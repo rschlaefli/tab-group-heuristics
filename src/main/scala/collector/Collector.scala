@@ -57,6 +57,7 @@ object Collector extends App with LazyLogging {
       .flatMap(TabEvent.decodeEventFromMessage)
       // add all the processed tab events to the queue
       .foreach(tabEvent => {
+        logger.debug(s"About to add $tabEvent to the queue")
         tabEventsQueue.synchronized {
           tabEventsQueue.enqueue(tabEvent)
           tabEventsQueue.notify()
@@ -70,8 +71,7 @@ object Collector extends App with LazyLogging {
     Iterator
       .continually(Utils.dequeueTabEvent(tabEventsQueue))
       .foreach(tabEvent => {
-        // log the tab event
-        logger.info(s"Processing tab event $tabEvent")
+        internalState = TabState.processEvent(internalState, tabEvent)
       })
   )
 
@@ -79,7 +79,7 @@ object Collector extends App with LazyLogging {
   val heuristicsEngine = new Thread(() => {
     while (true) {
       logger.debug("Heuristics engine checking tab state...")
-      Thread.sleep(2000)
+      Thread.sleep(50000)
     }
   })
 

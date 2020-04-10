@@ -12,12 +12,12 @@ case class TabCreateEvent(
     status: Option[String],
     hidden: Option[Boolean],
     discarded: Option[Boolean],
-    lastAccessed: Option[Int],
+    lastAccessed: Option[Double],
     url: Option[String],
     title: Option[String],
     openerTabId: Option[Int],
     sessionId: Option[Int],
-    successorId: Option[Int]
+    successorTabId: Option[Int]
 ) extends TabEvent
 
 object TabCreateEvent {

@@ -8,14 +8,14 @@ import java.io.{PrintWriter, File}
 import java.io.IOException
 import java.io.InputStream
 import com.typesafe.scalalogging.LazyLogging
-import argonaut._, Argonaut._
-import tabstate.TabState
 import java.io.BufferedOutputStream
 import java.io.BufferedInputStream
-import actions.{TabAction, NewTabAction, NotifyAction}
-import scala.util.{Try, Success, Failure}
+import scala.util.{Either, Try, Success, Failure}
 import java.io.OutputStream
 import scala.collection.mutable.Queue
+
+import events._
+import tabstate._
 
 object Collector extends App with LazyLogging {
 
@@ -40,12 +40,12 @@ object Collector extends App with LazyLogging {
   var internalState = TabState.initialize
   val tabEventsQueue = new Queue[TabEvent](50)
 
-  // let the tab extension know that heuristics are ready
-  Utils.writeNativeMessage(
-    out,
-    TabAction("NOTIFY", NotifyAction("hello from heuristics!").asJson).asJson
-      .toString()
-  )
+  // TODO: let the tab extension know that heuristics are ready
+  // Utils.writeNativeMessage(
+  //   out,
+  //   TabAction("NOTIFY", NotifyAction("hello from heuristics!").asJson).asJson
+  //     .toString()
+  // )
 
   // setup a continuous iterator for native message retrieval
   val messageReceiver = new Thread(() =>
@@ -54,15 +54,7 @@ object Collector extends App with LazyLogging {
       // flatten to get rid of any null values (None)
       .flatten
       // try to decode the messages into tab events
-      .map(message => {
-        // log the incoming event (stringified JSON)
-        logger.info(s"Processing message $message")
-
-        // parse the incoming JSON into a tab event
-        message.decodeOption[TabEvent]
-      })
-      // get rid of any invalid conversions
-      .flatten
+      .flatMap(TabEvent.decodeEventFromMessage)
       // add all the processed tab events to the queue
       .foreach(tabEvent => {
         tabEventsQueue.synchronized {

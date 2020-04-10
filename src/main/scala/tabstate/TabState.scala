@@ -1,7 +1,8 @@
 package tabstate
 
 import com.typesafe.scalalogging.LazyLogging
-import collector.TabEvent
+
+import events._
 
 object TabState extends LazyLogging {
 
@@ -15,9 +16,26 @@ object TabState extends LazyLogging {
     logger.info(s"Processing event: $event")
     logger.info(s"Computed new state: $state")
 
-    if (event.action == "CREATE") {
-      // event.payload
-      // return state.appended()
+    event match {
+      case TabCreateEvent(
+          id,
+          index,
+          windowId,
+          active,
+          attention,
+          pinned,
+          status,
+          hidden,
+          discarded,
+          lastAccessed,
+          url,
+          title,
+          openerTabId,
+          sessionId,
+          successorId
+          ) => {
+        logger.info(s"Tab state processed a create event for id $id")
+      }
     }
 
     state

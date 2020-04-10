@@ -8,9 +8,13 @@ object Dependencies {
   val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
   val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-  val argonautJson = "io.argonaut" %% "argonaut" % "6.2.5"
+  val circeVersion = "0.12.3"
 
   val runtimeDependencies =
-    Seq(scalaz, scalactic, logback, scalaLogging, argonautJson)
+    Seq(scalaz, scalactic, logback, scalaLogging) ++ Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic",
+      "io.circe" %% "circe-parser"
+    ).map(_ % circeVersion)
   val testingDependencies = Seq(scalatest % "test")
 }

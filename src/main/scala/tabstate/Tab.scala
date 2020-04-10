@@ -6,7 +6,7 @@ case class Tab(
     highlighted: Boolean,
     id: Int,
     index: Int,
-    lastAccedded: Double,
+    lastAccessed: Double,
     openerTabId: Option[Int],
     pinned: Boolean,
     sessionId: Option[Int],

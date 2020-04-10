@@ -68,7 +68,7 @@ object Utils extends LazyLogging {
     out.flush()
   }
 
-  def dequeueTabEvent(queue: mutable.Queue[TabEvent]): TabEvent = {
+  def dequeueTabEvent[T](queue: mutable.Queue[T]): T = {
     queue.synchronized {
       if (queue.isEmpty) {
         queue.wait()

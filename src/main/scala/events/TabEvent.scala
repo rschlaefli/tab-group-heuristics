@@ -55,6 +55,10 @@ object TabEvent extends LazyLogging {
           case Right(value) => Some(value)
         }
       }
+      // TODO: case MOVE
+      // TODO: case ATTACH
+      // TODO: case GROUP_ASSOC
+      // TODO: case GROUP_REMOVE
     }
 
     logger.debug(tabEvent.toString())

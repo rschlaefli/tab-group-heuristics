@@ -104,3 +104,36 @@ object Failure extends App {
   // fallback method
   println(potentialFailure orElse backupMethod())
 }
+
+object PartialFunctions extends App {
+  // Int => Int
+  val aFunction = (x: Int) => x + 1
+
+  // partial function
+  // can be called like any other function
+  // but throws a match error for any other value than the defined
+  val aPartialFunction: PartialFunction[Int, Int] = {
+    case 1 => 42
+    case 2 => 56
+    case 5 => 999
+  }
+
+  println(aPartialFunction.isDefinedAt(3))
+
+  // lift to normal function
+  // transforms a partial function to a full function returning Option[Int]
+  val lifted = aPartialFunction.lift
+
+  // chaining
+  aPartialFunction.orElse[Int, Int] {
+    case 42 => 42
+  }
+
+  // partial functions can be passed to normal function types
+  val aTotalFunction: Int => Int = {
+    case 42 => 42
+  }
+
+  // partial functions can be passed to HOCs like .map
+  List(1, 2).map(aPartialFunction)
+}

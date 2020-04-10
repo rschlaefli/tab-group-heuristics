@@ -3,18 +3,18 @@ package events
 import io.circe._, io.circe.generic.semiauto._
 
 case class TabUpdateEvent(
-    id: Option[Int],
-    index: Option[Int],
-    windowId: Option[Int],
-    active: Option[Boolean],
+    id: Int,
+    index: Int,
+    windowId: Int,
+    active: Boolean,
+    lastAccessed: Double,
+    url: String,
+    title: String,
+    pinned: Boolean,
+    status: String,
     attention: Option[Boolean],
-    pinned: Option[Boolean],
-    status: Option[String],
     hidden: Option[Boolean],
     discarded: Option[Boolean],
-    lastAccessed: Option[Double],
-    url: Option[String],
-    title: Option[String],
     openerTabId: Option[Int],
     sessionId: Option[Int],
     successorTabId: Option[Int]

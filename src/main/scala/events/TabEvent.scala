@@ -20,7 +20,7 @@ object TabEvent extends LazyLogging {
     // depending on the action type, decode into the appropriate TabEvent
     val tabEvent = action match {
       case "CREATE" => {
-        cursor.get[TabCreateEvent]("payload") match {
+        cursor.get[TabUpdateEvent]("payload") match {
           case Left(decodeError) => {
             logger.error(decodeError.message)
             None

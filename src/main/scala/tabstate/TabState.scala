@@ -17,41 +17,6 @@ object TabState extends LazyLogging {
     logger.info(s"Current tab state $state")
 
     event match {
-      case TabCreateEvent(
-          id,
-          index,
-          windowId,
-          active,
-          lastAccessed,
-          url,
-          title,
-          pinned,
-          status,
-          attention,
-          hidden,
-          discarded,
-          openerTabId,
-          sessionId,
-          successorTabId
-          ) => {
-        logger.info(s"Tab state processed a create event for id $id")
-        state.appended(
-          new Tab(
-            active,
-            id,
-            index,
-            lastAccessed,
-            openerTabId,
-            pinned,
-            sessionId,
-            successorTabId,
-            title,
-            url,
-            windowId
-          )
-        )
-      }
-
       case TabUpdateEvent(
           id,
           index,
@@ -70,22 +35,29 @@ object TabState extends LazyLogging {
           successorTabId
           ) => {
         logger.info(s"Tab state processed an update event for id $id")
-        state.updated(
-          state.indexWhere(_.id == id),
-          new Tab(
-            active,
-            id,
-            index,
-            lastAccessed,
-            openerTabId,
-            pinned,
-            sessionId,
-            successorTabId,
-            title,
-            url,
-            windowId
-          )
+        // find the existing tab if it exists
+        val existingIndex = state.indexWhere(_.id == id)
+        // build a new tab object from the received tab data
+        val tabData = new Tab(
+          active,
+          id,
+          index,
+          lastAccessed,
+          openerTabId,
+          pinned,
+          sessionId,
+          successorTabId,
+          title,
+          url,
+          windowId
         )
+        if (existingIndex == -1) {
+          // if the tab has never been added before, append it to the state
+          state.appended(tabData)
+        } else {
+          // if the tab already exists in the state, update it
+          state.updated(existingIndex, tabData)
+        }
       }
 
       case TabActivateEvent(id, windowId, previousTabId) => {

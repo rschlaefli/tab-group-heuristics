@@ -16,6 +16,7 @@ import scala.collection.mutable.Queue
 
 import events._
 import tabstate._
+import heuristics._
 
 object Collector extends App with LazyLogging {
 
@@ -37,7 +38,6 @@ object Collector extends App with LazyLogging {
   }
 
   // initialize the tab state and update queue
-  var internalState = TabState.initialize
   val tabEventsQueue = new Queue[TabEvent](50)
 
   // TODO: let the tab extension know that heuristics are ready
@@ -67,21 +67,10 @@ object Collector extends App with LazyLogging {
   )
 
   // setup a continuous iterator for event processing
-  val eventProcesser = new Thread(() =>
-    Iterator
-      .continually(Utils.dequeueTabEvent(tabEventsQueue))
-      .foreach(tabEvent => {
-        internalState = TabState.processEvent(internalState, tabEvent)
-      })
-  )
+  val eventProcesser = TabState.processQueue(tabEventsQueue)
 
   // setup a continually running
-  val heuristicsEngine = new Thread(() => {
-    while (true) {
-      logger.debug("Heuristics engine checking tab state...")
-      Thread.sleep(50000)
-    }
-  })
+  val heuristicsEngine = HeuristicsEngine.observe(internalState)
 
   messageReceiver.setName("MessageReceiver")
   eventProcesser.setName("EventProcessor")

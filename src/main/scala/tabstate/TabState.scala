@@ -1,22 +1,25 @@
 package tabstate
 
 import com.typesafe.scalalogging.LazyLogging
+import collector.Utils
+import scala.collection.mutable
 
 import events._
 
 object TabState extends LazyLogging {
+  var currentTabs = List[Tab]()
 
-  def initialize: List[Tab] = {
-    val initialState = List[Tab]()
-    logger.info(s"Initializing tab state: $initialState")
-    initialState
-  }
+  def processQueue(tabEventsQueue: mutable.Queue[TabEvent]) =
+    new Thread(() =>
+      Iterator
+        .continually(Utils.dequeueTabEvent(tabEventsQueue))
+        .foreach(tabEvent => currentTabs = processEvent(tabEvent))
+    )
 
-  def processEvent(state: List[Tab], event: TabEvent): List[Tab] = {
+  def processEvent(event: TabEvent): List[Tab] = {
     logger.info(s"Processing event $event")
-    logger.info(s"Current tab state $state")
 
-    event match {
+    currentTabs = event match {
       case TabUpdateEvent(
           id,
           index,
@@ -36,7 +39,8 @@ object TabState extends LazyLogging {
           ) => {
         logger.info(s"Tab state processed an update event for id $id")
         // find the existing tab if it exists
-        val existingIndex = state.indexWhere(_.id == id)
+        val existingIndex = currentTabs.indexWhere(_.id == id)
+
         // build a new tab object from the received tab data
         val tabData = new Tab(
           active,
@@ -51,24 +55,26 @@ object TabState extends LazyLogging {
           url,
           windowId
         )
+
         if (existingIndex == -1) {
           // if the tab has never been added before, append it to the state
-          state.appended(tabData)
+          currentTabs.appended(tabData)
         } else {
           // if the tab already exists in the state, update it
-          state.updated(existingIndex, tabData)
+          currentTabs.updated(existingIndex, tabData)
         }
       }
 
       case TabActivateEvent(id, windowId, previousTabId) => {
-        logger.info(s"Tab state processed an activate event for id $id")
-        state
+        logger.info(
+          s"Tab state processed an activate event for id $id with previousId $previousTabId"
+        )
+        currentTabs
       }
       case TabRemoveEvent(id, windowId) => {
         logger.info(s"Tab state processed a remove event for id $id")
-        state.filter(_.id != id)
+        currentTabs.filter(_.id != id)
       }
     }
   }
-
 }

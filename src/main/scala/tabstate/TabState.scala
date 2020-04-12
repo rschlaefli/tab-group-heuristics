@@ -15,7 +15,7 @@ object TabState extends LazyLogging {
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")
       Iterator
-        .continually(Utils.dequeueTabEvent(tabEventsQueue))
+        .continually(dequeueTabEvent(tabEventsQueue))
         .foreach(processEvent)
     })
 
@@ -23,6 +23,15 @@ object TabState extends LazyLogging {
     thread.setDaemon(true)
 
     thread
+  }
+
+  def dequeueTabEvent[T](queue: Queue[T]): T = {
+    queue.synchronized {
+      if (queue.isEmpty) {
+        queue.wait()
+      }
+      return queue.dequeue()
+    }
   }
 
   def processEvent(event: TabEvent): Unit = {

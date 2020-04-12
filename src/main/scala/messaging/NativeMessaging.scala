@@ -24,7 +24,7 @@ object NativeMessaging extends LazyLogging {
         // add all the processed tab events to the queue
         .foreach(tabEvent => {
           logger.debug(
-            s"> Processing tab event $tabEvent, current queue size $tabEventsQueue.size"
+            s"> Processing tab event $tabEvent, current queue size ${tabEventsQueue.size}"
           )
           tabEventsQueue.synchronized {
             tabEventsQueue.enqueue(tabEvent)

@@ -64,7 +64,7 @@ object Main extends App with LazyLogging {
   logger.info(s"> Daemons started (${Thread.activeCount()})")
 
   // setup a continually running
-  val heuristicsThread = HeuristicsEngine.observe(TabState.currentTabs)
+  val heuristicsThread = HeuristicsEngine.observe
 
   heuristicsThread.join()
 }

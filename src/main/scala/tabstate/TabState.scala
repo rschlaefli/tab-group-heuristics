@@ -91,10 +91,19 @@ object TabState extends LazyLogging {
           s"> Processing tab switch from $previousTabId to $id in window $windowId"
         )
 
-        // TODO: tab switch heuristic
+        // update the map of tab switches based on the new event
         if (previousTabId.isDefined) {
           tabSwitches.updateWith(previousTabId.get)((switchMap) => {
-            Some(switchMap.getOrElse(Map((id, 1))))
+            val map = switchMap.getOrElse(Map((id, 0)))
+
+            map.updateWith(id) {
+              case Some(value) => Some(value + 1)
+              case None        => Some(1)
+            }
+
+            logger.info(s"> Updated switch map for tab $previousTabId => $map")
+
+            Some(map)
           })
         }
 

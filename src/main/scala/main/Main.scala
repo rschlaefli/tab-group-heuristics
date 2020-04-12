@@ -2,7 +2,7 @@
   see https://github.com/rschlaefli/jfreesteel/blob/master/eidnativemessaging/src/main/java/net/devbase/jfreesteel/nativemessaging/EidWebExtensionApp.java
  */
 
-package collector
+package main
 
 import java.io.{PrintWriter, File}
 import java.io.IOException
@@ -14,11 +14,12 @@ import scala.util.{Either, Try, Success, Failure}
 import java.io.OutputStream
 import scala.collection.mutable.Queue
 
-import events._
+import util._
 import tabstate._
 import heuristics._
+import messaging._
 
-object Collector extends App with LazyLogging {
+object Main extends App with LazyLogging {
 
   var in: InputStream = null
   var out: OutputStream = null
@@ -37,6 +38,8 @@ object Collector extends App with LazyLogging {
     }
   }
 
+  logger.info("> Bootstrapping tab grouping heuristics")
+
   // initialize the tab state and update queue
   val tabEventsQueue = new Queue[TabEvent](50)
 
@@ -47,41 +50,21 @@ object Collector extends App with LazyLogging {
   //     .toString()
   // )
 
+  logger.info("> Starting threads")
+
   // setup a continuous iterator for native message retrieval
-  val messageReceiver = new Thread(() =>
-    Iterator
-      .continually(Utils.readNativeMessage(in))
-      // flatten to get rid of any null values (None)
-      .flatten
-      // try to decode the messages into tab events
-      .flatMap(TabEvent.decodeEventFromMessage)
-      // add all the processed tab events to the queue
-      .foreach(tabEvent => {
-        logger.debug(s"About to add $tabEvent to the queue")
-        tabEventsQueue.synchronized {
-          tabEventsQueue.enqueue(tabEvent)
-          tabEventsQueue.notify()
-        }
-        logger.debug(s"Queue contains ${tabEventsQueue.size}")
-      })
-  )
+  val nativeMessagingThread = NativeMessaging.listen(in, tabEventsQueue)
 
   // setup a continuous iterator for event processing
-  val eventProcesser = TabState.processQueue(tabEventsQueue)
+  val tabStateThread = TabState.processQueue(tabEventsQueue)
+
+  tabStateThread.start()
+  nativeMessagingThread.start()
+
+  logger.info(s"> Daemons started (${Thread.activeCount()})")
 
   // setup a continually running
-  val heuristicsEngine = HeuristicsEngine.observe(internalState)
+  val heuristicsThread = HeuristicsEngine.observe(TabState.currentTabs)
 
-  messageReceiver.setName("MessageReceiver")
-  eventProcesser.setName("EventProcessor")
-  heuristicsEngine.setName("HeuristicsEngine")
-
-  // set the message and event processor threads to be daemons
-  // TODO: this would make sense, but does not work as is
-  messageReceiver.setDaemon(true)
-  eventProcesser.setDaemon(true)
-
-  messageReceiver.start()
-  eventProcesser.start()
-  heuristicsEngine.start()
+  heuristicsThread.join()
 }

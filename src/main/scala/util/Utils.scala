@@ -1,10 +1,11 @@
-package collector
+package util
 
 import scala.runtime.RichByte
 import java.io.{InputStream, OutputStream}
 import com.typesafe.scalalogging.LazyLogging
 import java.util.concurrent.ArrayBlockingQueue
 import scala.collection.mutable
+import io.circe.Decoder
 
 object Utils extends LazyLogging {
   def readToByteArray(in: InputStream, length: Int): Option[Array[Byte]] = {
@@ -75,5 +76,15 @@ object Utils extends LazyLogging {
       }
       return queue.dequeue()
     }
+  }
+
+  def extractDecoderResult[T](
+      decoderResult: Decoder.Result[T]
+  ): Option[T] = decoderResult match {
+    case Left(decodeError) => {
+      logger.error(decodeError.message)
+      None
+    }
+    case Right(value) => Some(value)
   }
 }

@@ -44,6 +44,7 @@ object TabState extends LazyLogging {
           active,
           lastAccessed,
           url,
+          hash,
           title,
           pinned,
           status,

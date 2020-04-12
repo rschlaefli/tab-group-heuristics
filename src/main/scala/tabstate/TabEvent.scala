@@ -35,6 +35,7 @@ case class TabUpdateEvent(
     active: Boolean,
     lastAccessed: Double,
     url: String,
+    hash: String,
     title: String,
     pinned: Boolean,
     status: String,

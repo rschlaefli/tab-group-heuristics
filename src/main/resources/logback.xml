@@ -18,15 +18,39 @@
     </encoder>
   </appender>
 
-  <appender name="TABSTATE" class="ch.qos.logback.core.FileAppender">
-    <file>tabstate.log</file>
+  <appender name="HeuristicsEngine" class="ch.qos.logback.core.FileAppender">
+    <file>heuristics_engine.log</file>
     <append>true</append>
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
 
-  <appender name="EVENTS" class="ch.qos.logback.core.FileAppender">
+  <appender name="NativeMessaging" class="ch.qos.logback.core.FileAppender">
+    <file>native_messaging.log</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="TabState" class="ch.qos.logback.core.FileAppender">
+    <file>tab_state.log</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="Main" class="ch.qos.logback.core.FileAppender">
+    <file>main.log</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- <appender name="EVENTS" class="ch.qos.logback.core.FileAppender">
     <file>tabs.log</file>
     <append>true</append>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -35,18 +59,26 @@
     <encoder>
       <pattern>%d;%msg%n</pattern>
     </encoder>
-  </appender>
+  </appender> -->
 
   <root level="debug">
     <appender-ref ref="DEBUG" />
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="collector.Collector" level="debug">
-    <appender-ref ref="EVENTS" />
+  <logger name="heuristics.HeuristicsEngine" level="debug">
+    <appender-ref ref="HeuristicsEngine" />
+  </logger>
+
+  <logger name="messaging.NativeMessaging" level="debug">
+    <appender-ref ref="NativeMessaging" />
   </logger>
 
   <logger name="tabstate.TabState" level="debug">
-    <appender-ref ref="TABSTATE" />
+    <appender-ref ref="TabState" />
+  </logger>
+
+  <logger name="main.Main" level="debug">
+    <appender-ref ref="Main" />
   </logger>
 </configuration>

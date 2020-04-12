@@ -1,12 +1,44 @@
-package collector
+package messaging
 
-import scala.runtime.RichByte
-import java.io.{InputStream, OutputStream}
-import com.typesafe.scalalogging.LazyLogging
-import java.util.concurrent.ArrayBlockingQueue
 import scala.collection.mutable
+import com.typesafe.scalalogging.LazyLogging
+import java.io.InputStream
+import tabstate.TabEvent
 
-object Utils extends LazyLogging {
+import util.Utils
+import java.io.OutputStream
+
+object NativeMessaging extends LazyLogging {
+  def listen(
+      in: InputStream,
+      tabEventsQueue: mutable.Queue[TabEvent]
+  ): Thread = {
+    val thread = new Thread(() => {
+      logger.info("> Starting to listen for messages")
+      Iterator
+        .continually(readNativeMessage(in))
+        // flatten to get rid of any null values (None)
+        .flatten
+        // try to decode the messages into tab events
+        .flatMap(TabEvent.decodeEventFromMessage)
+        // add all the processed tab events to the queue
+        .foreach(tabEvent => {
+          logger.debug(
+            s"> Processing tab event $tabEvent, current queue size $tabEventsQueue.size"
+          )
+          tabEventsQueue.synchronized {
+            tabEventsQueue.enqueue(tabEvent)
+            tabEventsQueue.notify()
+          }
+        })
+    })
+
+    thread.setName("NativeMessaging")
+    thread.setDaemon(true)
+
+    thread
+  }
+
   def readToByteArray(in: InputStream, length: Int): Option[Array[Byte]] = {
     val byteArray = new Array[Byte](length)
     val count = in.read(byteArray)
@@ -68,12 +100,4 @@ object Utils extends LazyLogging {
     out.flush()
   }
 
-  def dequeueTabEvent[T](queue: mutable.Queue[T]): T = {
-    queue.synchronized {
-      if (queue.isEmpty) {
-        queue.wait()
-      }
-      return queue.dequeue()
-    }
-  }
 }

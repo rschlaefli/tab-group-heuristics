@@ -9,7 +9,7 @@ object TabState extends LazyLogging {
   var activeTab = -1
   var activeWindow = -1
   var currentTabs = Map[Int, Tab]()
-  val tabSwitches = Map[String, Map[String, Int]]()
+  var tabSwitches = Map[String, Map[String, Int]]()
 
   def processQueue(tabEventsQueue: Queue[TabEvent]): Thread = {
     val thread = new Thread(() => {

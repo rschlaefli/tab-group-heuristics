@@ -8,8 +8,8 @@ import util._
 object TabState extends LazyLogging {
   var activeTab = -1
   var activeWindow = -1
-  var currentTabs = List[Tab]()
-  val tabSwitches = Map[Int, Map[Int, Int]]()
+  var currentTabs = Map[Int, Tab]()
+  val tabSwitches = Map[String, Map[String, Int]]()
 
   def processQueue(tabEventsQueue: Queue[TabEvent]): Thread = {
     val thread = new Thread(() => {
@@ -55,11 +55,9 @@ object TabState extends LazyLogging {
           sessionId,
           successorTabId
           ) => {
-        // find the existing tab if it exists
-        val existingIndex = currentTabs.indexWhere(_.id == id)
-
         // build a new tab object from the received tab data
         val tabData = new Tab(
+          hash,
           active,
           id,
           index,
@@ -74,12 +72,12 @@ object TabState extends LazyLogging {
         )
 
         currentTabs.synchronized {
-          if (existingIndex == -1) {
+          if (!currentTabs.contains(id)) {
             // if the tab has never been added before, append it to the state
-            currentTabs.appended(tabData)
+            currentTabs += ((id, tabData))
           } else {
             // if the tab already exists in the state, update it
-            currentTabs.updated(existingIndex, tabData)
+            currentTabs.update(id, tabData)
           }
         }
       }
@@ -93,11 +91,14 @@ object TabState extends LazyLogging {
         )
 
         // update the map of tab switches based on the new event
-        if (previousTabId.isDefined) {
-          tabSwitches.updateWith(previousTabId.get)((switchMap) => {
-            val map = switchMap.getOrElse(Map((id, 0)))
+        if (currentTabs.contains(id) && previousTabId.isDefined && currentTabs
+              .contains(previousTabId.get)) {
+          val previousTabHash = currentTabs.get(previousTabId.get).get.hash
+          val currentTabHash = currentTabs.get(id).get.hash
+          tabSwitches.updateWith(previousTabHash)((switchMap) => {
+            val map = switchMap.getOrElse(Map((currentTabHash, 0)))
 
-            map.updateWith(id) {
+            map.updateWith(currentTabHash) {
               case Some(value) => Some(value + 1)
               case None        => Some(1)
             }
@@ -112,7 +113,7 @@ object TabState extends LazyLogging {
 
       case TabRemoveEvent(id, windowId) => {
         currentTabs.synchronized {
-          currentTabs = currentTabs.filter(_.id != id)
+          currentTabs -= (id)
         }
       }
     }

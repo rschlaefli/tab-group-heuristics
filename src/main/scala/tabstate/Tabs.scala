@@ -2,6 +2,7 @@ package tabstate
 
 // see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab
 case class Tab(
+    hash: String,
     active: Boolean,
     // highlighted: Boolean,
     id: Int,

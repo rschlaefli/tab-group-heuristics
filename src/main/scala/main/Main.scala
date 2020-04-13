@@ -56,6 +56,7 @@ object Main extends App with LazyLogging {
   val nativeMessagingThread = NativeMessaging.listen(in, tabEventsQueue)
 
   // setup a continuous iterator for event processing
+  // TODO: initialize the tab state using the persistence engine
   val tabStateThread = TabState.processQueue(tabEventsQueue)
 
   tabStateThread.start()

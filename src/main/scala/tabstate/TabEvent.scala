@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import util._
 
-class TabEvent
+sealed class TabEvent
 
 case class TabInitializationEvent(
     currentTabs: List[Tab]

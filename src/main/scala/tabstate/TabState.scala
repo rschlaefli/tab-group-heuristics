@@ -2,6 +2,8 @@ package tabstate
 
 import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.{Map, Queue}
+import scalax.collection.mutable.Graph
+import scalax.collection.edge.WDiEdge
 
 import util._
 
@@ -16,7 +18,10 @@ object TabState extends LazyLogging {
   var tabBaseHashes = Map[String, String]()
   var tabOriginHashes = Map[String, String]()
 
+  var tabOriginGraph = Graph[Tabs, WDiEdge]()
+
   def apply(tabEventsQueue: Queue[TabEvent]): Thread = {
+
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")
       Iterator
@@ -45,9 +50,16 @@ object TabState extends LazyLogging {
     event match {
       case TabInitializationEvent(initialTabs) => {
         currentTabs ++= initialTabs.map(tab => (tab.id, tab))
+
         tabBaseHashes ++= initialTabs.map(tab => (tab.baseHash, tab.baseUrl))
         tabOriginHashes ++= initialTabs.map(tab => (tab.originHash, tab.origin))
-        logger.info(s"> Initialized current tabs to $currentTabs")
+
+        tabOriginGraph ++= initialTabs
+        logger.info(tabOriginGraph.toString())
+
+        logger.info(
+          s"> Initialized current tabs to $currentTabs"
+        )
       }
 
       case TabUpdateEvent(
@@ -93,6 +105,8 @@ object TabState extends LazyLogging {
         currentTabs.synchronized {
           currentTabs.update(id, tabData)
 
+          tabOriginGraph += tabData
+
           tabBaseHashes.update(baseHash, baseUrl)
           tabOriginHashes.update(originHash, origin)
         }
@@ -125,13 +139,17 @@ object TabState extends LazyLogging {
             Some(map)
           })
 
-          tabOriginSwitches.updateWith(currentTab.originHash)((switchMap) => {
-            val map = switchMap.getOrElse(Map((currentTab.originHash, 0)))
+          tabOriginSwitches.updateWith(previousTab.originHash)((switchMap) => {
+            val map = switchMap
+              .getOrElse(Map((currentTab.originHash, 0)))
 
-            map.updateWith(currentTab.originHash) {
-              case Some(value) => Some(value + 1)
-              case None        => Some(1)
-            }
+            val previousCount = map(currentTab.originHash)
+
+            tabOriginGraph += WDiEdge((previousTab, currentTab))(
+              previousCount + 1
+            )
+
+            map.update(currentTab.originHash, previousCount + 1)
 
             logger.debug(s"> Updated switch map for tab $previousTabId => $map")
 

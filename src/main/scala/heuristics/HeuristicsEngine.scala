@@ -1,8 +1,8 @@
 package heuristics
 
-import tabstate.Tab
 import com.typesafe.scalalogging.LazyLogging
-import tabstate.TabState
+
+import tabstate.{TabState}
 
 object HeuristicsEngine extends LazyLogging {
   def apply(): Thread = {
@@ -10,7 +10,7 @@ object HeuristicsEngine extends LazyLogging {
       logger.info("> Starting to observe current tab state")
       while (true) {
         logger.debug(
-          s"> Current tab state: ${TabState.activeTab}, ${TabState.activeWindow}, ${TabState.currentTabs}"
+          s"> Current tab state: ${TabState.activeTab}, ${TabState.activeWindow}, ${TabState.currentTabs}, ${TabState.tabOriginGraph}"
         )
         Thread.sleep(30000)
       }

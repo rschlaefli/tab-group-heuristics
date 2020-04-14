@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 import tabstate.TabState
 
 object HeuristicsEngine extends LazyLogging {
-  def observe(): Thread = {
+  def apply(): Thread = {
     val thread = new Thread {
       logger.info("> Starting to observe current tab state")
       while (true) {

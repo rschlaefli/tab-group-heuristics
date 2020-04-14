@@ -15,4 +15,8 @@ lazy val tabs = (project in file("."))
 mainClass in Compile := Some("main.Main")
 discoveredMainClasses in Compile := Seq()
 
+// ensure that javadoc is not built on every stage
+// ref: https://sbt-native-packager.readthedocs.io/en/stable/formats/universal.html#skip-packagedoc-task-on-stage
+mappings in (Compile, packageDoc) := Seq()
+
 enablePlugins(JavaAppPackaging)

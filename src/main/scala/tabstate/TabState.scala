@@ -12,7 +12,7 @@ object TabState extends LazyLogging {
   var tabSwitches = Map[String, Map[String, Int]]()
   var tabHashes = Map[String, String]()
 
-  def processQueue(tabEventsQueue: Queue[TabEvent]): Thread = {
+  def apply(tabEventsQueue: Queue[TabEvent]): Thread = {
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")
       Iterator
@@ -37,7 +37,13 @@ object TabState extends LazyLogging {
 
   def processEvent(event: TabEvent): Unit = {
     logger.debug(s"> Processing tab event $event")
+
     event match {
+      case TabInitializationEvent(initialTabs) => {
+        currentTabs ++= initialTabs.map(tab => (tab.id, tab))
+        logger.info(s"> Initialized current tabs to $currentTabs")
+      }
+
       case TabUpdateEvent(
           id,
           index,
@@ -101,7 +107,7 @@ object TabState extends LazyLogging {
               case None        => Some(1)
             }
 
-            logger.info(s"> Updated switch map for tab $previousTabId => $map")
+            logger.debug(s"> Updated switch map for tab $previousTabId => $map")
 
             Some(map)
           })

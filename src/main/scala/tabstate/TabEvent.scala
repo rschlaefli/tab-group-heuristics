@@ -7,6 +7,15 @@ import util._
 
 class TabEvent
 
+case class TabInitializationEvent(
+    currentTabs: List[Tab]
+) extends TabEvent
+
+object TabInitializationEvent {
+  implicit val tabInitializationEventDecoder: Decoder[TabInitializationEvent] =
+    deriveDecoder
+}
+
 case class TabActivateEvent(
     id: Int,
     windowId: Int,
@@ -77,6 +86,13 @@ object TabEvent extends LazyLogging {
       case "REMOVE" => {
         Utils.extractDecoderResult(cursor.get[TabRemoveEvent]("payload"))
       }
+
+      case "INIT_TABS" => {
+        Utils.extractDecoderResult(
+          cursor.get[TabInitializationEvent]("payload")
+        )
+      }
+
       // TODO: case MOVE
       // TODO: case ATTACH
       // TODO: case GROUP_ASSOC

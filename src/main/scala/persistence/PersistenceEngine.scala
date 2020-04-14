@@ -14,21 +14,28 @@ import heuristics.TabSwitchGraph
 object PersistenceEngine extends LazyLogging {
 
   def apply(): Thread = {
+
     val persistenceThread = new Thread(() => {
       logger.info("> Starting to persist state")
 
       while (true) {
-        // persist tab switch and hash maps to json files
-        persistJson("tab_switches_base.json", TabState.tabBaseSwitches.asJson)
         persistJson("tab_hashes_base.json", TabState.tabBaseHashes.asJson)
+        persistJson("tab_hashes_origin.json", TabState.tabOriginHashes.asJson)
+
+        persistJson("tab_switches_base.json", TabState.tabBaseSwitches.asJson)
         persistJson(
           "tab_switches_origin.json",
           TabState.tabOriginSwitches.asJson
         )
-        persistJson("tab_hashes_origin.json", TabState.tabOriginHashes.asJson)
 
-        // persist the tab switch graph to a json file
-        writeString("tab_origin_graph.json", TabSwitchGraph.toJsonString)
+        writeString(
+          "tab_switch_graph_base.json",
+          TabSwitchGraph.toJsonString(TabState.tabBaseGraph)
+        )
+        writeString(
+          "tab_switch_graph_origin.json",
+          TabSwitchGraph.toJsonString(TabState.tabOriginGraph)
+        )
 
         Thread.sleep(60000)
       }
@@ -41,25 +48,11 @@ object PersistenceEngine extends LazyLogging {
   }
 
   def restoreInitialState() = {
-    restoreJson("tab_switches_base.json")
-      .map(decode[Map[String, Map[String, Int]]])
-      .foreach {
-        case Left(value)        =>
-        case Right(restoredMap) => TabState.tabBaseSwitches = restoredMap
-      }
-
     restoreJson("tab_hashes_base.json")
       .map(decode[Map[String, String]])
       .foreach {
         case Left(value)        =>
         case Right(restoredMap) => TabState.tabBaseHashes = restoredMap
-      }
-
-    restoreJson("tab_switches_origin.json")
-      .map(decode[Map[String, Map[String, Int]]])
-      .foreach {
-        case Left(value)        =>
-        case Right(restoredMap) => TabState.tabOriginSwitches = restoredMap
       }
 
     restoreJson("tab_hashes_origin.json")
@@ -69,7 +62,25 @@ object PersistenceEngine extends LazyLogging {
         case Right(restoredMap) => TabState.tabOriginHashes = restoredMap
       }
 
-    restoreJson("tab_origin_graph.json")
+    restoreJson("tab_switches_base.json")
+      .map(decode[Map[String, Map[String, Int]]])
+      .foreach {
+        case Left(value)        =>
+        case Right(restoredMap) => TabState.tabBaseSwitches = restoredMap
+      }
+
+    restoreJson("tab_switches_origin.json")
+      .map(decode[Map[String, Map[String, Int]]])
+      .foreach {
+        case Left(value)        =>
+        case Right(restoredMap) => TabState.tabOriginSwitches = restoredMap
+      }
+
+    restoreJson("tab_switch_graph_base.json")
+      .map(TabSwitchGraph.fromJsonString)
+      .foreach(TabState.tabBaseGraph = _)
+
+    restoreJson("tab_switch_graph_origin.json")
       .map(TabSwitchGraph.fromJsonString)
       .foreach(TabState.tabOriginGraph = _)
   }

@@ -40,8 +40,8 @@ object TabSwitchGraph extends LazyLogging {
     defaultEdgeDescriptor = WDi.descriptor[Tabs]()
   )
 
-  def toJsonString: String = {
-    TabState.tabOriginGraph.toJson(graphDescriptor)
+  def toJsonString(graph: Graph[Tabs, WDiEdge]): String = {
+    graph.toJson(graphDescriptor)
   }
 
   def fromJsonString(jsonString: String) = {

@@ -56,8 +56,6 @@ object Main extends App with LazyLogging {
   // read persisted state and initialize
   PersistenceEngine.restoreInitialState()
 
-  // TODO: query current tabs from browser on startup
-
   logger.info("> Starting threads")
 
   // setup a continuous iterator for native message retrieval

@@ -18,6 +18,7 @@ object TabState extends LazyLogging {
   var tabBaseHashes = Map[String, String]()
   var tabOriginHashes = Map[String, String]()
 
+  var tabBaseGraph = Graph[Tabs, WDiEdge]()
   var tabOriginGraph = Graph[Tabs, WDiEdge]()
 
   def apply(tabEventsQueue: Queue[TabEvent]): Thread = {
@@ -54,8 +55,8 @@ object TabState extends LazyLogging {
         tabBaseHashes ++= initialTabs.map(tab => (tab.baseHash, tab.baseUrl))
         tabOriginHashes ++= initialTabs.map(tab => (tab.originHash, tab.origin))
 
+        tabBaseGraph ++= initialTabs
         tabOriginGraph ++= initialTabs
-        logger.info(tabOriginGraph.toString())
 
         logger.info(
           s"> Initialized current tabs to $currentTabs"
@@ -105,6 +106,7 @@ object TabState extends LazyLogging {
         currentTabs.synchronized {
           currentTabs.update(id, tabData)
 
+          tabBaseGraph += tabData
           tabOriginGraph += tabData
 
           tabBaseHashes.update(baseHash, baseUrl)
@@ -129,12 +131,13 @@ object TabState extends LazyLogging {
           tabBaseSwitches.updateWith(previousTab.baseHash)((switchMap) => {
             val map = switchMap.getOrElse(Map((currentTab.baseHash, 0)))
 
-            map.updateWith(currentTab.baseHash) {
-              case Some(value) => Some(value + 1)
-              case None        => Some(1)
-            }
+            val previousCount = map(currentTab.baseHash)
 
-            logger.debug(s"> Updated switch map for tab $previousTabId => $map")
+            tabBaseGraph += WDiEdge((previousTab, currentTab))(
+              previousCount + 1
+            )
+
+            map.update(currentTab.baseHash, previousCount + 1)
 
             Some(map)
           })
@@ -150,8 +153,6 @@ object TabState extends LazyLogging {
             )
 
             map.update(currentTab.originHash, previousCount + 1)
-
-            logger.debug(s"> Updated switch map for tab $previousTabId => $map")
 
             Some(map)
           })

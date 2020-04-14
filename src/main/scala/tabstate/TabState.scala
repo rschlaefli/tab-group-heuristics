@@ -8,9 +8,13 @@ import util._
 object TabState extends LazyLogging {
   var activeTab = -1
   var activeWindow = -1
+
   var currentTabs = Map[Int, Tab]()
-  var tabSwitches = Map[String, Map[String, Int]]()
-  var tabHashes = Map[String, String]()
+
+  var tabBaseSwitches = Map[String, Map[String, Int]]()
+  var tabOriginSwitches = Map[String, Map[String, Int]]()
+  var tabBaseHashes = Map[String, String]()
+  var tabOriginHashes = Map[String, String]()
 
   def apply(tabEventsQueue: Queue[TabEvent]): Thread = {
     val thread = new Thread(() => {
@@ -41,6 +45,8 @@ object TabState extends LazyLogging {
     event match {
       case TabInitializationEvent(initialTabs) => {
         currentTabs ++= initialTabs.map(tab => (tab.id, tab))
+        tabBaseHashes ++= initialTabs.map(tab => (tab.baseHash, tab.baseUrl))
+        tabOriginHashes ++= initialTabs.map(tab => (tab.originHash, tab.origin))
         logger.info(s"> Initialized current tabs to $currentTabs")
       }
 
@@ -51,11 +57,13 @@ object TabState extends LazyLogging {
           active,
           lastAccessed,
           url,
-          hash,
+          baseHash,
+          baseUrl,
+          origin,
+          originHash,
           title,
           pinned,
           status,
-          baseUrl,
           attention,
           hidden,
           discarded,
@@ -65,7 +73,9 @@ object TabState extends LazyLogging {
           ) => {
         // build a new tab object from the received tab data
         val tabData = new Tab(
-          hash,
+          origin,
+          originHash,
+          baseHash,
           baseUrl,
           active,
           id,
@@ -82,7 +92,9 @@ object TabState extends LazyLogging {
 
         currentTabs.synchronized {
           currentTabs.update(id, tabData)
-          tabHashes.update(hash, baseUrl)
+
+          tabBaseHashes.update(baseHash, baseUrl)
+          tabOriginHashes.update(originHash, origin)
         }
       }
 
@@ -91,18 +103,32 @@ object TabState extends LazyLogging {
         activeWindow = windowId
 
         logger.info(
-          s"> Processing tab switch from $previousTabId to $id in window $windowId"
+          s"> Processing switch from $previousTabId to $id in window $windowId"
         )
 
         // update the map of tab switches based on the new event
         if (currentTabs.contains(id) && previousTabId.isDefined && currentTabs
               .contains(previousTabId.get)) {
-          val previousTabHash = currentTabs.get(previousTabId.get).get.hash
-          val currentTabHash = currentTabs.get(id).get.hash
-          tabSwitches.updateWith(previousTabHash)((switchMap) => {
-            val map = switchMap.getOrElse(Map((currentTabHash, 0)))
+          val previousTab = currentTabs.get(previousTabId.get).get
+          val currentTab = currentTabs.get(id).get
 
-            map.updateWith(currentTabHash) {
+          tabBaseSwitches.updateWith(previousTab.baseHash)((switchMap) => {
+            val map = switchMap.getOrElse(Map((currentTab.baseHash, 0)))
+
+            map.updateWith(currentTab.baseHash) {
+              case Some(value) => Some(value + 1)
+              case None        => Some(1)
+            }
+
+            logger.debug(s"> Updated switch map for tab $previousTabId => $map")
+
+            Some(map)
+          })
+
+          tabOriginSwitches.updateWith(currentTab.originHash)((switchMap) => {
+            val map = switchMap.getOrElse(Map((currentTab.originHash, 0)))
+
+            map.updateWith(currentTab.originHash) {
               case Some(value) => Some(value + 1)
               case None        => Some(1)
             }

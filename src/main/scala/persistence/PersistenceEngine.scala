@@ -15,8 +15,13 @@ object PersistenceEngine extends LazyLogging {
     val persistenceThread = new Thread(() => {
       logger.info("> Starting to persist state")
       while (true) {
-        persistJson("tab_switches.json", TabState.tabSwitches.asJson)
-        persistJson("tab_hashes.json", TabState.tabHashes.asJson)
+        persistJson("tab_switches_base.json", TabState.tabBaseSwitches.asJson)
+        persistJson("tab_hashes_base.json", TabState.tabBaseHashes.asJson)
+        persistJson(
+          "tab_switches_origin.json",
+          TabState.tabOriginSwitches.asJson
+        )
+        persistJson("tab_hashes_origin.json", TabState.tabOriginHashes.asJson)
         Thread.sleep(60000)
       }
     })
@@ -26,23 +31,37 @@ object PersistenceEngine extends LazyLogging {
   }
 
   def restoreInitialState() = {
-    restoreJson("tab_switches.json")
+    restoreJson("tab_switches_base.json")
       .map(decode[Map[String, Map[String, Int]]])
       .foreach {
         case Left(value)        =>
-        case Right(restoredMap) => TabState.tabSwitches = restoredMap
+        case Right(restoredMap) => TabState.tabBaseSwitches = restoredMap
       }
 
-    restoreJson("tab_hashes.json")
+    restoreJson("tab_hashes_base.json")
       .map(decode[Map[String, String]])
       .foreach {
         case Left(value)        =>
-        case Right(restoredMap) => TabState.tabHashes = restoredMap
+        case Right(restoredMap) => TabState.tabBaseHashes = restoredMap
+      }
+
+    restoreJson("tab_switches_origin.json")
+      .map(decode[Map[String, Map[String, Int]]])
+      .foreach {
+        case Left(value)        =>
+        case Right(restoredMap) => TabState.tabOriginSwitches = restoredMap
+      }
+
+    restoreJson("tab_hashes_origin.json")
+      .map(decode[Map[String, String]])
+      .foreach {
+        case Left(value)        =>
+        case Right(restoredMap) => TabState.tabOriginHashes = restoredMap
       }
   }
 
   def persistJson(fileName: String, jsonData: => Json): Try[Unit] = Try {
-    logger.info(s"> Writing $jsonData to $fileName")
+    logger.info(s"> Writing json to $fileName")
     Some(new PrintWriter(fileName)).foreach { p =>
       p.write(jsonData.toString()); p.close
     }

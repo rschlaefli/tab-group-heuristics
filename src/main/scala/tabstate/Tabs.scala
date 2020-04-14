@@ -4,7 +4,9 @@ import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 
 // see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab
 case class Tab(
-    hash: String,
+    origin: String,
+    originHash: String,
+    baseHash: String,
     baseUrl: String,
     active: Boolean,
     // highlighted: Boolean,

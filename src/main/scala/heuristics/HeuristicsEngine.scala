@@ -10,7 +10,7 @@ object HeuristicsEngine extends LazyLogging {
       logger.info("> Starting to observe current tab state")
       while (true) {
         logger.debug(
-          s"> Current tab state: ${TabState.activeTab}, ${TabState.activeWindow}, ${TabState.currentTabs}, ${TabState.tabSwitches}"
+          s"> Current tab state: ${TabState.activeTab}, ${TabState.activeWindow}, ${TabState.currentTabs}"
         )
         Thread.sleep(30000)
       }

@@ -11,11 +11,20 @@ object Dependencies {
 
   val scalaGraph = "org.scala-graph" %% "graph-core" % "1.13.2"
   val scalaGraphJson = "org.scala-graph" %% "graph-json" % "1.13.0"
+  val scalaGraphDot = "org.scala-graph" %% "graph-dot" % "1.13.0"
 
   val circeVersion = "0.12.3"
 
   val runtimeDependencies =
-    Seq(scalaz, scalactic, logback, scalaLogging, scalaGraph, scalaGraphJson) ++ Seq(
+    Seq(
+      scalaz,
+      scalactic,
+      logback,
+      scalaLogging,
+      scalaGraph,
+      scalaGraphJson,
+      scalaGraphDot
+    ) ++ Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
       "io.circe" %% "circe-parser"

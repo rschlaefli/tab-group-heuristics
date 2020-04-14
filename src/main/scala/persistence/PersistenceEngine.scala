@@ -37,6 +37,15 @@ object PersistenceEngine extends LazyLogging {
           TabSwitchGraph.toJsonString(TabState.tabOriginGraph)
         )
 
+        writeString(
+          "tab_switch_graph_base.dot",
+          TabSwitchGraph.toDotString(TabState.tabBaseGraph)
+        )
+        writeString(
+          "tab_switch_graph_origin.dot",
+          TabSwitchGraph.toDotString(TabState.tabOriginGraph)
+        )
+
         Thread.sleep(60000)
       }
     })

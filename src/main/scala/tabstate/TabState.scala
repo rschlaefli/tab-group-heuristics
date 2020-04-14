@@ -2,7 +2,7 @@ package tabstate
 
 import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.{Map, Queue}
-import scalax.collection.mutable.Graph
+import scalax.collection.Graph
 import scalax.collection.edge.WDiEdge
 
 import util._

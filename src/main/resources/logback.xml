@@ -43,6 +43,14 @@
     </encoder>
   </appender>
 
+  <appender name="Persistence" class="ch.qos.logback.core.FileAppender">
+    <file>persistence.log</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
   <appender name="Main" class="ch.qos.logback.core.FileAppender">
     <file>main.log</file>
     <append>true</append>
@@ -77,6 +85,10 @@
 
   <logger name="tabstate.TabState" level="debug">
     <appender-ref ref="TabState" />
+  </logger>
+
+  <logger name="persistence.Persistence" level="debug">
+    <appender-ref ref="Persistence" />
   </logger>
 
   <logger name="main.Main" level="debug">

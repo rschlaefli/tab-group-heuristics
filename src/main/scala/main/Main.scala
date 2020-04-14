@@ -13,7 +13,6 @@ import java.io.BufferedInputStream
 import scala.util.{Either, Try, Success, Failure}
 import java.io.OutputStream
 import scala.collection.mutable.Queue
-import io.circe.syntax._, io.circe.parser.decode
 import scala.collection.mutable.{Map, Queue}
 
 import util._
@@ -47,12 +46,7 @@ object Main extends App with LazyLogging {
   val tabEventsQueue = new Queue[TabEvent](50)
 
   // read persisted state and initialize
-  Persistence
-    .restoreJson("tab_switches.json")
-    .map(decode[Map[String, Map[String, Int]]])
-    .foreach {
-      case Right(restoredMap) => TabState.tabSwitches = restoredMap
-    }
+  PersistenceEngine.restoreInitialState()
 
   // TODO: let the tab extension know that heuristics are ready
   // Utils.writeNativeMessage(
@@ -61,25 +55,22 @@ object Main extends App with LazyLogging {
   //     .toString()
   // )
 
+  // TODO: query current tabs from browser on startup
+
   logger.info("> Starting threads")
 
   // setup a continuous iterator for native message retrieval
   val nativeMessagingThread = NativeMessaging.listen(in, tabEventsQueue)
 
   // setup a continuous iterator for event processing
-  // TODO: initialize the tab state using the persistence engine
   val tabStateThread = TabState.processQueue(tabEventsQueue)
 
   // setup a thread for the persistence engine
-  val persistenceThread = new Thread {
-    while (true) {
-      Persistence.persistJson("tab_switches.json", TabState.tabSwitches.asJson)
-      Thread.sleep(10000)
-    }
-  }
+  val persistenceThread = PersistenceEngine()
 
   tabStateThread.start()
   nativeMessagingThread.start()
+  persistenceThread.start()
 
   logger.info(s"> Daemons started (${Thread.activeCount()})")
 

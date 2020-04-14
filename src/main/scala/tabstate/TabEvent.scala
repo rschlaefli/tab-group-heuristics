@@ -39,6 +39,7 @@ case class TabUpdateEvent(
     title: String,
     pinned: Boolean,
     status: String,
+    baseUrl: String,
     attention: Option[Boolean],
     hidden: Option[Boolean],
     discarded: Option[Boolean],

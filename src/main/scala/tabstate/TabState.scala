@@ -10,6 +10,7 @@ object TabState extends LazyLogging {
   var activeWindow = -1
   var currentTabs = Map[Int, Tab]()
   var tabSwitches = Map[String, Map[String, Int]]()
+  var tabHashes = Map[String, String]()
 
   def processQueue(tabEventsQueue: Queue[TabEvent]): Thread = {
     val thread = new Thread(() => {
@@ -48,6 +49,7 @@ object TabState extends LazyLogging {
           title,
           pinned,
           status,
+          baseUrl,
           attention,
           hidden,
           discarded,
@@ -58,6 +60,7 @@ object TabState extends LazyLogging {
         // build a new tab object from the received tab data
         val tabData = new Tab(
           hash,
+          baseUrl,
           active,
           id,
           index,
@@ -72,13 +75,8 @@ object TabState extends LazyLogging {
         )
 
         currentTabs.synchronized {
-          if (!currentTabs.contains(id)) {
-            // if the tab has never been added before, append it to the state
-            currentTabs += ((id, tabData))
-          } else {
-            // if the tab already exists in the state, update it
-            currentTabs.update(id, tabData)
-          }
+          currentTabs.update(id, tabData)
+          tabHashes.update(hash, baseUrl)
         }
       }
 

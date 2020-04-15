@@ -86,6 +86,8 @@ object TabState extends LazyLogging {
           currentTabs -= (id)
         }
       }
+
+      case _: TabEvent => logger.warn("Received unknown TabEvent")
     }
   }
 }

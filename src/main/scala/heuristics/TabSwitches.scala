@@ -65,6 +65,7 @@ object TabSwitches extends LazyLogging with Persistable {
 
           val previousCount = map.getOrElse(currentTab.baseHash, 0)
 
+          tabBaseGraph -= WDiEdge((prevTab, currentTab))(previousCount)
           tabBaseGraph += WDiEdge((prevTab, currentTab))(
             previousCount + 1
           )
@@ -86,6 +87,7 @@ object TabSwitches extends LazyLogging with Persistable {
 
           val previousCount = map.getOrElse(currentTab.originHash, 0)
 
+          tabOriginGraph -= WDiEdge((prevTab, currentTab))(previousCount)
           tabOriginGraph += WDiEdge((prevTab, currentTab))(
             previousCount + 1
           )
@@ -100,24 +102,7 @@ object TabSwitches extends LazyLogging with Persistable {
 
   val jsonTabDescriptor = new NodeDescriptor[Tab](typeId = "Tabs") {
     def id(node: Any) = node match {
-      case Tab(
-          origin,
-          originHash,
-          baseHash,
-          baseUrl,
-          active,
-          id,
-          index,
-          lastAccessed,
-          openerTabId,
-          pinned,
-          sessionId,
-          successorTabId,
-          title,
-          url,
-          windowId
-          ) =>
-        baseHash
+      case tab: Tab => tab.baseHash
     }
   }
 
@@ -153,7 +138,10 @@ object TabSwitches extends LazyLogging with Persistable {
               DotEdgeStmt(
                 source.toString,
                 target.toString,
-                List(DotAttr("label", weight.toInt.toString))
+                List(
+                  DotAttr("weight", weight.toInt),
+                  DotAttr("label", weight.toInt.toString)
+                )
               )
             )
           )

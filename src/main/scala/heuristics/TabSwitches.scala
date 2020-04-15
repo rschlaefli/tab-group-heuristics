@@ -27,6 +27,11 @@ object TabSwitches extends LazyLogging with Persistable {
   var tabBaseGraph = Graph[Tabs, WDiEdge]()
   var tabOriginGraph = Graph[Tabs, WDiEdge]()
 
+  def cleanupGraph(graph: Graph[Tabs, WDiEdge]): Graph[Tabs, WDiEdge] = {
+    // remove all nodes that have a very low number of in-edges
+    graph -- graph.nodes.filter(node => node.inDegree <= 1)
+  }
+
   def processInitialTabs(initialTabs: List[Tab]) = {
     tabBaseHashes ++= initialTabs.map(tab => (tab.baseHash, tab.baseUrl))
     tabOriginHashes ++= initialTabs.map(tab => (tab.originHash, tab.origin))
@@ -200,6 +205,10 @@ object TabSwitches extends LazyLogging with Persistable {
         "tab_switch_graph_origin.dot",
         toDotString(tabOriginGraph)
       )
+    Persistable.persistString(
+      "tab_switch_graph_clean.dot",
+      toDotString(cleanupGraph(tabBaseGraph))
+    )
   }
 
   def restore: Try[Unit] = Try {

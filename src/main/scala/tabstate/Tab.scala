@@ -2,6 +2,8 @@ package tabstate
 
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 
+import messaging.TabUpdateEvent
+
 // create a trait that all nodes in the tab switch graph will be sharing
 sealed trait Tabs
 
@@ -40,8 +42,31 @@ case class Tab(
   }
 
   override def hashCode: Int = baseHash.hashCode()
+
+  // override toString to reduce clutter in graph representations
+  override def toString(): String = title
 }
 
 object Tab {
+
   implicit val tabDecoder: Decoder[Tab] = deriveDecoder
+
+  def fromEvent(event: TabUpdateEvent): Tab = new Tab(
+    event.origin,
+    event.originHash,
+    event.baseHash,
+    event.baseUrl,
+    event.active,
+    event.id,
+    event.index,
+    event.lastAccessed,
+    event.openerTabId,
+    event.pinned,
+    event.sessionId,
+    event.successorTabId,
+    event.title,
+    event.url,
+    event.windowId
+  )
+
 }

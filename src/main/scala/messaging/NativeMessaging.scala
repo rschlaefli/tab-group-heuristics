@@ -3,7 +3,6 @@ package messaging
 import scala.collection.mutable
 import com.typesafe.scalalogging.LazyLogging
 import java.io.InputStream
-import tabstate.TabEvent
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._
 

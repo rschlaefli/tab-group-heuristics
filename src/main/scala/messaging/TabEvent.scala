@@ -1,9 +1,10 @@
-package tabstate
+package messaging
 
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 import com.typesafe.scalalogging.LazyLogging
 
 import util._
+import tabstate.Tab
 
 sealed class TabEvent
 

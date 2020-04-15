@@ -54,7 +54,7 @@ object Main extends App with LazyLogging {
   val tabEventsQueue = new Queue[TabEvent](20)
 
   // read persisted state and initialize
-  PersistenceEngine.restoreInitialState()
+  PersistenceEngine.restoreInitialState
 
   logger.info("> Starting threads")
 

@@ -28,8 +28,11 @@ object TabSwitches extends LazyLogging with Persistable {
   var tabOriginGraph = Graph[Tabs, WDiEdge]()
 
   def cleanupGraph(graph: Graph[Tabs, WDiEdge]): Graph[Tabs, WDiEdge] = {
-    // remove all nodes that have a very low number of in-edges
-    graph -- graph.nodes.filter(node => node.inDegree <= 1)
+    // remove all nodes that have a very low incoming weight
+    // i.e., remove nodes that have been switched to few times
+    graph -- graph.nodes.filter(node =>
+      node.incoming.map(edge => edge.weight).sum <= 1
+    )
   }
 
   def processInitialTabs(initialTabs: List[Tab]) = {

@@ -30,8 +30,14 @@ object TabSwitches extends LazyLogging with Persistable {
   def cleanupGraph(graph: Graph[Tabs, WDiEdge]): Graph[Tabs, WDiEdge] = {
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
-    graph -- graph.nodes.filter(node =>
-      node.incoming.map(edge => edge.weight).sum <= 1
+    val graphWithoutNodes = graph -- graph.nodes.filter(node =>
+      node.incoming.map(edge => edge.weight).sum <= 5
+    )
+
+    // remove all edges that have been traversed only once
+    // i.e., get rid of tab switches that have only occured once
+    graphWithoutNodes -- graphWithoutNodes.edges.filter(edge =>
+      edge.weight <= 3
     )
   }
 
@@ -209,8 +215,12 @@ object TabSwitches extends LazyLogging with Persistable {
         toDotString(tabOriginGraph)
       )
     Persistable.persistString(
-      "tab_switch_graph_clean.dot",
+      "tab_switch_graph_base_clean.dot",
       toDotString(cleanupGraph(tabBaseGraph))
+    )
+    Persistable.persistString(
+      "tab_switch_graph_origin_clean.dot",
+      toDotString(cleanupGraph(tabOriginGraph))
     )
   }
 

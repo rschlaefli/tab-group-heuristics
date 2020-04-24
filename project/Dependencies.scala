@@ -15,6 +15,8 @@ object Dependencies {
 
   val circeVersion = "0.12.3"
 
+  val smile = "com.github.haifengl" %% "smile-scala" % "2.3.0"
+
   val runtimeDependencies =
     Seq(
       scalaz,
@@ -23,7 +25,8 @@ object Dependencies {
       scalaLogging,
       scalaGraph,
       scalaGraphJson,
-      scalaGraphDot
+      scalaGraphDot,
+      smile
     ) ++ Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",

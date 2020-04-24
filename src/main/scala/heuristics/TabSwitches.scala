@@ -34,19 +34,20 @@ object TabSwitches extends LazyLogging with Persistable {
       graph.edges.filter(edge => edge.from.equals(edge.to))
 
     // // extract all edge weights
-    // val edgeWeights = graph.edges.map(edge => edge.weight)
-
-    // remove all nodes that have a very low incoming weight
-    // i.e., remove nodes that have been switched to few times
-    val graphWithoutNodes =
-      graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
-        node.incoming.map(edge => edge.weight).sum <= 20
-      )
+    // TODO: extract all edges except values in the top-5% or similar
+    // val edgeWeights = q3(graph.edges.map(edge => edge.weight))
 
     // remove all edges that have been traversed only few times
     // i.e., get rid of tab switches that have only occured few times
-    graphWithoutNodes -- graphWithoutNodes.edges.filter(edge =>
-      edge.weight <= 10
+    val graphWithoutIrrelevantEdges =
+      graphWithoutSelfEdges -- graphWithoutSelfEdges.edges.filter(edge =>
+        edge.weight < 5
+      )
+
+    // remove all nodes that have a very low incoming weight
+    // i.e., remove nodes that have been switched to few times
+    graphWithoutIrrelevantEdges -- graphWithoutIrrelevantEdges.nodes.filter(
+      node => node.incoming.map(edge => edge.weight).sum < 10
     )
 
   }
@@ -128,7 +129,7 @@ object TabSwitches extends LazyLogging with Persistable {
       graph: Graph[Tabs, WDiEdge]
   ): Iterable[Graph[Tabs, WDiEdge]] = {
     graph
-      .strongComponentTraverser()
+      .componentTraverser()
       .map(comp => comp.to(Graph))
   }
 

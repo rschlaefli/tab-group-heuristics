@@ -44,7 +44,7 @@ case class Tab(
   override def hashCode: Int = baseHash.hashCode()
 
   // override toString to reduce clutter in graph representations
-  override def toString(): String = title
+  override def toString(): String = baseUrl
 }
 
 object Tab {

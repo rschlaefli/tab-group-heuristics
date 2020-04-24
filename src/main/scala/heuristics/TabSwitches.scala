@@ -28,17 +28,27 @@ object TabSwitches extends LazyLogging with Persistable {
   var tabOriginGraph = Graph[Tabs, WDiEdge]()
 
   def cleanupGraph(graph: Graph[Tabs, WDiEdge]): Graph[Tabs, WDiEdge] = {
+
+    // remove all edges that are recursive
+    val graphWithoutSelfEdges = graph --
+      graph.edges.filter(edge => edge.from.equals(edge.to))
+
+    // // extract all edge weights
+    // val edgeWeights = graph.edges.map(edge => edge.weight)
+
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
-    val graphWithoutNodes = graph -- graph.nodes.filter(node =>
-      node.incoming.map(edge => edge.weight).sum <= 5
+    val graphWithoutNodes =
+      graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
+        node.incoming.map(edge => edge.weight).sum <= 20
+      )
+
+    // remove all edges that have been traversed only few times
+    // i.e., get rid of tab switches that have only occured few times
+    graphWithoutNodes -- graphWithoutNodes.edges.filter(edge =>
+      edge.weight <= 10
     )
 
-    // remove all edges that have been traversed only once
-    // i.e., get rid of tab switches that have only occured once
-    graphWithoutNodes -- graphWithoutNodes.edges.filter(edge =>
-      edge.weight <= 3
-    )
   }
 
   def processInitialTabs(initialTabs: List[Tab]) = {
@@ -112,6 +122,14 @@ object TabSwitches extends LazyLogging with Persistable {
         })
       }
     }
+  }
+
+  def extractStrongComponents(
+      graph: Graph[Tabs, WDiEdge]
+  ): Iterable[Graph[Tabs, WDiEdge]] = {
+    graph
+      .strongComponentTraverser()
+      .map(comp => comp.to(Graph))
   }
 
   val jsonTabDescriptor = new NodeDescriptor[Tab](typeId = "Tabs") {

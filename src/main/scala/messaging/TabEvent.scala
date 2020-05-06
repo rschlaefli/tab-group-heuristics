@@ -45,6 +45,7 @@ case class TabUpdateEvent(
     active: Boolean,
     lastAccessed: Double,
     url: String,
+    hash: String,
     baseHash: String,
     baseUrl: String,
     origin: String,
@@ -70,7 +71,7 @@ object TabEvent extends LazyLogging {
   def decodeEventFromMessage(message: String): Option[TabEvent] = {
     // parse the incoming JSON
     val json: Json = parse(message).getOrElse(Json.Null)
-    logger.debug(s"> Parsed JSON from message => ${json.toString()}")
+    // logger.debug(s"> Parsed JSON from message => ${json.toString()}")
 
     // get the action type from the json message
     val cursor = json.hcursor

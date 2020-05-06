@@ -51,6 +51,14 @@
     </encoder>
   </appender>
 
+  <appender name="Graphs" class="ch.qos.logback.core.FileAppender">
+    <file>graphs.log</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
   <appender name="Main" class="ch.qos.logback.core.FileAppender">
     <file>main.log</file>
     <append>true</append>
@@ -89,6 +97,10 @@
 
   <logger name="persistence.Persistence" level="debug">
     <appender-ref ref="Persistence" />
+  </logger>
+
+  <logger name="graphs.CommunityDetection" level="debug">
+    <appender-ref ref="Graphs" />
   </logger>
 
   <logger name="main.Main" level="debug">

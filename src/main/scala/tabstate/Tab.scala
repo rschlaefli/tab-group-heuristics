@@ -11,6 +11,7 @@ sealed trait Tabs
 // augmented with url variations and hashes thereof
 // ref: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab
 case class Tab(
+    hash: String,
     origin: String,
     originHash: String,
     baseHash: String,
@@ -36,15 +37,15 @@ case class Tab(
 
   override def equals(that: Any): Boolean = {
     that match {
-      case that: Tab => that.canEqual(this) && this.baseHash == that.baseHash
+      case that: Tab => that.canEqual(this) && this.hash == that.hash
       case _         => false
     }
   }
 
-  override def hashCode: Int = baseHash.hashCode()
+  override def hashCode(): Int = hash.hashCode()
 
   // override toString to reduce clutter in graph representations
-  override def toString(): String = baseUrl
+  override def toString(): String = s"$title (${hashCode()})"
 }
 
 object Tab {
@@ -52,6 +53,7 @@ object Tab {
   implicit val tabDecoder: Decoder[Tab] = deriveDecoder
 
   def fromEvent(event: TabUpdateEvent): Tab = new Tab(
+    event.hash,
     event.origin,
     event.originHash,
     event.baseHash,

@@ -5,6 +5,7 @@ import scalax.collection.mutable.Graph
 import scalax.collection.edge.WDiEdge
 
 import tabstate._
+import graphs.CommunityDetection
 
 object HeuristicsEngine extends LazyLogging {
   def apply(): Thread = {
@@ -19,16 +20,20 @@ object HeuristicsEngine extends LazyLogging {
         //   s"> Strong components: ${TabSwitches.tabBaseGraph.strongComponentTraverser().map(_.toString())}"
         // )
 
-        TabSwitches
-          .extractStrongComponents(
-            TabSwitches.cleanupGraph(TabSwitches.tabBaseGraph)
-          )
-          .map(TabSwitches.toDotString(_))
-          .foreach(comp =>
-            logger.debug(
-              s">> Strong component: ${comp}"
-            )
-          )
+        val cleanTabSwitchGraph = TabSwitches.cleanupGraph(TabSwitches.tabGraph)
+
+        // TabSwitches
+        //   .extractStrongComponents(
+        //     cleanTabSwitchGraph
+        //   )
+        //   .map(TabSwitches.toDotString(_))
+        //   .foreach(comp =>
+        //     logger.debug(
+        //       s">> Strong component: ${comp}"
+        //     )
+        //   )
+
+        CommunityDetection.processGraph(cleanTabSwitchGraph)
 
         Thread.sleep(30000)
       }

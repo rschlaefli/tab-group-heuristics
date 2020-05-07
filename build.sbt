@@ -1,7 +1,7 @@
 import Dependencies._
 
 ThisBuild / version := "0.0.1"
-ThisBuild / scalaVersion := "2.13.1"
+ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / organization := "ch.uzh.rschlaefli"
 
 lazy val tabs = (project in file("."))

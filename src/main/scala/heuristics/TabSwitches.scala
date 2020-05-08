@@ -40,7 +40,7 @@ object TabSwitches extends LazyLogging with Persistable {
     // remove the new tab "root"
     val graphWithoutNewTab =
       graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
-        node.hashCode() == -836262972
+        node.hashCode() == -836262972 || node.hashCode() == -35532496
       )
 
     // // extract all edge weights

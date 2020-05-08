@@ -21,27 +21,27 @@ object TabSwitches extends LazyLogging with Persistable {
 
   var tabSwitches = Map[String, Map[String, Int]]()
   var tabHashes = Map[String, String]()
-  var tabGraph = Graph[Tabs, WDiEdge]()
+  var tabGraph = Graph[Tab, WDiEdge]()
 
   // var tabBaseSwitches = Map[String, Map[String, Int]]()
   // var tabBaseHashes = Map[String, String]()
-  // var tabBaseGraph = Graph[Tabs, WDiEdge]()
+  // var tabBaseGraph = Graph[Tab, WDiEdge]()
 
   // var tabOriginSwitches = Map[String, Map[String, Int]]()
   // var tabOriginHashes = Map[String, String]()
-  // var tabOriginGraph = Graph[Tabs, WDiEdge]()
+  // var tabOriginGraph = Graph[Tab, WDiEdge]()
 
-  def cleanupGraph(graph: Graph[Tabs, WDiEdge]): Graph[Tabs, WDiEdge] = {
+  def cleanupGraph(graph: Graph[Tab, WDiEdge]): Graph[Tab, WDiEdge] = {
 
     // remove all edges that are recursive
     val graphWithoutSelfEdges = graph --
       graph.edges.filter(edge => edge.from.equals(edge.to))
 
     // remove the new tab "root"
-    val graphWithoutNewTab =
-      graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
-        node.hashCode() == -836262972 || node.hashCode() == -35532496
-      )
+    // val graphWithoutNewTab =
+    //   graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
+    //     node.hashCode() == -836262972 || node.hashCode() == -35532496
+    //   )
 
     // // extract all edge weights
     // TODO: extract all edges except values in the top-5% or similar
@@ -50,16 +50,16 @@ object TabSwitches extends LazyLogging with Persistable {
     // remove all edges that have been traversed only few times
     // i.e., get rid of tab switches that have only occured few times
     val graphWithoutIrrelevantEdges =
-      graphWithoutNewTab -- graphWithoutNewTab.edges.filter(edge =>
+      graphWithoutSelfEdges -- graphWithoutSelfEdges.edges.filter(edge =>
         // edge.weight < 5
-        edge.weight < 2
+        edge.weight < 1
       )
 
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
     graphWithoutIrrelevantEdges -- graphWithoutIrrelevantEdges.nodes.filter(
       // node => node.incoming.map(edge => edge.weight).sum < 10
-      node => node.incoming.map(edge => edge.weight).sum < 2
+      node => node.incoming.map(edge => edge.weight).sum < 1
     )
 
   }
@@ -141,31 +141,23 @@ object TabSwitches extends LazyLogging with Persistable {
     }
   }
 
-  def extractStrongComponents(
-      graph: Graph[Tabs, WDiEdge]
-  ): Iterable[Graph[Tabs, WDiEdge]] = {
-    graph
-      .componentTraverser()
-      .map(comp => comp.to(Graph))
-  }
-
   val jsonTabDescriptor = new NodeDescriptor[Tab](typeId = "Tabs") {
     def id(node: Any) = node match {
       case tab: Tab => tab.hash
     }
   }
 
-  val jsonGraphDescriptor = new Descriptor[Tabs](
+  val jsonGraphDescriptor = new Descriptor[Tab](
     defaultNodeDescriptor = jsonTabDescriptor,
-    defaultEdgeDescriptor = WDi.descriptor[Tabs]()
+    defaultEdgeDescriptor = WDi.descriptor[Tab]()
   )
 
-  def toJsonString(graph: Graph[Tabs, WDiEdge]): String = {
+  def toJsonString(graph: Graph[Tab, WDiEdge]): String = {
     graph.toJson(jsonGraphDescriptor)
   }
 
   def fromJsonString(jsonString: String) = {
-    Graph.fromJson[Tabs, WDiEdge](jsonString, jsonGraphDescriptor)
+    Graph.fromJson[Tab, WDiEdge](jsonString, jsonGraphDescriptor)
   }
 
   val dotRoot = DotRootGraph(
@@ -176,7 +168,7 @@ object TabSwitches extends LazyLogging with Persistable {
   )
 
   def edgeTransformer(
-      innerEdge: Graph[Tabs, WDiEdge]#EdgeT
+      innerEdge: Graph[Tab, WDiEdge]#EdgeT
   ): Option[(DotGraph, DotEdgeStmt)] = innerEdge.edge match {
     case WDiEdge(source, target, weight) =>
       weight match {
@@ -204,7 +196,7 @@ object TabSwitches extends LazyLogging with Persistable {
     * @param graph A directed, weighted tab switch graph
     * @return A string in the DOT format
     */
-  def toDotString(graph: Graph[Tabs, WDiEdge]): String = {
+  def toDotString(graph: Graph[Tab, WDiEdge]): String = {
     graph.toDot(dotRoot, edgeTransformer)
   }
 

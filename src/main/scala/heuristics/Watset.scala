@@ -93,14 +93,14 @@ object Watset extends App with LazyLogging {
   def processClusters(
       clusters: ju.Collection[ju.Collection[Tab]]
   ): List[Set[Tab]] = {
-    logger.info("processing clusters...")
     val clusterList = clusters.asScala.toList
-    clusterList.zipWithIndex.map {
-      case (cluster, index) => {
+    clusterList.zipWithIndex.flatMap {
+      case (cluster, index) if cluster.size > 3 => {
         val clusterMembers = cluster.asScala.toSet
         logger.info(s"> Cluster $index contains ${clusterMembers.toString()}")
-        clusterMembers
+        List(clusterMembers)
       }
+      case _ => List()
     }
   }
 }

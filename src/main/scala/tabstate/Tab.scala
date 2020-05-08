@@ -51,6 +51,7 @@ case class Tab(
 object Tab {
 
   implicit val tabDecoder: Decoder[Tab] = deriveDecoder
+  implicit val tabEncoder: Encoder[Tab] = deriveEncoder
 
   def fromEvent(event: TabUpdateEvent): Tab = new Tab(
     event.hash,

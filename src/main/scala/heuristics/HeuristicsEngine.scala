@@ -20,10 +20,15 @@ object HeuristicsEngine extends LazyLogging {
 
         val markovClusters = Watset(cleanTabSwitchGraph)
 
+        val markovClustersWithTitles = markovClusters.map(tabCluster => {
+          val keywords = extractKeywordsFromTabSet(tabCluster)
+          (keywords.mkString(" "), tabCluster)
+        })
+
         // update the markov clusters stored in the webextension
         NativeMessaging.writeNativeMessage(
           Main.out,
-          HeuristicsAction("UPDATE_GROUPS", markovClusters.asJson)
+          HeuristicsAction("UPDATE_GROUPS", markovClustersWithTitles.asJson)
         )
 
         Thread.sleep(30000)
@@ -33,5 +38,20 @@ object HeuristicsEngine extends LazyLogging {
     thread.setName("HeuristicsEngine")
 
     thread
+  }
+
+  def extractKeywordsFromTabSet(tabSet: Set[Tab]): List[String] = {
+    val allTitles =
+      tabSet
+        .map(tab =>
+          s"${tab.title} ${tab.origin.split("/").drop(2).mkString(" ")}"
+        )
+        .mkString(" ")
+    logger.info(s"> Combined all titles in tab cluster: $allTitles")
+
+    val keywords = KeywordExtraction(allTitles)
+    logger.info(s"> Extracted keywords from tab cluster: $keywords")
+
+    keywords
   }
 }

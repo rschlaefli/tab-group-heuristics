@@ -2,16 +2,21 @@ package tabstate
 
 import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.{Map, Queue}
+import scalax.collection.Graph
+import scalax.collection.edge.WDiEdge
 
+import messaging._
+import heuristics.TabSwitches
 import util._
 
 object TabState extends LazyLogging {
   var activeTab = -1
   var activeWindow = -1
-  var currentTabs = List[Tab]()
-  val tabSwitches = Map[Int, Map[Int, Int]]()
 
-  def processQueue(tabEventsQueue: Queue[TabEvent]): Thread = {
+  var currentTabs = Map[Int, Tab]()
+
+  def apply(tabEventsQueue: Queue[TabEvent]): Thread = {
+
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")
       Iterator
@@ -36,50 +41,26 @@ object TabState extends LazyLogging {
 
   def processEvent(event: TabEvent): Unit = {
     logger.debug(s"> Processing tab event $event")
-    event match {
-      case TabUpdateEvent(
-          id,
-          index,
-          windowId,
-          active,
-          lastAccessed,
-          url,
-          title,
-          pinned,
-          status,
-          attention,
-          hidden,
-          discarded,
-          openerTabId,
-          sessionId,
-          successorTabId
-          ) => {
-        // find the existing tab if it exists
-        val existingIndex = currentTabs.indexWhere(_.id == id)
 
-        // build a new tab object from the received tab data
-        val tabData = new Tab(
-          active,
-          id,
-          index,
-          lastAccessed,
-          openerTabId,
-          pinned,
-          sessionId,
-          successorTabId,
-          title,
-          url,
-          windowId
+    event match {
+      case TabInitializationEvent(initialTabs) => {
+        currentTabs ++= initialTabs.map(tab => (tab.id, tab))
+
+        TabSwitches.processInitialTabs(initialTabs)
+
+        logger.info(
+          s"> Initialized current tabs to $currentTabs"
         )
+      }
+
+      case updateEvent: TabUpdateEvent => {
+        // build a new tab object from the received tab data
+        val tab = Tab.fromEvent(updateEvent)
 
         currentTabs.synchronized {
-          if (existingIndex == -1) {
-            // if the tab has never been added before, append it to the state
-            currentTabs.appended(tabData)
-          } else {
-            // if the tab already exists in the state, update it
-            currentTabs.updated(existingIndex, tabData)
-          }
+          TabSwitches.processTabSwitch(currentTabs.get(tab.id), tab)
+          currentTabs.update(tab.id, tab)
+
         }
       }
 
@@ -88,23 +69,25 @@ object TabState extends LazyLogging {
         activeWindow = windowId
 
         logger.info(
-          s"> Processing tab switch from $previousTabId to $id in window $windowId"
+          s"> Processing switch from $previousTabId to $id in window $windowId"
         )
 
-        // TODO: tab switch heuristic
-        if (previousTabId.isDefined) {
-          tabSwitches.updateWith(previousTabId.get)((switchMap) => {
-            Some(switchMap.getOrElse(Map((id, 1))))
-          })
+        // update the map of tab switches based on the new event
+        if (currentTabs.contains(id) && previousTabId.isDefined) {
+          val previousTab = currentTabs.get(previousTabId.get)
+          val currentTab = currentTabs.get(id).get
+          TabSwitches.processTabSwitch(previousTab, currentTab)
         }
 
       }
 
       case TabRemoveEvent(id, windowId) => {
         currentTabs.synchronized {
-          currentTabs = currentTabs.filter(_.id != id)
+          currentTabs -= (id)
         }
       }
+
+      case _: TabEvent => logger.warn("Received unknown TabEvent")
     }
   }
 }

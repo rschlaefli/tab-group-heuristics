@@ -1,11 +1,21 @@
-package tabstate
+package messaging
 
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 import com.typesafe.scalalogging.LazyLogging
 
 import util._
+import tabstate.Tab
 
-class TabEvent
+sealed class TabEvent
+
+case class TabInitializationEvent(
+    currentTabs: List[Tab]
+) extends TabEvent
+
+object TabInitializationEvent {
+  implicit val tabInitializationEventDecoder: Decoder[TabInitializationEvent] =
+    deriveDecoder
+}
 
 case class TabActivateEvent(
     id: Int,
@@ -33,11 +43,16 @@ case class TabUpdateEvent(
     index: Int,
     windowId: Int,
     active: Boolean,
-    lastAccessed: Double,
     url: String,
+    hash: String,
+    baseHash: String,
+    baseUrl: String,
+    origin: String,
+    originHash: String,
     title: String,
     pinned: Boolean,
     status: String,
+    lastAccessed: Option[Double],
     attention: Option[Boolean],
     hidden: Option[Boolean],
     discarded: Option[Boolean],
@@ -56,7 +71,7 @@ object TabEvent extends LazyLogging {
   def decodeEventFromMessage(message: String): Option[TabEvent] = {
     // parse the incoming JSON
     val json: Json = parse(message).getOrElse(Json.Null)
-    logger.debug(s"> Parsed JSON from message => ${json.toString()}")
+    // logger.debug(s"> Parsed JSON from message => ${json.toString()}")
 
     // get the action type from the json message
     val cursor = json.hcursor
@@ -75,6 +90,13 @@ object TabEvent extends LazyLogging {
       case "REMOVE" => {
         Utils.extractDecoderResult(cursor.get[TabRemoveEvent]("payload"))
       }
+
+      case "INIT_TABS" => {
+        Utils.extractDecoderResult(
+          cursor.get[TabInitializationEvent]("payload")
+        )
+      }
+
       // TODO: case MOVE
       // TODO: case ATTACH
       // TODO: case GROUP_ASSOC

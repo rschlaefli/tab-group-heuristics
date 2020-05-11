@@ -13,11 +13,14 @@ import java.io.BufferedInputStream
 import scala.util.{Either, Try, Success, Failure}
 import java.io.OutputStream
 import scala.collection.mutable.Queue
+import scala.collection.mutable.{Map, Queue}
 
 import util._
 import tabstate._
 import heuristics._
 import messaging._
+import persistence._
+import io.circe.Json
 
 object Main extends App with LazyLogging {
 
@@ -28,6 +31,13 @@ object Main extends App with LazyLogging {
     System.in.available()
     in = new BufferedInputStream(System.in)
     out = new BufferedOutputStream(System.out)
+
+    // let the tab extension know that heuristics are ready
+    // the web extension will then return the list of current tabs
+    NativeMessaging.writeNativeMessage(
+      out,
+      HeuristicsAction("QUERY_TABS", Json.Null)
+    )
   } catch {
     case ioException: IOException => {
       // TODO: send a message to the browser (IO unavailable)
@@ -41,30 +51,30 @@ object Main extends App with LazyLogging {
   logger.info("> Bootstrapping tab grouping heuristics")
 
   // initialize the tab state and update queue
-  val tabEventsQueue = new Queue[TabEvent](50)
+  val tabEventsQueue = new Queue[TabEvent](20)
 
-  // TODO: let the tab extension know that heuristics are ready
-  // Utils.writeNativeMessage(
-  //   out,
-  //   TabAction("NOTIFY", NotifyAction("hello from heuristics!").asJson).asJson
-  //     .toString()
-  // )
+  // read persisted state and initialize
+  PersistenceEngine.restoreInitialState
 
   logger.info("> Starting threads")
 
   // setup a continuous iterator for native message retrieval
-  val nativeMessagingThread = NativeMessaging.listen(in, tabEventsQueue)
+  val nativeMessagingThread = NativeMessaging(in, tabEventsQueue)
 
   // setup a continuous iterator for event processing
-  val tabStateThread = TabState.processQueue(tabEventsQueue)
+  val tabStateThread = TabState(tabEventsQueue)
+
+  // setup a thread for the persistence engine
+  val persistenceThread = PersistenceEngine()
 
   tabStateThread.start()
   nativeMessagingThread.start()
+  persistenceThread.start()
 
   logger.info(s"> Daemons started (${Thread.activeCount()})")
 
   // setup a continually running
-  val heuristicsThread = HeuristicsEngine.observe(TabState.currentTabs)
+  val heuristicsThread = HeuristicsEngine()
 
   heuristicsThread.join()
 }

@@ -3,13 +3,14 @@ package messaging
 import scala.collection.mutable
 import com.typesafe.scalalogging.LazyLogging
 import java.io.InputStream
-import tabstate.TabEvent
+import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
+io.circe.syntax._
 
 import util.Utils
 import java.io.OutputStream
 
 object NativeMessaging extends LazyLogging {
-  def listen(
+  def apply(
       in: InputStream,
       tabEventsQueue: mutable.Queue[TabEvent]
   ): Thread = {
@@ -24,7 +25,7 @@ object NativeMessaging extends LazyLogging {
         // add all the processed tab events to the queue
         .foreach(tabEvent => {
           logger.debug(
-            s"> Processing tab event $tabEvent, current queue size $tabEventsQueue.size"
+            s"> Processing tab event $tabEvent, current queue size ${tabEventsQueue.size}"
           )
           tabEventsQueue.synchronized {
             tabEventsQueue.enqueue(tabEvent)
@@ -85,7 +86,13 @@ object NativeMessaging extends LazyLogging {
     message
   }
 
-  def writeNativeMessage(out: OutputStream, message: String) = {
+  def writeNativeMessage(
+      out: OutputStream,
+      heuristicsAction: HeuristicsAction
+  ) = {
+    // encode the action in a json string
+    val message = heuristicsAction.asJson.toString()
+
     // convert the message to a byte array
     val msgBytes = message.getBytes()
 

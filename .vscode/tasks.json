@@ -13,5 +13,11 @@
       },
       "problemMatcher": []
     }
+    // {
+    //   "label": "stage:watch",
+    //   "type": "shell",
+    //   "command": "sbt ~ stage;",
+    //   "problemMatcher": []
+    // }
   ]
 }

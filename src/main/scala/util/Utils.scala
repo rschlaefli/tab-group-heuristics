@@ -8,7 +8,7 @@ object Utils extends LazyLogging {
       decoderResult: Decoder.Result[T]
   ): Option[T] = decoderResult match {
     case Left(decodeError) => {
-      logger.error(decodeError.message)
+      logger.error(decodeError.message + decoderResult.toString())
       None
     }
     case Right(value) => Some(value)

@@ -1,15 +1,13 @@
 import Dependencies._
 
-name := "automated-tab-grouping"
-maintainer := "rolandschlaefli@gmail.com"
-
 ThisBuild / version := "0.0.1"
 ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / organization := "ch.uzh.rschlaefli"
 
 lazy val tabs = (project in file("."))
   .settings(
-    name := "Tabs",
+    name := "automated-tab-grouping",
+    maintainer := "rolandschlaefli@gmail.com",
     libraryDependencies ++= runtimeDependencies,
     libraryDependencies ++= testingDependencies
   )
@@ -34,7 +32,10 @@ mappings in (Universal, packageZipTarball) += file(
 ) -> "install.bat"
 mappings in (Universal, packageZipTarball) += file(
   "deployment/install-linux.sh"
-) -> "install.sh"
+) -> "install-linux.sh"
+mappings in (Universal, packageZipTarball) += file(
+  "deployment/install-mac.sh"
+) -> "install-mac.sh"
 // mappings in (Universal, packageOsxDmg) += file("scripts/install-linux.sh") -> "install.sh"
 
 enablePlugins(JavaAppPackaging)

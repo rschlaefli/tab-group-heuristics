@@ -1,7 +1,7 @@
 {
   "name": "tabs",
   "description": "Host for Automated Tab Organization",
-  "path": "~/bin/tabs/bin/automated-tab-grouping",
+  "path": "~/bin/tabs/bin/tabs",
   "type": "stdio",
   "allowed_origins": ["chrome-extension://aoipjbodficcbdjijlodfkbemndpgdig/"]
 }

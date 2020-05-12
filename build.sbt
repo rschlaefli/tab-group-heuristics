@@ -6,7 +6,7 @@ ThisBuild / organization := "ch.uzh.rschlaefli"
 
 lazy val tabs = (project in file("."))
   .settings(
-    name := "automated-tab-grouping",
+    name := "tabs",
     maintainer := "rolandschlaefli@gmail.com",
     libraryDependencies ++= runtimeDependencies,
     libraryDependencies ++= testingDependencies

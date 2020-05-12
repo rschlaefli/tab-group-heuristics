@@ -22,11 +22,11 @@ mappings in (Compile, packageDoc) := Seq()
 
 // embed additional files in the package
 mappings in (Universal, packageZipTarball) += file(
-  "deployment/manifest-chrome.json"
-) -> "manifest-chrome.json"
+  "deployment/manifest-chrome.json.template"
+) -> "manifest-chrome.json.template"
 mappings in (Universal, packageZipTarball) += file(
-  "deployment/manifest-firefox.json"
-) -> "manifest-firefox.json"
+  "deployment/manifest-firefox.json.template"
+) -> "manifest-firefox.json.template"
 mappings in (Universal, packageZipTarball) += file(
   "deployment/install-windows.bat"
 ) -> "install.bat"

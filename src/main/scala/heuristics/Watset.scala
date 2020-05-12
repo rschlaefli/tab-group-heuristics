@@ -20,11 +20,21 @@ import org.nlpub.watset.graph.MarkovClustering
 import java.{util => ju}
 
 object Watset extends App with LazyLogging {
-  def apply(graph: Graph[Tab, WDiEdge]) = {
+  def apply(graph: Graph[Tab, WDiEdge]): List[Set[Tab]] = {
+    if (graph == null) {
+      return List()
+    }
+
     val watsetGraph = buildWatsetGraph(graph)
 
     // val maxmaxClusters = computeClustersMaxmax(watsetGraph)
     // val cwClusters = computeClustersWhispers(watsetGraph)
+
+    if (watsetGraph
+          .vertexSet()
+          .size() < 2 || watsetGraph.edgeSet().size() == 0) {
+      return List()
+    }
 
     val markovClusters = computeClustersMarkov(watsetGraph)
 

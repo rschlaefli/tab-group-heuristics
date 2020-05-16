@@ -8,6 +8,10 @@ lazy val tabs = (project in file("."))
   .settings(
     name := "tabs",
     maintainer := "rolandschlaefli@gmail.com",
+    packageSummary := "Automated Tab Organization",
+    packageDescription := """Heuristics backend for the Automated Tab Organization WebExtension""",
+    wixProductId := "25695a01-bd23-4155-a430-6ef8be4babfa",
+    wixProductUpgradeId := "9b2f86fa-aa0d-4b12-ac73-6831f4628329",
     libraryDependencies ++= runtimeDependencies,
     libraryDependencies ++= testingDependencies
   )
@@ -40,3 +44,4 @@ mappings in (Universal, packageZipTarball) += file(
 
 enablePlugins(JavaAppPackaging)
 enablePlugins(UniversalPlugin)
+enablePlugins(WindowsPlugin)

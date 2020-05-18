@@ -32,8 +32,8 @@ mappings in (Universal, packageZipTarball) += file(
   "deployment/manifest-firefox.json.template"
 ) -> "manifest-firefox.json.template"
 mappings in (Universal, packageZipTarball) += file(
-  "deployment/install-windows.bat"
-) -> "install.bat"
+  "deployment/clean-unix.sh"
+) -> "clean-unix.sh"
 mappings in (Universal, packageZipTarball) += file(
   "deployment/install-linux.sh"
 ) -> "install-linux.sh"

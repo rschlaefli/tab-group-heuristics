@@ -3,5 +3,5 @@
   "description": "Host for Automated Tab Organization",
   "path": "$HOME/bin/tabs/bin/tabs",
   "type": "stdio",
-  "allowed_origins": ["chrome-extension://aoipjbodficcbdjijlodfkbemndpgdig/"]
+  "allowed_origins": ["chrome-extension://jgcfdfeaeoogamdkkfbdnfhkohibdjkd/"]
 }

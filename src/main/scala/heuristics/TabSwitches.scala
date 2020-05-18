@@ -51,15 +51,15 @@ object TabSwitches extends LazyLogging with Persistable {
     // i.e., get rid of tab switches that have only occured few times
     val graphWithoutIrrelevantEdges =
       graphWithoutSelfEdges -- graphWithoutSelfEdges.edges.filter(edge =>
-        // edge.weight < 5
-        edge.weight < 1
+        edge.weight < 5
+      // edge.weight < 1
       )
 
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
     graphWithoutIrrelevantEdges -- graphWithoutIrrelevantEdges.nodes.filter(
-      // node => node.incoming.map(edge => edge.weight).sum < 10
-      node => node.incoming.map(edge => edge.weight).sum < 1
+      node => node.incoming.map(edge => edge.weight).sum < 10
+      // node => node.incoming.map(edge => edge.weight).sum < 1
     )
 
   }

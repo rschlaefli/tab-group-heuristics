@@ -12,12 +12,27 @@
         "isDefault": true
       },
       "problemMatcher": []
+    },
+    {
+      "label": "build:linux",
+      "type": "shell",
+      "command": "sbt universal:packageZipTarball",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "build:windows",
+      "type": "shell",
+      "command": "sbt universal:packageBin",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "build:osx",
+      "type": "shell",
+      "command": "sbt universal:packageOsxDmg",
+      "group": "build",
+      "problemMatcher": []
     }
-    // {
-    //   "label": "stage:watch",
-    //   "type": "shell",
-    //   "command": "sbt ~ stage;",
-    //   "problemMatcher": []
-    // }
   ]
 }

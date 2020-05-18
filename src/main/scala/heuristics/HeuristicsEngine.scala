@@ -16,20 +16,23 @@ object HeuristicsEngine extends LazyLogging {
     val thread = new Thread {
       logger.info("> Starting to observe current tab state")
       while (true) {
-        val cleanTabSwitchGraph = TabSwitches.cleanupGraph(TabSwitches.tabGraph)
+        if (TabSwitches.tabGraph != null) {
+          val cleanTabSwitchGraph =
+            TabSwitches.cleanupGraph(TabSwitches.tabGraph)
 
-        val markovClusters = Watset(cleanTabSwitchGraph)
+          val markovClusters = Watset(cleanTabSwitchGraph)
 
-        val markovClustersWithTitles = markovClusters.map(tabCluster => {
-          val keywords = extractKeywordsFromTabSet(tabCluster)
-          (keywords.mkString(" "), tabCluster)
-        })
+          val markovClustersWithTitles = markovClusters.map(tabCluster => {
+            val keywords = extractKeywordsFromTabSet(tabCluster)
+            (keywords.mkString(" "), tabCluster)
+          })
 
-        // update the markov clusters stored in the webextension
-        NativeMessaging.writeNativeMessage(
-          Main.out,
-          HeuristicsAction("UPDATE_GROUPS", markovClustersWithTitles.asJson)
-        )
+          // update the markov clusters stored in the webextension
+          NativeMessaging.writeNativeMessage(
+            Main.out,
+            HeuristicsAction("UPDATE_GROUPS", markovClustersWithTitles.asJson)
+          )
+        }
 
         Thread.sleep(30000)
       }

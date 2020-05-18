@@ -1,0 +1,7 @@
+{
+  "name": "tabs",
+  "description": "Host for Automated Tab Organization",
+  "path": "$HOME/bin/tabs/bin/tabs",
+  "type": "stdio",
+  "allowed_extensions": ["automated-tab-organization@rschlaefli"]
+}

@@ -23,14 +23,6 @@ object TabSwitches extends LazyLogging with Persistable {
   var tabHashes = Map[String, String]()
   var tabGraph = Graph[Tab, WDiEdge]()
 
-  // var tabBaseSwitches = Map[String, Map[String, Int]]()
-  // var tabBaseHashes = Map[String, String]()
-  // var tabBaseGraph = Graph[Tab, WDiEdge]()
-
-  // var tabOriginSwitches = Map[String, Map[String, Int]]()
-  // var tabOriginHashes = Map[String, String]()
-  // var tabOriginGraph = Graph[Tab, WDiEdge]()
-
   def cleanupGraph(graph: Graph[Tab, WDiEdge]): Graph[Tab, WDiEdge] = {
 
     // remove all edges that are recursive
@@ -66,12 +58,7 @@ object TabSwitches extends LazyLogging with Persistable {
 
   def processInitialTabs(initialTabs: List[Tab]) = {
     tabHashes ++= initialTabs.map(tab => (tab.hash, tab.baseUrl + tab.title))
-    // tabBaseHashes ++= initialTabs.map(tab => (tab.baseHash, tab.baseUrl))
-    // tabOriginHashes ++= initialTabs.map(tab => (tab.originHash, tab.origin))
-
     tabGraph ++= initialTabs
-    // tabBaseGraph ++= initialTabs
-    // tabOriginGraph ++= initialTabs
   }
 
   /**
@@ -83,12 +70,14 @@ object TabSwitches extends LazyLogging with Persistable {
     */
   def processTabSwitch(previousTab: Option[Tab], currentTab: Tab) {
     tabGraph += currentTab
-    // tabBaseGraph += currentTab
-    // tabOriginGraph += currentTab
 
-    tabHashes.update(currentTab.hash, currentTab.baseUrl + currentTab.title)
-    // tabBaseHashes.update(currentTab.baseHash, currentTab.baseUrl)
-    // tabOriginHashes.update(currentTab.originHash, currentTab.origin)
+    val hashedTitle = currentTab.title
+      .replaceAll("[^a-zA-Z ]", " ")
+      .replaceAll("\\s\\s+", " ")
+    val tabHashContent =
+      s"${currentTab.baseUrl} ${hashedTitle}"
+
+    tabHashes.update(currentTab.hash, tabHashContent)
 
     // check if the location of the tab changes in this update
     // if yes, we need to also account for the tab switch
@@ -116,28 +105,6 @@ object TabSwitches extends LazyLogging with Persistable {
           Some(map)
         })
       }
-
-      // if (prevTab.originHash != currentTab.originHash) {
-      //   logger.info(
-      //     s"Processing fake tab switch (origin) for tab ${currentTab.id}"
-      //   )
-
-      //   tabOriginSwitches.updateWith(prevTab.originHash)((switchMap) => {
-      //     val map = switchMap
-      //       .getOrElse(Map((currentTab.originHash, 0)))
-
-      //     val previousCount = map.getOrElse(currentTab.originHash, 0)
-
-      //     tabOriginGraph -= WDiEdge((prevTab, currentTab))(previousCount)
-      //     tabOriginGraph += WDiEdge((prevTab, currentTab))(
-      //       previousCount + 1
-      //     )
-
-      //     map.update(currentTab.originHash, previousCount + 1)
-
-      //     Some(map)
-      //   })
-      // }
     }
   }
 
@@ -203,52 +170,28 @@ object TabSwitches extends LazyLogging with Persistable {
   def persist: Try[Unit] = Try {
     Persistable
       .persistJson("tab_hashes.json", tabHashes.asJson)
-    // Persistable
-    //   .persistJson(
-    //     "tab_hashes_origin.json",
-    //     tabOriginHashes.asJson
-    //   )
 
     Persistable
       .persistJson(
         "tab_switches.json",
         tabSwitches.asJson
       )
-    // Persistable
-    //   .persistJson(
-    //     "tab_switches_origin.json",
-    //     tabOriginSwitches.asJson
-    //   )
 
     Persistable
       .persistString(
         "tab_switch_graph.json",
         toJsonString(tabGraph)
       )
-    // Persistable
-    //   .persistString(
-    //     "tab_switch_graph_origin.json",
-    //     toJsonString(tabOriginGraph)
-    //   )
 
     Persistable
       .persistString(
         "tab_switch_graph.dot",
         toDotString(tabGraph)
       )
-    // Persistable
-    //   .persistString(
-    //     "tab_switch_graph_origin.dot",
-    //     toDotString(tabOriginGraph)
-    //   )
     Persistable.persistString(
       "tab_switch_graph_clean.dot",
       toDotString(cleanupGraph(tabGraph))
     )
-    // Persistable.persistString(
-    //   "tab_switch_graph_origin_clean.dot",
-    //   toDotString(cleanupGraph(tabOriginGraph))
-    // )
   }
 
   def restore: Try[Unit] = Try {
@@ -260,14 +203,6 @@ object TabSwitches extends LazyLogging with Persistable {
         case Right(restoredMap) => tabHashes = restoredMap
       }
 
-    // Persistable
-    //   .restoreJson("tab_hashes_origin.json")
-    //   .map(decode[Map[String, String]])
-    //   .foreach {
-    //     case Left(value)        =>
-    //     case Right(restoredMap) => tabOriginHashes = restoredMap
-    //   }
-
     Persistable
       .restoreJson("tab_switches.json")
       .map(decode[Map[String, Map[String, Int]]])
@@ -276,23 +211,9 @@ object TabSwitches extends LazyLogging with Persistable {
         case Right(restoredMap) => tabSwitches = restoredMap
       }
 
-    // Persistable
-    //   .restoreJson("tab_switches_origin.json")
-    //   .map(decode[Map[String, Map[String, Int]]])
-    //   .foreach {
-    //     case Left(value)        =>
-    //     case Right(restoredMap) => tabOriginSwitches = restoredMap
-    //   }
-
     Persistable
       .restoreJson("tab_switch_graph.json")
       .map(TabSwitches.fromJsonString)
       .foreach(tabGraph = _)
-
-    // Persistable
-    //   .restoreJson("tab_switch_graph_origin.json")
-    //   .map(TabSwitches.fromJsonString)
-    //   .foreach(tabOriginGraph = _)
   }
-
 }

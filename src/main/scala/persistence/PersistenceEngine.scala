@@ -12,7 +12,7 @@ object PersistenceEngine extends LazyLogging {
 
       while (true) {
         TabSwitches.persist
-        Thread.sleep(60000)
+        Thread.sleep(120000)
       }
     })
 

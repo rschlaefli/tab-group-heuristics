@@ -34,7 +34,7 @@ object HeuristicsEngine extends LazyLogging {
           )
         }
 
-        Thread.sleep(30000)
+        Thread.sleep(120000)
       }
     }
 

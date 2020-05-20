@@ -13,8 +13,6 @@ sealed trait Tabs
 case class Tab(
     hash: String,
     origin: String,
-    originHash: String,
-    baseHash: String,
     baseUrl: String,
     active: Boolean,
     // highlighted: Boolean,
@@ -56,8 +54,6 @@ object Tab {
   def fromEvent(event: TabUpdateEvent): Tab = new Tab(
     event.hash,
     event.origin,
-    event.originHash,
-    event.baseHash,
     event.baseUrl,
     event.active,
     event.id,

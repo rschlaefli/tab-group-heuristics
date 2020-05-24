@@ -16,6 +16,7 @@ object NativeMessaging extends LazyLogging {
   ): Thread = {
     val thread = new Thread(() => {
       logger.info("> Starting to listen for messages")
+
       Iterator
         .continually(readNativeMessage(in))
         // flatten to get rid of any null values (None)
@@ -99,7 +100,7 @@ object NativeMessaging extends LazyLogging {
     // store the length of the message as a byte array
     val msgLength = msgBytes.length
     val lengthBytes = intToByteArray(msgLength)
-    logger.info(s"Writing native message with length $msgLength")
+    logger.debug(s"Writing native message with length $msgLength")
 
     // write the message to stdout
     out.write(lengthBytes)

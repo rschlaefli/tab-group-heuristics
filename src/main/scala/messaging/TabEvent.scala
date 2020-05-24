@@ -48,6 +48,7 @@ case class TabUpdateEvent(
     baseUrl: String,
     origin: String,
     title: String,
+    normalizedTitle: String,
     pinned: Boolean,
     status: String,
     lastAccessed: Option[Double],

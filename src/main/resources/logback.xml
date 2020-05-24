@@ -27,6 +27,36 @@
     </encoder>
   </appender>
 
+  <appender name="StatisticsEngine" class="ch.qos.logback.core.FileAppender">
+    <file>statistics_engine.log</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker == null</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+  </appender>
+
+  <appender name="StatisticsCSV" class="ch.qos.logback.core.FileAppender">
+    <file>statistics.csv</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date;%msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker != null &amp;&amp; marker.contains("CSV")</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+  </appender>
+
   <appender name="NativeMessaging" class="ch.qos.logback.core.FileAppender">
     <file>native_messaging.log</file>
     <append>true</append>
@@ -41,6 +71,28 @@
     <encoder>
       <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker == null</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+  </appender>
+
+  <appender name="TabEventsCSV" class="ch.qos.logback.core.FileAppender">
+    <file>tab_events.csv</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date;%msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker != null &amp;&amp; marker.contains("CSV")</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
   </appender>
 
   <appender name="Persistence" class="ch.qos.logback.core.FileAppender">
@@ -76,12 +128,18 @@
     <appender-ref ref="HeuristicsEngine" />
   </logger>
 
+  <logger name="statistics.StatisticsEngine" level="debug">
+    <appender-ref ref="StatisticsEngine" />
+    <appender-ref ref="StatisticsCSV" />
+  </logger>
+
   <logger name="messaging.NativeMessaging" level="debug">
     <appender-ref ref="NativeMessaging" />
   </logger>
 
   <logger name="tabstate.TabState" level="debug">
     <appender-ref ref="TabState" />
+    <appender-ref ref="TabEventsCSV" />
   </logger>
 
   <logger name="persistence.Persistence" level="debug">

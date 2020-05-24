@@ -4,12 +4,15 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.{Map, Queue}
 import scalax.collection.Graph
 import scalax.collection.edge.WDiEdge
+import org.slf4j.MarkerFactory
 
 import messaging._
 import heuristics.TabSwitches
-import util._
+import util.Utils
 
 object TabState extends LazyLogging {
+  val logToCsv = MarkerFactory.getMarker("CSV");
+
   var activeTab = -1
   var activeWindow = -1
 
@@ -19,6 +22,7 @@ object TabState extends LazyLogging {
 
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")
+
       Iterator
         .continually(dequeueTabEvent(tabEventsQueue))
         .foreach(processEvent)
@@ -57,10 +61,14 @@ object TabState extends LazyLogging {
         // build a new tab object from the received tab data
         val tab = Tab.fromEvent(updateEvent)
 
+        logger.info(
+          logToCsv,
+          s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};;;;"
+        )
+
         currentTabs.synchronized {
           TabSwitches.processTabSwitch(currentTabs.get(tab.id), tab)
           currentTabs.update(tab.id, tab)
-
         }
       }
 
@@ -68,7 +76,7 @@ object TabState extends LazyLogging {
         activeTab = id
         activeWindow = windowId
 
-        logger.info(
+        logger.debug(
           s"> Processing switch from $previousTabId to $id in window $windowId"
         )
 
@@ -76,12 +84,24 @@ object TabState extends LazyLogging {
         if (currentTabs.contains(id) && previousTabId.isDefined) {
           val previousTab = currentTabs.get(previousTabId.get)
           val currentTab = currentTabs.get(id).get
+
+          val csvRow = previousTab match {
+            case Some(tab) =>
+              s"SWITCH;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
+            case None =>
+              s"SWITCH;;;;;${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
+          }
+
+          logger.info(logToCsv, csvRow)
+
           TabSwitches.processTabSwitch(previousTab, currentTab)
         }
 
       }
 
       case TabRemoveEvent(id, windowId) => {
+        logger.info(logToCsv, s"REMOVE;${id};;;;;;;")
+
         currentTabs.synchronized {
           currentTabs -= (id)
         }

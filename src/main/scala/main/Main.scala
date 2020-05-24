@@ -14,13 +14,14 @@ import scala.util.{Either, Try, Success, Failure}
 import java.io.OutputStream
 import scala.collection.mutable.Queue
 import scala.collection.mutable.{Map, Queue}
+import io.circe.Json
 
 import util._
 import tabstate._
 import heuristics._
 import messaging._
 import persistence._
-import io.circe.Json
+import statistics._
 
 object Main extends App with LazyLogging {
 
@@ -67,9 +68,13 @@ object Main extends App with LazyLogging {
   // setup a thread for the persistence engine
   val persistenceThread = PersistenceEngine()
 
+  // setup a thread for the statistics collector
+  val statisticsThread = StatisticsEngine()
+
   tabStateThread.start()
   nativeMessagingThread.start()
   persistenceThread.start()
+  statisticsThread.start()
 
   logger.info(s"> Daemons started (${Thread.activeCount()})")
 

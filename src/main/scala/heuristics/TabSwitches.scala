@@ -43,15 +43,15 @@ object TabSwitches extends LazyLogging with Persistable {
     // i.e., get rid of tab switches that have only occured few times
     val graphWithoutIrrelevantEdges =
       graphWithoutSelfEdges -- graphWithoutSelfEdges.edges.filter(edge =>
-        edge.weight < 3
-      // edge.weight < 1
+        // edge.weight < 3
+        edge.weight < 1
       )
 
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
     graphWithoutIrrelevantEdges -- graphWithoutIrrelevantEdges.nodes.filter(
-      node => node.incoming.map(edge => edge.weight).sum < 5
-      // node => node.incoming.map(edge => edge.weight).sum < 1
+      // node => node.incoming.map(edge => edge.weight).sum < 2
+      node => node.incoming.map(edge => edge.weight).sum < 1
     )
 
   }
@@ -71,11 +71,8 @@ object TabSwitches extends LazyLogging with Persistable {
   def processTabSwitch(previousTab: Option[Tab], currentTab: Tab) {
     tabGraph += currentTab
 
-    val hashedTitle = currentTab.title
-      .replaceAll("[^a-zA-Z ]", " ")
-      .replaceAll("\\s\\s+", " ")
     val tabHashContent =
-      s"${currentTab.baseUrl} ${hashedTitle}"
+      s"${currentTab.baseUrl} ${currentTab.normalizedTitle}"
 
     tabHashes.update(currentTab.hash, tabHashContent)
 
@@ -86,7 +83,7 @@ object TabSwitches extends LazyLogging with Persistable {
       val prevTab = previousTab.get
 
       if (prevTab.hash != currentTab.hash) {
-        logger.info(
+        logger.debug(
           s"Processing fake tab switch for tab ${currentTab.id}"
         )
 

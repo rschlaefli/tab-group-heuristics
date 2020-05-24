@@ -61,42 +61,44 @@ object Watset extends App with LazyLogging {
     })
 
     val newGraph = graphBuilder.build()
-    logger.info(
+    logger.debug(
       s"> Constructed watset graph with ${newGraph.vertexSet().size()} vertices and ${newGraph.edgeSet().size()} edges"
     )
 
     newGraph
   }
 
-  def computeClustersMaxmax(
-      graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
-  ): ju.Collection[ju.Collection[Tab]] = {
-    val maxmaxClusters = new MaxMax(graph)
-    maxmaxClusters.fit()
-    logger.info(s"Digraph (maxmax): ${maxmaxClusters.getDigraph().toString()}")
-    logger.info(
-      s"Clusters (maxmax): ${maxmaxClusters.getClusters().toString()}"
-    )
-    maxmaxClusters.getClusters()
-  }
+  // def computeClustersMaxmax(
+  //     graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
+  // ): ju.Collection[ju.Collection[Tab]] = {
+  //   val maxmaxClusters = new MaxMax(graph)
+  //   maxmaxClusters.fit()
+  //   logger.info(s"Digraph (maxmax): ${maxmaxClusters.getDigraph().toString()}")
+  //   logger.info(
+  //     s"Clusters (maxmax): ${maxmaxClusters.getClusters().toString()}"
+  //   )
+  //   maxmaxClusters.getClusters()
+  // }
 
-  def computeClustersWhispers(
-      graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
-  ): ju.Collection[ju.Collection[Tab]] = {
-    val cwClusters = new ChineseWhispers(graph, NodeWeighting.top())
-    cwClusters.fit()
-    logger.info(s"Clusters (whispers): ${cwClusters.getClusters().toString()}")
-    cwClusters.getClusters()
-  }
+  // def computeClustersWhispers(
+  //     graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
+  // ): ju.Collection[ju.Collection[Tab]] = {
+  //   val cwClusters = new ChineseWhispers(graph, NodeWeighting.top())
+  //   cwClusters.fit()
+  //   logger.info(s"Clusters (whispers): ${cwClusters.getClusters().toString()}")
+  //   cwClusters.getClusters()
+  // }
 
   def computeClustersMarkov(
       graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
   ): ju.Collection[ju.Collection[Tab]] = {
     val markovClusters = new MarkovClustering(graph, 2, 2)
     markovClusters.fit()
-    logger.info(
+
+    logger.debug(
       s"Clusters (markov): ${markovClusters.getClusters().toString()}"
     )
+
     markovClusters.getClusters()
   }
 
@@ -107,7 +109,7 @@ object Watset extends App with LazyLogging {
     clusterList.zipWithIndex.flatMap {
       case (cluster, index) if cluster.size > 3 => {
         val clusterMembers = cluster.asScala.toSet
-        logger.info(s"> Cluster $index contains ${clusterMembers.toString()}")
+        logger.debug(s"> Cluster $index contains ${clusterMembers.toString()}")
         List(clusterMembers)
       }
       case _ => List()

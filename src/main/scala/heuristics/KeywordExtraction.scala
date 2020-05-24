@@ -9,7 +9,8 @@ object KeywordExtraction extends LazyLogging {
     val tokenizedInput = normalizedInput.words("google")
     val frequencyMap = tokenizedInput.mkString(" ").bag("none")
     val sortedFrequencyMap = frequencyMap.toSeq.sortBy(_._2).reverse
-    logger.info(s"> Sorted frequency map ${sortedFrequencyMap.toString}")
+
+    logger.debug(s"> Sorted frequency map ${sortedFrequencyMap.toString}")
 
     sortedFrequencyMap.take(4).map(_._1).toList
   }

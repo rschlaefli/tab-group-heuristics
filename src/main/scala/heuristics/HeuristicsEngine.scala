@@ -12,61 +12,48 @@ import main.Main
 import messaging.HeuristicsAction
 
 object HeuristicsEngine extends LazyLogging {
+  var clusters: List[Set[Tab]] = List()
+
   def apply(): Thread = {
     val thread = new Thread {
       logger.info("> Starting to observe current tab state")
 
       while (true) {
+        Thread.sleep(59000)
+
         if (TabSwitches.tabGraph != null) {
-          logger.debug("> Cleaning tab switch graph")
+
+          // cleaning the switch graph
+          logger.debug(s"> Cleaning the tab switch graph")
           val cleanTabSwitchGraph =
             TabSwitches.cleanupGraph(TabSwitches.tabGraph)
 
-          logger.debug("> Computing markov clusters")
-          val markovClusters = Watset(cleanTabSwitchGraph)
+          // computing clusters
+          logger.debug(s"> Computing tab clusters")
+          clusters.synchronized {
+            clusters = Watset(cleanTabSwitchGraph)
+          }
 
-          logger.debug("> Computing cluster titles")
-          val markovClustersWithTitles = markovClusters.map(tabCluster => {
-            val keywords = extractKeywordsFromTabSet(tabCluster)
+          // generating cluster titles
+          logger.debug(s"> Generating tab cluster titles")
+          val clustersWithTitles = clusters.map(tabCluster => {
+            val keywords = KeywordExtraction(tabCluster)
             (keywords.mkString(" "), tabCluster)
           })
 
           // update the markov clusters stored in the webextension
-          if (markovClustersWithTitles.size > 0) {
-            logger.debug(
-              s"> Sending updated groups to browser ${markovClustersWithTitles.toString()}"
-            )
-
+          if (clustersWithTitles.size >= 0) {
+            logger.debug(s"> Updating tab clusters in the webextension")
             NativeMessaging.writeNativeMessage(
               Main.out,
-              HeuristicsAction("UPDATE_GROUPS", markovClustersWithTitles.asJson)
+              HeuristicsAction("UPDATE_GROUPS", clustersWithTitles.asJson)
             )
           }
         }
-
-        Thread.sleep(30000)
       }
     }
 
     thread.setName("HeuristicsEngine")
-
     thread
-  }
-
-  def extractKeywordsFromTabSet(tabSet: Set[Tab]): List[String] = {
-    logger.debug(s"> Extracting keywords from set of tabs ${tabSet.toString()}")
-
-    val allTitles =
-      tabSet
-        .map(tab =>
-          s"${tab.normalizedTitle} ${tab.origin.split("/").drop(2).mkString(" ")}"
-        )
-        .mkString(" ")
-    logger.debug(s"> Combined all titles in tab cluster: $allTitles")
-
-    val keywords = KeywordExtraction(allTitles)
-    logger.debug(s"> Extracted keywords from tab cluster: $keywords")
-
-    keywords
   }
 }

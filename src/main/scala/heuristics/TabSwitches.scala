@@ -14,7 +14,8 @@ import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._
 import scala.util.Try
 
-import tabstate.{Tabs, Tab, TabState}
+import statistics.StatisticsEngine
+import tabstate.{TabState, Tab}
 import persistence.Persistable
 
 object TabSwitches extends LazyLogging with Persistable {
@@ -29,12 +30,6 @@ object TabSwitches extends LazyLogging with Persistable {
     val graphWithoutSelfEdges = graph --
       graph.edges.filter(edge => edge.from.equals(edge.to))
 
-    // remove the new tab "root"
-    // val graphWithoutNewTab =
-    //   graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
-    //     node.hashCode() == -836262972 || node.hashCode() == -35532496
-    //   )
-
     // // extract all edge weights
     // TODO: extract all edges except values in the top-5% or similar
     // val edgeWeights = q3(graph.edges.map(edge => edge.weight))
@@ -43,17 +38,14 @@ object TabSwitches extends LazyLogging with Persistable {
     // i.e., get rid of tab switches that have only occured few times
     val graphWithoutIrrelevantEdges =
       graphWithoutSelfEdges -- graphWithoutSelfEdges.edges.filter(edge =>
-        // edge.weight < 3
-        edge.weight < 1
+        edge.weight < 2
       )
 
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
     graphWithoutIrrelevantEdges -- graphWithoutIrrelevantEdges.nodes.filter(
-      // node => node.incoming.map(edge => edge.weight).sum < 2
-      node => node.incoming.map(edge => edge.weight).sum < 1
+      node => node.incoming.map(edge => edge.weight).sum < 2
     )
-
   }
 
   def processInitialTabs(initialTabs: List[Tab]) = {
@@ -76,16 +68,10 @@ object TabSwitches extends LazyLogging with Persistable {
 
     tabHashes.update(currentTab.hash, tabHashContent)
 
-    // check if the location of the tab changes in this update
-    // if yes, we need to also account for the tab switch
-    // TODO: does this make sense or is that update only happening if we leave a tab completely?
     if (previousTab.isDefined) {
       val prevTab = previousTab.get
 
       if (prevTab.hash != currentTab.hash) {
-        logger.debug(
-          s"Processing fake tab switch for tab ${currentTab.id}"
-        )
 
         tabSwitches.updateWith(prevTab.hash)((switchMap) => {
           val map = switchMap.getOrElse(Map((currentTab.hash, 0)))

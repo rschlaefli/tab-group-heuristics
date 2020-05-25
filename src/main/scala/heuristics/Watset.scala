@@ -27,9 +27,6 @@ object Watset extends App with LazyLogging {
 
     val watsetGraph = buildWatsetGraph(graph)
 
-    // val maxmaxClusters = computeClustersMaxmax(watsetGraph)
-    // val cwClusters = computeClustersWhispers(watsetGraph)
-
     if (watsetGraph
           .vertexSet()
           .size() < 2 || watsetGraph.edgeSet().size() == 0) {
@@ -67,27 +64,6 @@ object Watset extends App with LazyLogging {
 
     newGraph
   }
-
-  // def computeClustersMaxmax(
-  //     graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
-  // ): ju.Collection[ju.Collection[Tab]] = {
-  //   val maxmaxClusters = new MaxMax(graph)
-  //   maxmaxClusters.fit()
-  //   logger.info(s"Digraph (maxmax): ${maxmaxClusters.getDigraph().toString()}")
-  //   logger.info(
-  //     s"Clusters (maxmax): ${maxmaxClusters.getClusters().toString()}"
-  //   )
-  //   maxmaxClusters.getClusters()
-  // }
-
-  // def computeClustersWhispers(
-  //     graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
-  // ): ju.Collection[ju.Collection[Tab]] = {
-  //   val cwClusters = new ChineseWhispers(graph, NodeWeighting.top())
-  //   cwClusters.fit()
-  //   logger.info(s"Clusters (whispers): ${cwClusters.getClusters().toString()}")
-  //   cwClusters.getClusters()
-  // }
 
   def computeClustersMarkov(
       graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]

@@ -11,7 +11,7 @@ import heuristics.TabSwitches
 import util.Utils
 
 object TabState extends LazyLogging {
-  val logToCsv = MarkerFactory.getMarker("CSV");
+  val logToCsv = MarkerFactory.getMarker("CSV")
 
   var activeTab = -1
   var activeWindow = -1
@@ -30,7 +30,6 @@ object TabState extends LazyLogging {
 
     thread.setName("TabState")
     thread.setDaemon(true)
-
     thread
   }
 
@@ -48,7 +47,13 @@ object TabState extends LazyLogging {
 
     event match {
       case TabInitializationEvent(initialTabs) => {
-        currentTabs ++= initialTabs.map(tab => (tab.id, tab))
+        currentTabs ++= initialTabs.map(tab => {
+          logger.info(
+            logToCsv,
+            s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};;;;"
+          )
+          (tab.id, tab)
+        })
 
         TabSwitches.processInitialTabs(initialTabs)
 

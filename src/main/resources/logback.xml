@@ -124,7 +124,7 @@
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="heuristics.HeuristicsEngine" level="debug">
+  <logger name="heuristics.HeuristicsEngine" level="info">
     <appender-ref ref="HeuristicsEngine" />
   </logger>
 
@@ -133,24 +133,24 @@
     <appender-ref ref="StatisticsCSV" />
   </logger>
 
-  <logger name="messaging.NativeMessaging" level="debug">
+  <logger name="messaging.NativeMessaging" level="info">
     <appender-ref ref="NativeMessaging" />
   </logger>
 
-  <logger name="tabstate.TabState" level="debug">
+  <logger name="tabstate.TabState" level="info">
     <appender-ref ref="TabState" />
     <appender-ref ref="TabEventsCSV" />
   </logger>
 
-  <logger name="persistence.Persistence" level="debug">
+  <logger name="persistence.Persistence" level="info">
     <appender-ref ref="Persistence" />
   </logger>
 
-  <logger name="heuristics.Watset" level="debug">
+  <logger name="heuristics.Watset" level="info">
     <appender-ref ref="Graphs" />
   </logger>
 
-  <logger name="main.Main" level="debug">
+  <logger name="main.Main" level="info">
     <appender-ref ref="Main" />
   </logger>
 </configuration>

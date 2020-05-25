@@ -12,13 +12,15 @@ trait Persistable {
 
 object Persistable extends LazyLogging {
   def persistJson(fileName: String, jsonData: => Json): Try[Unit] = Try {
-    logger.info(s"> Writing json to $fileName")
+    logger.info(s"> Persisted $fileName")
+    logger.debug(s"> Writing json to $fileName")
     persistString(fileName, jsonData.toString())
   }
 
   def restoreJson(fileName: String): Try[String] = Try {
     val jsonString = scala.io.Source.fromFile(fileName).getLines.mkString
-    logger.info(s"> Restored JSON from file: $jsonString")
+    logger.info(s"> Restored $fileName")
+    logger.debug(s"> Restored JSON from file: $jsonString")
     jsonString
   }
 

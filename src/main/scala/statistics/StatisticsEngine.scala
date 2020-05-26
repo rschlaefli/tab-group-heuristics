@@ -26,11 +26,11 @@ object StatisticsEngine extends LazyLogging {
       logger.info("> Starting to collect statistics")
 
       while (true) {
-        Thread.sleep(3000)
+        Thread.sleep(23000)
 
         // derive the current window for aggregation
         val currentTimestamp = Instant.now.getEpochSecond()
-        val fiveMinBlock = (currentTimestamp / 20).toLong
+        val fiveMinBlock = (currentTimestamp / 300).toLong
         logger.debug(
           s"> Current timestamp: ${currentTimestamp}, assigned block: $fiveMinBlock, currentMap: ${aggregationWindows.size}"
         )
@@ -79,7 +79,7 @@ object StatisticsEngine extends LazyLogging {
             if (isWindowExpired) {
               val statistics = computeAggregateStatistics(data)
 
-              logger.debug(s">Aggregated window $window: ${statistics}")
+              logger.debug(s"> Aggregated window $window: ${statistics}")
 
               logger.info(
                 logToCsv,

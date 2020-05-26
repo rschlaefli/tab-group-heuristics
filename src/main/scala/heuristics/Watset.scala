@@ -5,12 +5,10 @@ import scalax.collection.Graph
 import scalax.collection.edge.WDiEdge
 import scalax.collection.io.dot._
 import scalax.collection.edge.Implicits._
+import scala.collection.mutable
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.nlpub.watset.graph.SimplifiedWatset
-
-import tabstate.Tabs
-import tabstate.Tab
 import com.typesafe.scalalogging.LazyLogging
 import scala.util.Try
 import org.nlpub.watset.graph.NodeWeighting
@@ -19,10 +17,15 @@ import org.nlpub.watset.graph.MaxMax
 import org.nlpub.watset.graph.MarkovClustering
 import java.{util => ju}
 
+import tabstate.Tabs
+import tabstate.Tab
+
 object Watset extends App with LazyLogging {
-  def apply(graph: Graph[Tab, WDiEdge]): List[Set[Tab]] = {
+  def apply(
+      graph: Graph[Tab, WDiEdge]
+  ): (mutable.Map[Int, Int], List[Set[Tab]]) = {
     if (graph == null) {
-      return List()
+      return (mutable.Map(), List())
     }
 
     val watsetGraph = buildWatsetGraph(graph)
@@ -30,14 +33,12 @@ object Watset extends App with LazyLogging {
     if (watsetGraph
           .vertexSet()
           .size() < 2 || watsetGraph.edgeSet().size() == 0) {
-      return List()
+      return (mutable.Map(), List())
     }
 
     val markovClusters = computeClustersMarkov(watsetGraph)
 
-    val markovProcessed = processClusters(markovClusters)
-
-    markovProcessed
+    processClusters(markovClusters)
   }
 
   def buildWatsetGraph(
@@ -80,15 +81,31 @@ object Watset extends App with LazyLogging {
 
   def processClusters(
       clusters: ju.Collection[ju.Collection[Tab]]
-  ): List[Set[Tab]] = {
-    val clusterList = clusters.asScala.toList
-    clusterList.zipWithIndex.flatMap {
-      case (cluster, index) if cluster.size > 3 => {
+  ): (mutable.Map[Int, Int], List[Set[Tab]]) = {
+    // preapre an index for which tab is stored in which cluster
+    val clusterIndex: mutable.Map[Int, Int] = mutable.Map[Int, Int]()
+
+    // prepare a return container for the clusters
+    val clusterList = clusters.asScala.toList.zipWithIndex.flatMap {
+      // case (cluster, index) if cluster.size > 3 => {
+      case (cluster, index) if cluster.size > 1 => {
         val clusterMembers = cluster.asScala.toSet
+
+        clusterMembers.foreach(tab => {
+          clusterIndex(tab.hashCode()) = index
+        })
+
         logger.debug(s"> Cluster $index contains ${clusterMembers.toString()}")
+
         List(clusterMembers)
       }
       case _ => List()
     }
+
+    logger.debug(
+      s"> Computed overall index $clusterIndex for ${clusterList.length} clusters"
+    )
+
+    (clusterIndex, clusterList)
   }
 }

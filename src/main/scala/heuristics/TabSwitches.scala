@@ -13,10 +13,13 @@ import scala.collection.mutable.Map
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._
 import scala.util.Try
+import smile.math.MathEx._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import statistics.StatisticsEngine
 import tabstate.{TabState, Tab}
 import persistence.Persistable
+import scala.concurrent.Future
 
 object TabSwitches extends LazyLogging with Persistable {
 
@@ -30,22 +33,33 @@ object TabSwitches extends LazyLogging with Persistable {
     val graphWithoutSelfEdges = graph --
       graph.edges.filter(edge => edge.from.equals(edge.to))
 
-    // // extract all edge weights
-    // TODO: extract all edges except values in the top-5% or similar
-    // val edgeWeights = q3(graph.edges.map(edge => edge.weight))
+    // extract all edge weights
+    val edgeWeightsThreshold = median(
+      graph.edges.map(edge => edge.weight).toArray
+    )
+    logger.debug(s"> Computed threshold for edge weights $edgeWeightsThreshold")
 
     // remove all edges that have been traversed only few times
     // i.e., get rid of tab switches that have only occured few times
-    val graphWithoutIrrelevantEdges =
-      graphWithoutSelfEdges -- graphWithoutSelfEdges.edges.filter(edge =>
-        edge.weight < 2
+    val irrelevantEdges =
+      graphWithoutSelfEdges.edges.filter(edge =>
+        edge.weight < edgeWeightsThreshold
       )
+    val graphWithoutIrrelevantEdges = graphWithoutSelfEdges -- irrelevantEdges
 
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
-    graphWithoutIrrelevantEdges -- graphWithoutIrrelevantEdges.nodes.filter(
-      node => node.incoming.map(edge => edge.weight).sum < 2
+    val irrelevantNodes = graphWithoutIrrelevantEdges.nodes.filter(node =>
+      node.incoming.map(edge => edge.weight).sum < edgeWeightsThreshold
     )
+    val cleanGraph = graphWithoutIrrelevantEdges -- irrelevantNodes
+
+    logger.debug(
+      s"> Performed graph cleanup: removed ${irrelevantEdges.size} edges and ${irrelevantNodes.size} nodes - " +
+        s"left with ${cleanGraph.edges.size} edges and ${cleanGraph.nodes.size} nodes"
+    )
+
+    cleanGraph
   }
 
   def processInitialTabs(initialTabs: List[Tab]) = {
@@ -60,7 +74,7 @@ object TabSwitches extends LazyLogging with Persistable {
     * @param previousTab
     * @param currentTab
     */
-  def processTabSwitch(previousTab: Option[Tab], currentTab: Tab) {
+  def processTabSwitch(previousTab: Option[Tab], currentTab: Tab): Unit = {
     tabGraph += currentTab
 
     val tabHashContent =
@@ -72,6 +86,12 @@ object TabSwitches extends LazyLogging with Persistable {
       val prevTab = previousTab.get
 
       if (prevTab.hash != currentTab.hash) {
+        Future {
+          StatisticsEngine.tabSwitchQueue.synchronized {
+            // add the tab switch to the statistics switch queue
+            StatisticsEngine.tabSwitchQueue.enqueue((prevTab, currentTab))
+          }
+        }
 
         tabSwitches.updateWith(prevTab.hash)((switchMap) => {
           val map = switchMap.getOrElse(Map((currentTab.hash, 0)))

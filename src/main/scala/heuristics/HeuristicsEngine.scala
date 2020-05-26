@@ -1,6 +1,7 @@
 package heuristics
 
 import com.typesafe.scalalogging.LazyLogging
+import scala.collection.mutable
 import scalax.collection.mutable.Graph
 import scalax.collection.edge.WDiEdge
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
@@ -12,7 +13,8 @@ import main.Main
 import messaging.HeuristicsAction
 
 object HeuristicsEngine extends LazyLogging {
-  var clusters: List[Set[Tab]] = List()
+  var clusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
+    (mutable.Map(), List())
 
   def apply(): Thread = {
     val thread = new Thread {
@@ -36,7 +38,7 @@ object HeuristicsEngine extends LazyLogging {
 
           // generating cluster titles
           logger.debug(s"> Generating tab cluster titles")
-          val clustersWithTitles = clusters.map(tabCluster => {
+          val clustersWithTitles = clusters._2.map(tabCluster => {
             val keywords = KeywordExtraction(tabCluster)
             (keywords.mkString(" "), tabCluster)
           })

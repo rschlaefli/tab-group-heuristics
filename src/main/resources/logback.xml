@@ -11,24 +11,31 @@
     </encoder>
   </appender>
 
-  <appender name="DEBUG" class="ch.qos.logback.core.FileAppender">
+<appender name="MAIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>main.log</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>INFO</level>
+    </filter>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker == null</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>main.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>300MB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
+  <appender name="DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>debug.log</file>
-    <append>true</append>
-    <encoder>
-      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
-
-  <appender name="HeuristicsEngine" class="ch.qos.logback.core.FileAppender">
-    <file>heuristics_engine.log</file>
-    <append>true</append>
-    <encoder>
-      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
-
-  <appender name="StatisticsEngine" class="ch.qos.logback.core.FileAppender">
-    <file>statistics_engine.log</file>
     <append>true</append>
     <encoder>
       <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -40,7 +47,14 @@
       <OnMismatch>DENY</OnMismatch>
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>debug.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>3</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
   </appender>
+
+
 
   <appender name="StatisticsCSV" class="ch.qos.logback.core.FileAppender">
     <file>statistics.csv</file>
@@ -51,29 +65,6 @@
     <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
       <evaluator>
         <expression>marker != null &amp;&amp; marker.contains("CSV")</expression>
-      </evaluator>
-      <OnMismatch>DENY</OnMismatch>
-      <OnMatch>NEUTRAL</OnMatch>
-    </filter>
-  </appender>
-
-  <appender name="NativeMessaging" class="ch.qos.logback.core.FileAppender">
-    <file>native_messaging.log</file>
-    <append>true</append>
-    <encoder>
-      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
-
-  <appender name="TabState" class="ch.qos.logback.core.FileAppender">
-    <file>tab_state.log</file>
-    <append>true</append>
-    <encoder>
-      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-      <evaluator>
-        <expression>marker == null</expression>
       </evaluator>
       <OnMismatch>DENY</OnMismatch>
       <OnMatch>NEUTRAL</OnMatch>
@@ -95,62 +86,20 @@
     </filter>
   </appender>
 
-  <appender name="Persistence" class="ch.qos.logback.core.FileAppender">
-    <file>persistence.log</file>
-    <append>true</append>
-    <encoder>
-      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
-
-  <appender name="Graphs" class="ch.qos.logback.core.FileAppender">
-    <file>graphs.log</file>
-    <append>true</append>
-    <encoder>
-      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
-
-  <appender name="Main" class="ch.qos.logback.core.FileAppender">
-    <file>main.log</file>
-    <append>true</append>
-    <encoder>
-      <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
-
   <root level="debug">
+    <appender-ref ref="MAIN" />
     <appender-ref ref="DEBUG" />
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="heuristics.HeuristicsEngine" level="info">
-    <appender-ref ref="HeuristicsEngine" />
-  </logger>
+  <logger name="heuristics.HeuristicsEngine" level="debug" />
 
   <logger name="statistics.StatisticsEngine" level="debug">
-    <appender-ref ref="StatisticsEngine" />
     <appender-ref ref="StatisticsCSV" />
   </logger>
 
-  <logger name="messaging.NativeMessaging" level="info">
-    <appender-ref ref="NativeMessaging" />
-  </logger>
-
   <logger name="tabstate.TabState" level="info">
-    <appender-ref ref="TabState" />
     <appender-ref ref="TabEventsCSV" />
   </logger>
 
-  <logger name="persistence.Persistence" level="info">
-    <appender-ref ref="Persistence" />
-  </logger>
-
-  <logger name="heuristics.Watset" level="info">
-    <appender-ref ref="Graphs" />
-  </logger>
-
-  <logger name="main.Main" level="info">
-    <appender-ref ref="Main" />
-  </logger>
 </configuration>

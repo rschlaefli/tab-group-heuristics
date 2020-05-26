@@ -17,7 +17,7 @@ object Dependencies {
 
   val circeVersion = "0.13.0"
 
-  val smileCore = "com.github.haifengl" %% "smile-core" % "2.4.0"
+  val smileCore = "com.github.haifengl" % "smile-core" % "2.4.0"
   val smileScala = "com.github.haifengl" %% "smile-scala" % "2.4.0"
 
   val nscalaTime = "com.github.nscala-time" %% "nscala-time" % "2.24.0"

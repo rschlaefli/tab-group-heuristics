@@ -5,6 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import util._
 import tabstate.Tab
+import heuristics.TabGroup
 
 sealed class TabEvent
 
@@ -14,6 +15,15 @@ case class TabInitializationEvent(
 
 object TabInitializationEvent {
   implicit val tabInitializationEventDecoder: Decoder[TabInitializationEvent] =
+    deriveDecoder
+}
+
+case class TabGroupUpdateEvent(
+    tabGroups: List[TabGroup]
+) extends TabEvent
+
+object TabGroupUpdateEvent {
+  implicit val tabGroupUpdateEventDecoder: Decoder[TabGroupUpdateEvent] =
     deriveDecoder
 }
 
@@ -96,6 +106,17 @@ object TabEvent extends LazyLogging {
         )
       }
 
+      case "UPDATE_GROUPS" => {
+        Utils.extractDecoderResult(
+          cursor.get[TabGroupUpdateEvent]("payload")
+        )
+      }
+
+      case _ => {
+        logger.warn(s"> Unknown tab event received: $action")
+        None
+      }
+
       // TODO: case MOVE
       // TODO: case ATTACH
       // TODO: case GROUP_ASSOC
@@ -104,5 +125,4 @@ object TabEvent extends LazyLogging {
 
     tabEvent
   }
-
 }

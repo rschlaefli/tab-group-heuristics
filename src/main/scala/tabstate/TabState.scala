@@ -9,6 +9,7 @@ import org.slf4j.MarkerFactory
 import messaging._
 import heuristics.TabSwitches
 import util.Utils
+import heuristics.HeuristicsEngine
 
 object TabState extends LazyLogging {
   val logToCsv = MarkerFactory.getMarker("CSV")
@@ -60,6 +61,16 @@ object TabState extends LazyLogging {
         logger.info(
           s"> Initialized current tabs to $currentTabs"
         )
+      }
+
+      case TabGroupUpdateEvent(tabGroups) => {
+        logger.debug(
+          s"> Updating tab groups to $tabGroups"
+        )
+
+        logger.info(logToCsv, s"UPDATE_GROUPS;;;;;;;;")
+
+        HeuristicsEngine.updateManualClusters(tabGroups)
       }
 
       case updateEvent: TabUpdateEvent => {

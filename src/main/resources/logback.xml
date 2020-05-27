@@ -90,7 +90,7 @@
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>tab_events.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>tab_events.%d{yyyy-MM-dd}.csv</fileNamePattern>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
     </rollingPolicy>

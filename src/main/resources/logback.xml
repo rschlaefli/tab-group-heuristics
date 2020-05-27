@@ -56,7 +56,7 @@
 
 
 
-  <appender name="StatisticsCSV" class="ch.qos.logback.core.FileAppender">
+  <appender name="StatisticsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>statistics.csv</file>
     <append>true</append>
     <encoder>
@@ -69,9 +69,14 @@
       <OnMismatch>DENY</OnMismatch>
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>statistics.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
   </appender>
 
-  <appender name="TabEventsCSV" class="ch.qos.logback.core.FileAppender">
+  <appender name="TabEventsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>tab_events.csv</file>
     <append>true</append>
     <encoder>
@@ -84,6 +89,11 @@
       <OnMismatch>DENY</OnMismatch>
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>tab_events.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
   </appender>
 
   <root level="debug">

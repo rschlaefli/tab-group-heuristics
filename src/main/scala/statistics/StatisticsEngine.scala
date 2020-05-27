@@ -52,23 +52,20 @@ object StatisticsEngine extends LazyLogging {
         val openTabsUngrouped = openTabHashes.size - openTabsGrouped
 
         // process the tab switch queue
-        var tabSwitchBetweenGroups = 0
-        var tabSwitchWithinGroups = 0
-        var tabSwitchToGroup = 0
-        var tabSwitchFromGroup = 0
-        var tabSwitchUngrouped = 0
         val clusterAssignments = currentClustering._1
         val clusteredTabs = clusterAssignments.keySet
+        var tabSwitchStatistics: (Int, Int, Int, Int, Int) = null
+
         tabSwitchQueue.synchronized {
           logger.debug(
             s"> Elements in tab switch queue: ${tabSwitchQueue.toString()}"
           )
 
-          // TODO: transform this to a reduce with a tuple4 as an accumulator
-          tabSwitchQueue
+          tabSwitchStatistics = tabSwitchQueue
             .dequeueAll(_ => true)
-            .foreach(tabSwitch => {
+            .map(tabSwitch => {
               val (prevTab, newTab) = tabSwitch
+
               val isPrevTabClustered =
                 clusteredTabs.contains(prevTab.hashCode())
               val isNewTabClustered = clusteredTabs.contains(newTab.hashCode())
@@ -77,19 +74,35 @@ object StatisticsEngine extends LazyLogging {
                 // switch within a group
                 if (clusterAssignments(prevTab.hashCode())
                       == clusterAssignments(newTab.hashCode())) {
-                  tabSwitchWithinGroups += 1
+                  (1, 0, 0, 0, 0)
                 } else {
-                  tabSwitchBetweenGroups += 1
-
+                  (0, 1, 0, 0, 0)
                 }
               } else if (isPrevTabClustered) {
-                tabSwitchFromGroup += 1
+                (0, 0, 1, 0, 0)
               } else if (isNewTabClustered) {
-                tabSwitchToGroup += 1
+                (0, 0, 0, 1, 0)
               } else {
-                tabSwitchUngrouped += 1
+                (0, 0, 0, 0, 1)
               }
             })
+            .foldLeft((0, 0, 0, 0, 0)) {
+              case (
+                  (acc1, acc2, acc3, acc4, acc5),
+                  (val1, val2, val3, val4, val5)
+                  ) =>
+                (
+                  acc1 + val1,
+                  acc2 + val2,
+                  acc3 + val3,
+                  acc4 + val4,
+                  acc5 + val5
+                )
+            }
+
+          logger.debug(
+            s"> Tab switch queue aggregated to ${tabSwitchStatistics}"
+          )
         }
 
         aggregationWindows.synchronized {
@@ -102,11 +115,11 @@ object StatisticsEngine extends LazyLogging {
                     currentlyOpenTabs.size,
                     openTabsGrouped,
                     openTabsUngrouped,
-                    tabSwitchWithinGroups,
-                    tabSwitchBetweenGroups,
-                    tabSwitchFromGroup,
-                    tabSwitchToGroup,
-                    tabSwitchUngrouped
+                    tabSwitchStatistics._1,
+                    tabSwitchStatistics._2,
+                    tabSwitchStatistics._3,
+                    tabSwitchStatistics._4,
+                    tabSwitchStatistics._5
                   )
                 )
               )
@@ -117,11 +130,11 @@ object StatisticsEngine extends LazyLogging {
                     currentlyOpenTabs.size,
                     openTabsGrouped,
                     openTabsUngrouped,
-                    tabSwitchWithinGroups,
-                    tabSwitchBetweenGroups,
-                    tabSwitchFromGroup,
-                    tabSwitchToGroup,
-                    tabSwitchUngrouped
+                    tabSwitchStatistics._1,
+                    tabSwitchStatistics._2,
+                    tabSwitchStatistics._3,
+                    tabSwitchStatistics._4,
+                    tabSwitchStatistics._5
                   )
                 )
               )

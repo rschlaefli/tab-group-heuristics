@@ -13,14 +13,18 @@ class StatisticsData() {
   var tabSwitchUngrouped: List[Int] = List()
 
   def withDataPoint(dataPoint: DataPoint): StatisticsData = {
-    this.numCurrentTabs.appended(dataPoint.currentlyOpenTabs)
-    this.openTabsGrouped.appended(dataPoint.openTabsGrouped)
-    this.openTabsUngrouped.appended(dataPoint.openTabsUngrouped)
-    this.tabSwitchWithinGroups.appended(dataPoint.switchesWithinGroups)
-    this.tabSwitchBetweenGroups.appended(dataPoint.switchesBetweenGroups)
-    this.tabSwitchFromGroup.appended(dataPoint.switchesFromGroups)
-    this.tabSwitchToGroup.appended(dataPoint.switchesToGroups)
-    this.tabSwitchUngrouped.appended(dataPoint.switchesOutsideGroups)
+    numCurrentTabs = numCurrentTabs.appended(dataPoint.currentlyOpenTabs)
+    openTabsGrouped = openTabsGrouped.appended(dataPoint.openTabsGrouped)
+    openTabsUngrouped = openTabsUngrouped.appended(dataPoint.openTabsUngrouped)
+    tabSwitchWithinGroups =
+      tabSwitchWithinGroups.appended(dataPoint.switchesWithinGroups)
+    tabSwitchBetweenGroups =
+      tabSwitchBetweenGroups.appended(dataPoint.switchesBetweenGroups)
+    tabSwitchFromGroup =
+      tabSwitchFromGroup.appended(dataPoint.switchesFromGroups)
+    tabSwitchToGroup = tabSwitchToGroup.appended(dataPoint.switchesToGroups)
+    tabSwitchUngrouped =
+      tabSwitchUngrouped.appended(dataPoint.switchesOutsideGroups)
     return this
   }
 
@@ -36,4 +40,8 @@ class StatisticsData() {
       tabSwitchUngrouped.sum
     )
 
+  override def toString(): String = {
+    s"StatisticsData($numCurrentTabs, $openTabsGrouped, $openTabsUngrouped, $tabSwitchWithinGroups " +
+      s"$tabSwitchBetweenGroups, $tabSwitchFromGroup, $tabSwitchToGroup, $tabSwitchUngrouped)"
+  }
 }

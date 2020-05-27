@@ -26,7 +26,7 @@ object StatisticsEngine extends LazyLogging {
       logger.info("> Starting to collect statistics")
 
       while (true) {
-        Thread.sleep(23000)
+        Thread.sleep(20370)
 
         // derive the current window for aggregation
         val currentTimestamp = Instant.now.getEpochSecond()
@@ -158,8 +158,9 @@ object StatisticsEngine extends LazyLogging {
       dataPoints: List[DataPoint]
   ): StatisticsOutput = {
     val output = dataPoints.foldLeft(new StatisticsData()) {
-      case (output, dataPoint) => output.withDataPoint(dataPoint)
+      case (acc, dataPoint) => acc.withDataPoint(dataPoint)
     }
+    logger.debug(s"> Combined data into a single object ${output.toString()}")
     output.aggregated
   }
 }

@@ -11,7 +11,7 @@ object PersistenceEngine extends LazyLogging {
       logger.info("> Starting to persist state")
 
       while (true) {
-        Thread.sleep(43000)
+        Thread.sleep(129000)
 
         logger.info("> Persisting current state")
         TabSwitches.persist

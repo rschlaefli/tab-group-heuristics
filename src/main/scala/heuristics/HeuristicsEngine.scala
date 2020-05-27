@@ -26,7 +26,7 @@ object HeuristicsEngine extends LazyLogging {
       logger.info("> Starting to observe current tab state")
 
       while (true) {
-        Thread.sleep(59000)
+        Thread.sleep(590000)
 
         if (TabSwitches.tabGraph != null) {
 

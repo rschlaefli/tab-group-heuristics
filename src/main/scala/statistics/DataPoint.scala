@@ -19,4 +19,9 @@ class DataPoint(
     switchesToGroups = switchStatistics.switchesToGroups
     switchesOutsideGroups = switchStatistics.switchesOutsideGroups
   }
+
+  override def toString(): String = {
+    s"DataPoint($currentlyOpenTabs, $openTabsGrouped, $openTabsUngrouped, $switchesWithinGroups, " +
+      s"$switchesBetweenGroups, $switchesFromGroups, $switchesToGroups, $switchesOutsideGroups)"
+  }
 }

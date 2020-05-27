@@ -33,19 +33,25 @@ object TabSwitches extends LazyLogging with Persistable {
     val graphWithoutSelfEdges = graph --
       graph.edges.filter(edge => edge.from.equals(edge.to))
 
+    // remove the new tab page from the graph
+    val graphWithoutNewTab =
+      graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
+        node.value.title == "New Tab"
+      )
+
     // extract all edge weights
     val edgeWeightsThreshold = median(
-      graph.edges.map(edge => edge.weight).toArray
+      graphWithoutNewTab.edges.map(edge => edge.weight).toArray
     )
     logger.debug(s"> Computed threshold for edge weights $edgeWeightsThreshold")
 
     // remove all edges that have been traversed only few times
     // i.e., get rid of tab switches that have only occured few times
     val irrelevantEdges =
-      graphWithoutSelfEdges.edges.filter(edge =>
+      graphWithoutNewTab.edges.filter(edge =>
         edge.weight < edgeWeightsThreshold
       )
-    val graphWithoutIrrelevantEdges = graphWithoutSelfEdges -- irrelevantEdges
+    val graphWithoutIrrelevantEdges = graphWithoutNewTab -- irrelevantEdges
 
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
@@ -56,7 +62,7 @@ object TabSwitches extends LazyLogging with Persistable {
 
     logger.debug(
       s"> Performed graph cleanup: removed ${irrelevantEdges.size} edges and ${irrelevantNodes.size} nodes - " +
-        s"left with ${cleanGraph.edges.size} edges and ${cleanGraph.nodes.size} nodes"
+        s"left with ${cleanGraph.edges.size}/${cleanGraph.nodes.size} of ${graph.edges.size}/${graph.nodes.size} edges/nodes"
     )
 
     cleanGraph

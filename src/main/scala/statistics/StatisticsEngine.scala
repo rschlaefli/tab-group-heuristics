@@ -54,51 +54,54 @@ object StatisticsEngine extends LazyLogging {
         // process the tab switch queue
         val clusterAssignments = currentClustering._1
         val clusteredTabs = clusterAssignments.keySet
-        var tabSwitchStatistics: (Int, Int, Int, Int, Int) = null
+        var tabSwitchStatistics: Option[(Int, Int, Int, Int, Int)] = None
 
         tabSwitchQueue.synchronized {
           logger.debug(
             s"> Elements in tab switch queue: ${tabSwitchQueue.toString()}"
           )
 
-          tabSwitchStatistics = tabSwitchQueue
-            .dequeueAll(_ => true)
-            .map(tabSwitch => {
-              val (prevTab, newTab) = tabSwitch
+          tabSwitchStatistics = Some(
+            tabSwitchQueue
+              .dequeueAll(_ => true)
+              .map(tabSwitch => {
+                val (prevTab, newTab) = tabSwitch
 
-              val isPrevTabClustered =
-                clusteredTabs.contains(prevTab.hashCode())
-              val isNewTabClustered = clusteredTabs.contains(newTab.hashCode())
+                val isPrevTabClustered =
+                  clusteredTabs.contains(prevTab.hashCode())
+                val isNewTabClustered =
+                  clusteredTabs.contains(newTab.hashCode())
 
-              if (isPrevTabClustered && isNewTabClustered) {
-                // switch within a group
-                if (clusterAssignments(prevTab.hashCode())
-                      == clusterAssignments(newTab.hashCode())) {
-                  (1, 0, 0, 0, 0)
+                if (isPrevTabClustered && isNewTabClustered) {
+                  // switch within a group
+                  if (clusterAssignments(prevTab.hashCode())
+                        == clusterAssignments(newTab.hashCode())) {
+                    (1, 0, 0, 0, 0)
+                  } else {
+                    (0, 1, 0, 0, 0)
+                  }
+                } else if (isPrevTabClustered) {
+                  (0, 0, 1, 0, 0)
+                } else if (isNewTabClustered) {
+                  (0, 0, 0, 1, 0)
                 } else {
-                  (0, 1, 0, 0, 0)
+                  (0, 0, 0, 0, 1)
                 }
-              } else if (isPrevTabClustered) {
-                (0, 0, 1, 0, 0)
-              } else if (isNewTabClustered) {
-                (0, 0, 0, 1, 0)
-              } else {
-                (0, 0, 0, 0, 1)
+              })
+              .foldLeft((0, 0, 0, 0, 0)) {
+                case (
+                    (acc1, acc2, acc3, acc4, acc5),
+                    (val1, val2, val3, val4, val5)
+                    ) =>
+                  (
+                    acc1 + val1,
+                    acc2 + val2,
+                    acc3 + val3,
+                    acc4 + val4,
+                    acc5 + val5
+                  )
               }
-            })
-            .foldLeft((0, 0, 0, 0, 0)) {
-              case (
-                  (acc1, acc2, acc3, acc4, acc5),
-                  (val1, val2, val3, val4, val5)
-                  ) =>
-                (
-                  acc1 + val1,
-                  acc2 + val2,
-                  acc3 + val3,
-                  acc4 + val4,
-                  acc5 + val5
-                )
-            }
+          )
 
           logger.debug(
             s"> Tab switch queue aggregated to ${tabSwitchStatistics}"
@@ -106,38 +109,31 @@ object StatisticsEngine extends LazyLogging {
         }
 
         aggregationWindows.synchronized {
+          val (
+            switchesWithinGroups,
+            switchesBetweenGroups,
+            switchesFromGroups,
+            switchesToGroups,
+            switchesOutsideGroups
+          ) =
+            tabSwitchStatistics.getOrElse((0, 0, 0, 0, 0))
+
           // push the values into a window
           aggregationWindows.updateWith(fiveMinBlock) {
-            case Some(list) =>
-              Some(
-                list.appended(
-                  (
-                    currentlyOpenTabs.size,
-                    openTabsGrouped,
-                    openTabsUngrouped,
-                    tabSwitchStatistics._1,
-                    tabSwitchStatistics._2,
-                    tabSwitchStatistics._3,
-                    tabSwitchStatistics._4,
-                    tabSwitchStatistics._5
-                  )
+            _.map(
+              _.appended(
+                (
+                  currentlyOpenTabs.size,
+                  openTabsGrouped,
+                  openTabsUngrouped,
+                  switchesWithinGroups,
+                  switchesBetweenGroups,
+                  switchesFromGroups,
+                  switchesToGroups,
+                  switchesOutsideGroups
                 )
               )
-            case None =>
-              Some(
-                List(
-                  (
-                    currentlyOpenTabs.size,
-                    openTabsGrouped,
-                    openTabsUngrouped,
-                    tabSwitchStatistics._1,
-                    tabSwitchStatistics._2,
-                    tabSwitchStatistics._3,
-                    tabSwitchStatistics._4,
-                    tabSwitchStatistics._5
-                  )
-                )
-              )
+            ).orElse(Some(List()))
           }
 
           logger.debug(
@@ -149,7 +145,9 @@ object StatisticsEngine extends LazyLogging {
           aggregationWindows.filterInPlace((window, data) => {
             val isWindowExpired = window <= fiveMinBlock - 1
 
-            logger.debug(s"> Filtering window $window with data: ${data}")
+            logger.debug(
+              s"> Filtering window $window with data: ${data}, expired: ${isWindowExpired}"
+            )
 
             if (isWindowExpired) {
               val statistics = computeAggregateStatistics(data)
@@ -177,25 +175,51 @@ object StatisticsEngine extends LazyLogging {
   def computeAggregateStatistics(
       data: List[(Int, Int, Int, Int, Int, Int, Int, Int)]
   ): (Int, Int, Int, Int, Int, Int, Int, Int) = {
-    var numCurrentTabs = List[Int]()
-    var openTabsGrouped = List[Int]()
-    var openTabsUngrouped = List[Int]()
-    var tabSwitchWithinGroups = List[Int]()
-    var tabSwitchBetweenGroups = List[Int]()
-    var tabSwitchFromGroup = List[Int]()
-    var tabSwitchToGroup = List[Int]()
-    var tabSwitchUngrouped = List[Int]()
-
-    data.foreach(tuple => {
-      numCurrentTabs.appended(tuple._1)
-      openTabsGrouped.appended(tuple._2)
-      openTabsUngrouped.appended(tuple._3)
-      tabSwitchWithinGroups.appended(tuple._4)
-      tabSwitchBetweenGroups.appended(tuple._5)
-      tabSwitchFromGroup.appended(tuple._6)
-      tabSwitchToGroup.appended(tuple._7)
-      tabSwitchUngrouped.appended(tuple._8)
-    })
+    val (
+      numCurrentTabs,
+      openTabsGrouped,
+      openTabsUngrouped,
+      tabSwitchWithinGroups,
+      tabSwitchBetweenGroups,
+      tabSwitchFromGroup,
+      tabSwitchToGroup,
+      tabSwitchUngrouped
+    ) = data.foldLeft(
+      (
+        List[Int](),
+        List[Int](),
+        List[Int](),
+        List[Int](),
+        List[Int](),
+        List[Int](),
+        List[Int](),
+        List[Int]()
+      )
+    ) {
+      case (
+          (
+            numCurrentTabs,
+            openTabsGrouped,
+            openTabsUngrouped,
+            tabSwitchWithinGroups,
+            tabSwitchBetweenGroups,
+            tabSwitchFromGroup,
+            tabSwitchToGroup,
+            tabSwitchUngrouped
+          ),
+          (val1, val2, val3, val4, val5, val6, val7, val8)
+          ) =>
+        (
+          numCurrentTabs.appended(val1),
+          openTabsGrouped.appended(val2),
+          openTabsUngrouped.appended(val3),
+          tabSwitchWithinGroups.appended(val4),
+          tabSwitchBetweenGroups.appended(val5),
+          tabSwitchFromGroup.appended(val6),
+          tabSwitchToGroup.appended(val7),
+          tabSwitchUngrouped.appended(val8)
+        )
+    }
 
     (
       median(numCurrentTabs.toArray),

@@ -23,9 +23,9 @@ import tabstate.Tab
 object Watset extends App with LazyLogging {
   def apply(
       graph: Graph[Tab, WDiEdge]
-  ): (mutable.Map[Int, Int], List[Set[Tab]]) = {
+  ): List[Set[Tab]] = {
     if (graph == null) {
-      return (mutable.Map(), List())
+      return List()
     }
 
     val watsetGraph = buildWatsetGraph(graph)
@@ -33,12 +33,12 @@ object Watset extends App with LazyLogging {
     if (watsetGraph
           .vertexSet()
           .size() < 2 || watsetGraph.edgeSet().size() == 0) {
-      return (mutable.Map(), List())
+      return List()
     }
 
-    val markovClusters = computeClustersMarkov(watsetGraph)
+    val clusters = computeClustersMarkov(watsetGraph)
 
-    processClusters(markovClusters)
+    clusters.map(cluster => cluster.asScala.toSet)
   }
 
   def buildWatsetGraph(
@@ -68,7 +68,7 @@ object Watset extends App with LazyLogging {
 
   def computeClustersMarkov(
       graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
-  ): ju.Collection[ju.Collection[Tab]] = {
+  ): List[ju.Collection[Tab]] = {
     val markovClusters = new MarkovClustering(graph, 2, 2)
     markovClusters.fit()
 
@@ -76,36 +76,6 @@ object Watset extends App with LazyLogging {
       s"Clusters (markov): ${markovClusters.getClusters().toString()}"
     )
 
-    markovClusters.getClusters()
-  }
-
-  def processClusters(
-      clusters: ju.Collection[ju.Collection[Tab]]
-  ): (mutable.Map[Int, Int], List[Set[Tab]]) = {
-    // preapre an index for which tab is stored in which cluster
-    val clusterIndex: mutable.Map[Int, Int] = mutable.Map[Int, Int]()
-
-    // prepare a return container for the clusters
-    val clusterList = clusters.asScala.toList.zipWithIndex.flatMap {
-      // case (cluster, index) if cluster.size > 3 => {
-      case (cluster, index) if cluster.size > 1 => {
-        val clusterMembers = cluster.asScala.toSet
-
-        clusterMembers.foreach(tab => {
-          clusterIndex(tab.hashCode()) = index
-        })
-
-        logger.debug(s"> Cluster $index contains ${clusterMembers.toString()}")
-
-        List(clusterMembers)
-      }
-      case _ => List()
-    }
-
-    logger.debug(
-      s"> Computed overall index $clusterIndex for ${clusterList.length} clusters"
-    )
-
-    (clusterIndex, clusterList)
+    markovClusters.getClusters().asScala.toList
   }
 }

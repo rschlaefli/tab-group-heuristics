@@ -13,8 +13,9 @@ import tabstate._
 import messaging._
 
 object HeuristicsEngine extends LazyLogging {
-  var clusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
+  var automatedClusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
     (mutable.Map(), List())
+  var automatedTitles: List[String] = List()
 
   var manualClusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
     (mutable.Map(), List())
@@ -37,25 +38,28 @@ object HeuristicsEngine extends LazyLogging {
 
           // computing clusters
           logger.debug(s"> Computing tab clusters")
-          clusters.synchronized {
+          automatedClusters.synchronized {
             val computedClusters = Watset(cleanTabSwitchGraph)
-            clusters = processClusters(computedClusters)
+            automatedClusters = processClusters(computedClusters)
           }
 
           // generating cluster titles
           logger.debug(s"> Generating tab cluster titles")
-          val clustersWithTitles = clusters._2.map(tabCluster => {
-            val keywords = KeywordExtraction(tabCluster)
-            (keywords.mkString(" "), tabCluster)
-          })
+          automatedTitles.synchronized {
+            val clustersWithTitles = automatedClusters._2.map(tabCluster => {
+              val keywords = KeywordExtraction(tabCluster)
+              (keywords.mkString(" "), tabCluster)
+            })
+            automatedTitles = clustersWithTitles.map(_._1)
 
-          // update the markov clusters stored in the webextension
-          if (clustersWithTitles.size >= 0) {
-            logger.debug(s"> Updating tab clusters in the webextension")
-            NativeMessaging.writeNativeMessage(
-              IO.out,
-              HeuristicsAction("UPDATE_GROUPS", clustersWithTitles.asJson)
-            )
+            // update the markov clusters stored in the webextension
+            if (clustersWithTitles.size >= 0) {
+              logger.debug(s"> Updating tab clusters in the webextension")
+              NativeMessaging.writeNativeMessage(
+                IO.out,
+                HeuristicsAction("UPDATE_GROUPS", clustersWithTitles.asJson)
+              )
+            }
           }
         }
       }
@@ -99,5 +103,12 @@ object HeuristicsEngine extends LazyLogging {
     manualClusters.synchronized {
       manualClusters = processClusters(groupsAsTabSets)
     }
+  }
+
+  def clusters = {
+    (
+      manualClusters._1 ++ automatedClusters._1,
+      manualClusters._2 ++ automatedClusters._2
+    )
   }
 }

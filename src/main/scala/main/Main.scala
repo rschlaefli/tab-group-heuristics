@@ -24,13 +24,6 @@ import statistics._
 
 object Main extends App with LazyLogging {
 
-  // add a shutdown hook that persists data upon shutdown
-  sys.addShutdownHook({
-    logger.info("> Shutting down...")
-    PersistenceEngine.persistCurrentState
-    System.exit(143)
-  })
-
   val io = IO()
 
   logger.info("> Bootstrapping tab grouping heuristics")
@@ -58,6 +51,17 @@ object Main extends App with LazyLogging {
   statisticsThread.start()
 
   logger.info(s"> Daemons started (${Thread.activeCount()})")
+
+  // add a shutdown hook that persists data upon shutdown
+  sys.addShutdownHook({
+    logger.info("> Shutting down...")
+    persistenceThread.interrupt()
+    tabStateThread.interrupt()
+    nativeMessagingThread.interrupt()
+    statisticsThread.interrupt()
+    PersistenceEngine.persistCurrentState
+    System.exit(143)
+  })
 
   // setup a continually running
   val heuristicsThread = HeuristicsEngine()

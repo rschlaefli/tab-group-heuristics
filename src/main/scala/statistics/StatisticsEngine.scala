@@ -120,7 +120,7 @@ object StatisticsEngine extends LazyLogging {
 
           // push the values into a window
           aggregationWindows.updateWith(fiveMinBlock) {
-            _.map(_.appended(dataPoint)).orElse(Some(List()))
+            _.map(_.appended(dataPoint)).orElse(Some(List(dataPoint)))
           }
 
           logger.debug(

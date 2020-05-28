@@ -14,7 +14,7 @@ class DataPoint(
 
   def updateSwitchStatistics(switchStatistics: SwitchStatistics): Unit = {
     switchesWithinGroups = switchStatistics.switchesWithinGroups
-    switchesBetweenGroups = switchStatistics.switchesWithinGroups
+    switchesBetweenGroups = switchStatistics.switchesBetweenGroups
     switchesFromGroups = switchStatistics.switchesFromGroups
     switchesToGroups = switchStatistics.switchesToGroups
     switchesOutsideGroups = switchStatistics.switchesOutsideGroups

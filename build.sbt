@@ -38,9 +38,9 @@ mappings in (Universal, packageZipTarball) += file(
   "deployment/install-linux.sh"
 ) -> "install-linux.sh"
 mappings in (Universal, packageZipTarball) += file(
-  "deployment/install-mac.sh"
-) -> "install-mac.sh"
-// mappings in (Universal, packageOsxDmg) += file("scripts/install-linux.sh") -> "install.sh"
+  "deployment/install-mac.command"
+) -> "install-mac.command"
+// mappings in (Universal, packageOsxDmg) += file("scripts/install-mac.command") -> "install-mac.command"
 
 enablePlugins(JavaAppPackaging)
 enablePlugins(UniversalPlugin)

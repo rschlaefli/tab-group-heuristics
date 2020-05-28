@@ -106,7 +106,7 @@ object TabEvent extends LazyLogging {
         )
       }
 
-      case "UPDATE_GROUPS" => {
+      case "INIT_GROUPS" => {
         Utils.extractDecoderResult(
           cursor.get[TabGroupUpdateEvent]("payload")
         )

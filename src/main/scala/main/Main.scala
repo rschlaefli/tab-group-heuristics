@@ -12,7 +12,6 @@ import java.io.BufferedOutputStream
 import java.io.BufferedInputStream
 import scala.util.{Either, Try, Success, Failure}
 import java.io.OutputStream
-import scala.collection.mutable.Queue
 import scala.collection.mutable.{Map, Queue}
 import io.circe.Json
 
@@ -25,34 +24,9 @@ import statistics._
 
 object Main extends App with LazyLogging {
 
-  var in: InputStream = null
-  var out: OutputStream = null
-
-  try {
-    System.in.available()
-    in = new BufferedInputStream(System.in)
-    out = new BufferedOutputStream(System.out)
-
-    // let the tab extension know that heuristics are ready
-    // the web extension will then return the list of current tabs
-    NativeMessaging.writeNativeMessage(
-      out,
-      HeuristicsAction("QUERY_TABS", Json.Null)
-    )
-  } catch {
-    case ioException: IOException => {
-      // TODO: send a message to the browser (IO unavailable)
-
-      // if the input channel is unavailable, log an error and exit the program
-      logger.error(ioException.getMessage())
-      System.exit(1)
-    }
-  }
+  val io = IO()
 
   logger.info("> Bootstrapping tab grouping heuristics")
-
-  // initialize the tab state and update queue
-  val tabEventsQueue = new Queue[TabEvent](20)
 
   // read persisted state and initialize
   PersistenceEngine.restoreInitialState
@@ -60,10 +34,10 @@ object Main extends App with LazyLogging {
   logger.info("> Starting threads")
 
   // setup a continuous iterator for native message retrieval
-  val nativeMessagingThread = NativeMessaging(in, tabEventsQueue)
+  val nativeMessagingThread = NativeMessaging(IO.in, TabState.tabEventsQueue)
 
   // setup a continuous iterator for event processing
-  val tabStateThread = TabState(tabEventsQueue)
+  val tabStateThread = TabState()
 
   // setup a thread for the persistence engine
   val persistenceThread = PersistenceEngine()

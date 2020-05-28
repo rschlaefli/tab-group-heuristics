@@ -5,11 +5,11 @@ import scala.collection.mutable.{Map, Queue}
 import scalax.collection.Graph
 import scalax.collection.edge.WDiEdge
 import org.slf4j.MarkerFactory
+import io.circe.Json
 
 import messaging._
-import heuristics.TabSwitches
+import heuristics._
 import util.Utils
-import heuristics.HeuristicsEngine
 
 object TabState extends LazyLogging {
   val logToCsv = MarkerFactory.getMarker("CSV")
@@ -19,7 +19,21 @@ object TabState extends LazyLogging {
 
   var currentTabs = Map[Int, Tab]()
 
-  def apply(tabEventsQueue: Queue[TabEvent]): Thread = {
+  var tabEventsQueue: Queue[TabEvent] = new Queue[TabEvent](20)
+
+  def apply(): Thread = {
+
+    // query the webextension for the list of current tabs
+    NativeMessaging.writeNativeMessage(
+      IO.out,
+      HeuristicsAction("QUERY_TABS", Json.Null)
+    )
+
+    // query the webextension for the list of current groups
+    NativeMessaging.writeNativeMessage(
+      IO.out,
+      HeuristicsAction("QUERY_GROUPS", Json.Null)
+    )
 
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")

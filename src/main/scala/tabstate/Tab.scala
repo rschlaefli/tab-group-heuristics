@@ -11,23 +11,22 @@ sealed trait Tabs
 // augmented with url variations and hashes thereof
 // ref: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab
 case class Tab(
-    hash: String,
-    origin: String,
-    originHash: String,
-    baseHash: String,
-    baseUrl: String,
-    active: Boolean,
-    // highlighted: Boolean,
+    // Tabs.Tab properties that are important for grouping
     id: Int,
     index: Int,
-    // lastAccessed: Double,
+    lastAccessed: Option[Double],
     openerTabId: Option[Int],
     pinned: Boolean,
     sessionId: Option[Int],
     successorTabId: Option[Int],
     title: String,
     url: String,
-    windowId: Int
+    windowId: Int,
+    // derived properties
+    normalizedTitle: String,
+    hash: String,
+    origin: String,
+    baseUrl: String
 ) extends Tabs {
 
   // override canEqual, equals, and hashCode to ensure that tabs are compared by base hash
@@ -45,7 +44,7 @@ case class Tab(
   override def hashCode(): Int = hash.hashCode()
 
   // override toString to reduce clutter in graph representations
-  override def toString(): String = s"$title (${hashCode()})"
+  override def toString(): String = s"$normalizedTitle (${hashCode()})"
 }
 
 object Tab {
@@ -54,22 +53,20 @@ object Tab {
   implicit val tabEncoder: Encoder[Tab] = deriveEncoder
 
   def fromEvent(event: TabUpdateEvent): Tab = new Tab(
-    event.hash,
-    event.origin,
-    event.originHash,
-    event.baseHash,
-    event.baseUrl,
-    event.active,
     event.id,
     event.index,
-    // event.lastAccessed,
+    event.lastAccessed,
     event.openerTabId,
     event.pinned,
     event.sessionId,
     event.successorTabId,
     event.title,
     event.url,
-    event.windowId
+    event.windowId,
+    event.normalizedTitle,
+    event.hash,
+    event.origin,
+    event.baseUrl
   )
 
 }

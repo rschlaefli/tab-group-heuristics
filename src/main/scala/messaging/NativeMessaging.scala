@@ -5,9 +5,11 @@ import com.typesafe.scalalogging.LazyLogging
 import java.io.InputStream
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._
+import java.io.OutputStream
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import util.Utils
-import java.io.OutputStream
 
 object NativeMessaging extends LazyLogging {
   def apply(
@@ -16,6 +18,7 @@ object NativeMessaging extends LazyLogging {
   ): Thread = {
     val thread = new Thread(() => {
       logger.info("> Starting to listen for messages")
+
       Iterator
         .continually(readNativeMessage(in))
         // flatten to get rid of any null values (None)
@@ -36,7 +39,6 @@ object NativeMessaging extends LazyLogging {
 
     thread.setName("NativeMessaging")
     thread.setDaemon(true)
-
     thread
   }
 
@@ -81,7 +83,7 @@ object NativeMessaging extends LazyLogging {
       .map(byteArrayToString)
 
     // TODO: is it any use to sleep here?
-    Thread.sleep(100)
+    // Thread.sleep(100)
 
     message
   }
@@ -89,7 +91,7 @@ object NativeMessaging extends LazyLogging {
   def writeNativeMessage(
       out: OutputStream,
       heuristicsAction: HeuristicsAction
-  ) = {
+  ): Future[Unit] = Future {
     // encode the action in a json string
     val message = heuristicsAction.asJson.toString()
 
@@ -99,7 +101,9 @@ object NativeMessaging extends LazyLogging {
     // store the length of the message as a byte array
     val msgLength = msgBytes.length
     val lengthBytes = intToByteArray(msgLength)
-    logger.info(s"Writing native message with length $msgLength")
+    logger.debug(
+      s"> Pushing action ${heuristicsAction.action} with message length $msgLength"
+    )
 
     // write the message to stdout
     out.write(lengthBytes)

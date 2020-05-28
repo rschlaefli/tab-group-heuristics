@@ -33,6 +33,30 @@
       "command": "sbt universal:packageOsxDmg",
       "group": "build",
       "problemMatcher": []
+    },
+    {
+      "label": "observe:debug",
+      "type": "shell",
+      "command": "tail -f -n 20 target/universal/stage/bin/debug.log",
+      "problemMatcher": []
+    },
+    {
+      "label": "observe:main",
+      "type": "shell",
+      "command": "tail -f -n 20 target/universal/stage/bin/main.log",
+      "problemMatcher": []
+    },
+    {
+      "label": "observe:stats",
+      "type": "shell",
+      "command": "tail -f -n 20 target/universal/stage/bin/statistics.csv",
+      "problemMatcher": []
+    },
+    {
+      "label": "observe:events",
+      "type": "shell",
+      "command": "tail -f -n 20 target/universal/stage/bin/tab_events.csv",
+      "problemMatcher": []
     }
   ]
 }

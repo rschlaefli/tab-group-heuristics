@@ -4,21 +4,34 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.{Map, Queue}
 import scalax.collection.Graph
 import scalax.collection.edge.WDiEdge
+import org.slf4j.MarkerFactory
+import io.circe.Json
 
 import messaging._
-import heuristics.TabSwitches
-import util._
+import heuristics._
+import util.Utils
 
 object TabState extends LazyLogging {
+  val logToCsv = MarkerFactory.getMarker("CSV")
+
   var activeTab = -1
   var activeWindow = -1
 
   var currentTabs = Map[Int, Tab]()
 
-  def apply(tabEventsQueue: Queue[TabEvent]): Thread = {
+  var tabEventsQueue: Queue[TabEvent] = new Queue[TabEvent](20)
+
+  def apply(): Thread = {
+
+    // query the webextension for the list of current tabs
+    NativeMessaging.writeNativeMessage(IO.out, HeuristicsAction.QUERY_TABS)
+
+    // query the webextension for the list of current groups
+    NativeMessaging.writeNativeMessage(IO.out, HeuristicsAction.QUERY_GROUPS)
 
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")
+
       Iterator
         .continually(dequeueTabEvent(tabEventsQueue))
         .foreach(processEvent)
@@ -26,7 +39,6 @@ object TabState extends LazyLogging {
 
     thread.setName("TabState")
     thread.setDaemon(true)
-
     thread
   }
 
@@ -44,7 +56,13 @@ object TabState extends LazyLogging {
 
     event match {
       case TabInitializationEvent(initialTabs) => {
-        currentTabs ++= initialTabs.map(tab => (tab.id, tab))
+        currentTabs ++= initialTabs.map(tab => {
+          logger.info(
+            logToCsv,
+            s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};;;;"
+          )
+          (tab.id, tab)
+        })
 
         TabSwitches.processInitialTabs(initialTabs)
 
@@ -53,14 +71,28 @@ object TabState extends LazyLogging {
         )
       }
 
+      case TabGroupUpdateEvent(tabGroups) => {
+        logger.debug(
+          s"> Updating tab groups to $tabGroups"
+        )
+
+        logger.info(logToCsv, s"UPDATE_GROUPS;;;;;;;;")
+
+        HeuristicsEngine.updateManualClusters(tabGroups)
+      }
+
       case updateEvent: TabUpdateEvent => {
         // build a new tab object from the received tab data
         val tab = Tab.fromEvent(updateEvent)
 
+        logger.info(
+          logToCsv,
+          s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};;;;"
+        )
+
         currentTabs.synchronized {
           TabSwitches.processTabSwitch(currentTabs.get(tab.id), tab)
           currentTabs.update(tab.id, tab)
-
         }
       }
 
@@ -68,7 +100,7 @@ object TabState extends LazyLogging {
         activeTab = id
         activeWindow = windowId
 
-        logger.info(
+        logger.debug(
           s"> Processing switch from $previousTabId to $id in window $windowId"
         )
 
@@ -76,12 +108,24 @@ object TabState extends LazyLogging {
         if (currentTabs.contains(id) && previousTabId.isDefined) {
           val previousTab = currentTabs.get(previousTabId.get)
           val currentTab = currentTabs.get(id).get
+
+          val csvRow = previousTab match {
+            case Some(tab) =>
+              s"SWITCH;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
+            case None =>
+              s"SWITCH;;;;;${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
+          }
+
+          logger.info(logToCsv, csvRow)
+
           TabSwitches.processTabSwitch(previousTab, currentTab)
         }
 
       }
 
       case TabRemoveEvent(id, windowId) => {
+        logger.info(logToCsv, s"REMOVE;${id};;;;;;;")
+
         currentTabs.synchronized {
           currentTabs -= (id)
         }

@@ -13,8 +13,12 @@ import scala.collection.mutable.Map
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._
 import scala.util.Try
+import smile.math.MathEx._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-import tabstate.{Tabs, Tab, TabState}
+import statistics.StatisticsEngine
+import tabstate.{TabState, Tab}
 import persistence.Persistable
 
 object TabSwitches extends LazyLogging with Persistable {
@@ -29,31 +33,39 @@ object TabSwitches extends LazyLogging with Persistable {
     val graphWithoutSelfEdges = graph --
       graph.edges.filter(edge => edge.from.equals(edge.to))
 
-    // remove the new tab "root"
-    // val graphWithoutNewTab =
-    //   graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
-    //     node.hashCode() == -836262972 || node.hashCode() == -35532496
-    //   )
+    // remove the new tab page from the graph
+    val graphWithoutNewTab =
+      graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
+        node.value.title == "New Tab"
+      )
 
-    // // extract all edge weights
-    // TODO: extract all edges except values in the top-5% or similar
-    // val edgeWeights = q3(graph.edges.map(edge => edge.weight))
+    // extract all edge weights
+    val edgeWeightsThreshold = median(
+      graphWithoutNewTab.edges.map(edge => edge.weight).toArray
+    )
+    logger.debug(s"> Computed threshold for edge weights $edgeWeightsThreshold")
 
     // remove all edges that have been traversed only few times
     // i.e., get rid of tab switches that have only occured few times
-    val graphWithoutIrrelevantEdges =
-      graphWithoutSelfEdges -- graphWithoutSelfEdges.edges.filter(edge =>
-        edge.weight < 3
-      // edge.weight < 1
+    val irrelevantEdges =
+      graphWithoutNewTab.edges.filter(edge =>
+        edge.weight < edgeWeightsThreshold
       )
+    val graphWithoutIrrelevantEdges = graphWithoutNewTab -- irrelevantEdges
 
     // remove all nodes that have a very low incoming weight
     // i.e., remove nodes that have been switched to few times
-    graphWithoutIrrelevantEdges -- graphWithoutIrrelevantEdges.nodes.filter(
-      node => node.incoming.map(edge => edge.weight).sum < 5
-      // node => node.incoming.map(edge => edge.weight).sum < 1
+    val irrelevantNodes = graphWithoutIrrelevantEdges.nodes.filter(node =>
+      node.incoming.map(edge => edge.weight).sum < edgeWeightsThreshold
+    )
+    val cleanGraph = graphWithoutIrrelevantEdges -- irrelevantNodes
+
+    logger.debug(
+      s"> Performed graph cleanup: removed ${irrelevantEdges.size} edges and ${irrelevantNodes.size} nodes - " +
+        s"left with ${cleanGraph.edges.size}/${cleanGraph.nodes.size} of ${graph.edges.size}/${graph.nodes.size} edges/nodes"
     )
 
+    cleanGraph
   }
 
   def processInitialTabs(initialTabs: List[Tab]) = {
@@ -68,27 +80,24 @@ object TabSwitches extends LazyLogging with Persistable {
     * @param previousTab
     * @param currentTab
     */
-  def processTabSwitch(previousTab: Option[Tab], currentTab: Tab) {
+  def processTabSwitch(previousTab: Option[Tab], currentTab: Tab): Unit = {
     tabGraph += currentTab
 
-    val hashedTitle = currentTab.title
-      .replaceAll("[^a-zA-Z ]", " ")
-      .replaceAll("\\s\\s+", " ")
     val tabHashContent =
-      s"${currentTab.baseUrl} ${hashedTitle}"
+      s"${currentTab.baseUrl} ${currentTab.normalizedTitle}"
 
     tabHashes.update(currentTab.hash, tabHashContent)
 
-    // check if the location of the tab changes in this update
-    // if yes, we need to also account for the tab switch
-    // TODO: does this make sense or is that update only happening if we leave a tab completely?
     if (previousTab.isDefined) {
       val prevTab = previousTab.get
 
       if (prevTab.hash != currentTab.hash) {
-        logger.info(
-          s"Processing fake tab switch for tab ${currentTab.id}"
-        )
+        Future {
+          StatisticsEngine.tabSwitchQueue.synchronized {
+            // add the tab switch to the statistics switch queue
+            StatisticsEngine.tabSwitchQueue.enqueue((prevTab, currentTab))
+          }
+        }
 
         tabSwitches.updateWith(prevTab.hash)((switchMap) => {
           val map = switchMap.getOrElse(Map((currentTab.hash, 0)))

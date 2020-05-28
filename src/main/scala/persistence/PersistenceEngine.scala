@@ -12,9 +12,7 @@ object PersistenceEngine extends LazyLogging {
 
       while (true) {
         Thread.sleep(129000)
-
-        logger.info("> Persisting current state")
-        TabSwitches.persist
+        persistCurrentState
       }
     })
 
@@ -27,5 +25,10 @@ object PersistenceEngine extends LazyLogging {
     logger.info("> Restoring initial state")
 
     TabSwitches.restore
+  }
+
+  def persistCurrentState = {
+    logger.info("> Persisting current state")
+    TabSwitches.persist
   }
 }

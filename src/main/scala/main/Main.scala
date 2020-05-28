@@ -24,6 +24,13 @@ import statistics._
 
 object Main extends App with LazyLogging {
 
+  // add a shutdown hook that persists data upon shutdown
+  sys.addShutdownHook({
+    logger.info("> Shutting down...")
+    PersistenceEngine.persistCurrentState
+    System.exit(143)
+  })
+
   val io = IO()
 
   logger.info("> Bootstrapping tab grouping heuristics")

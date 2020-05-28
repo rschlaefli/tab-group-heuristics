@@ -57,7 +57,7 @@ object HeuristicsEngine extends LazyLogging {
               logger.debug(s"> Updating tab clusters in the webextension")
               NativeMessaging.writeNativeMessage(
                 IO.out,
-                HeuristicsAction("UPDATE_GROUPS", clustersWithTitles.asJson)
+                HeuristicsAction.UPDATE_GROUPS(clustersWithTitles.asJson)
               )
             }
           }

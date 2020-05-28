@@ -11,6 +11,10 @@ import tabstate.{Tab, TabState}
 import util.Utils
 import heuristics.HeuristicsEngine
 import statistics._
+import messaging.NativeMessaging
+import messaging.HeuristicsAction
+import messaging.IO
+import io.circe.Json
 
 object StatisticsEngine extends LazyLogging {
   val logToCsv = MarkerFactory.getMarker("CSV")
@@ -146,6 +150,9 @@ object StatisticsEngine extends LazyLogging {
           })
         }
 
+        // refresh the manual tab groups for the next iteration
+        NativeMessaging
+          .writeNativeMessage(IO.out, HeuristicsAction.QUERY_GROUPS)
       }
     })
 

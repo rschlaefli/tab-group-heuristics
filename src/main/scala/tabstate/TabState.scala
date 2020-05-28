@@ -24,16 +24,10 @@ object TabState extends LazyLogging {
   def apply(): Thread = {
 
     // query the webextension for the list of current tabs
-    NativeMessaging.writeNativeMessage(
-      IO.out,
-      HeuristicsAction("QUERY_TABS", Json.Null)
-    )
+    NativeMessaging.writeNativeMessage(IO.out, HeuristicsAction.QUERY_TABS)
 
     // query the webextension for the list of current groups
-    NativeMessaging.writeNativeMessage(
-      IO.out,
-      HeuristicsAction("QUERY_GROUPS", Json.Null)
-    )
+    NativeMessaging.writeNativeMessage(IO.out, HeuristicsAction.QUERY_GROUPS)
 
     val thread = new Thread(() => {
       logger.info("> Starting to process tab events")

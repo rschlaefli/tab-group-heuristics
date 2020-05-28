@@ -10,9 +10,7 @@ io.circe.syntax._
 import java.{util => ju}
 
 import tabstate._
-import messaging.NativeMessaging
-import main.Main
-import messaging.HeuristicsAction
+import messaging._
 
 object HeuristicsEngine extends LazyLogging {
   var clusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
@@ -55,7 +53,7 @@ object HeuristicsEngine extends LazyLogging {
           if (clustersWithTitles.size >= 0) {
             logger.debug(s"> Updating tab clusters in the webextension")
             NativeMessaging.writeNativeMessage(
-              Main.out,
+              IO.out,
               HeuristicsAction("UPDATE_GROUPS", clustersWithTitles.asJson)
             )
           }

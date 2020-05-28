@@ -15,11 +15,11 @@ io.circe.syntax._
 import scala.util.Try
 import smile.math.MathEx._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 import statistics.StatisticsEngine
 import tabstate.{TabState, Tab}
 import persistence.Persistable
-import scala.concurrent.Future
 
 object TabSwitches extends LazyLogging with Persistable {
 

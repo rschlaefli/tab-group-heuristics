@@ -12,6 +12,14 @@ lazy val tabs = (project in file("."))
     packageDescription := """Heuristics backend for the Automated Tab Organization WebExtension""",
     wixProductId := "25695a01-bd23-4155-a430-6ef8be4babfa",
     wixProductUpgradeId := "9b2f86fa-aa0d-4b12-ac73-6831f4628329",
+    // wixProductConfig := <Component Id="NativeMessagingRegistryKeys">
+    //   <RegistryKey Id='ChromeManifestLocation' Root='HKLM' Key='SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
+    //       <RegistryValue Type='string' Value='[INSTALLDIR]manifest-chrome-win.json'/>
+    //   </RegistryKey>
+    //   <RegistryKey Id='FirefoxManifestLocation' Root='HKLM' Key='Software\Mozilla\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
+    //       <RegistryValue Type='string' Value='[INSTALLDIR]manifest-firefox-win.json'/>
+    //   </RegistryKey>
+    // </Component>,
     libraryDependencies ++= runtimeDependencies,
     libraryDependencies ++= testingDependencies
   )
@@ -49,9 +57,10 @@ mappings in Windows += file(
 mappings in Windows += file(
   "deployment/manifest-firefox-win.json"
 ) -> "manifest-firefox-win.json"
-// wixFiles := Seq(
-//   file("deployments/wix/winpkg.wxs")
-// )
+
+wixFiles := Seq(
+  file("deployment/wix/package.wxs"),
+)
 
 enablePlugins(JavaAppPackaging)
 enablePlugins(UniversalPlugin)

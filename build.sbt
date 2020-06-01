@@ -40,7 +40,10 @@ mappings in (Universal, packageZipTarball) += file(
 mappings in (Universal, packageZipTarball) += file(
   "deployment/install-mac.command"
 ) -> "install-mac.command"
-// mappings in (Universal, packageOsxDmg) += file("scripts/install-mac.command") -> "install-mac.command"
+
+wixFiles := Seq(
+  file("deployments/wix/winpkg.wxs")
+)
 
 enablePlugins(JavaAppPackaging)
 enablePlugins(UniversalPlugin)

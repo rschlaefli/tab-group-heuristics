@@ -437,10 +437,10 @@
                 </RegistryKey>
               </Component>
             <Component Id="RegistryEntries64" Guid="18392396-dae0-42dc-b112-9c431d315da4" Win64="yes">
-                <RegistryKey Id='ChromeManifestLocation' Root='HKLM' Key='SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
+                <RegistryKey Id='ChromeManifestLocation64' Root='HKLM' Key='SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
                     <RegistryValue Type='string' Value='[INSTALLDIR]manifest-chrome-win.json'/>
                 </RegistryKey>
-                <RegistryKey Id='FirefoxManifestLocation' Root='HKLM' Key='SOFTWARE\Mozilla\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
+                <RegistryKey Id='FirefoxManifestLocation64' Root='HKLM' Key='SOFTWARE\Mozilla\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
                     <RegistryValue Type='string' Value='[INSTALLDIR]manifest-firefox-win.json'/>
                 </RegistryKey>
               </Component>

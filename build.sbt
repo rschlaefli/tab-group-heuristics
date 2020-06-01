@@ -41,9 +41,17 @@ mappings in (Universal, packageZipTarball) += file(
   "deployment/install-mac.command"
 ) -> "install-mac.command"
 
-wixFiles := Seq(
-  file("deployments/wix/winpkg.wxs")
-)
+// windows configuration
+mappings in Windows := (mappings in Universal).value
+mappings in Windows += file(
+  "deployment/manifest-chrome-win.json"
+) -> "manifest-chrome-win.json"
+mappings in Windows += file(
+  "deployment/manifest-firefox-win.json"
+) -> "manifest-firefox-win.json"
+// wixFiles := Seq(
+//   file("deployments/wix/winpkg.wxs")
+// )
 
 enablePlugins(JavaAppPackaging)
 enablePlugins(UniversalPlugin)

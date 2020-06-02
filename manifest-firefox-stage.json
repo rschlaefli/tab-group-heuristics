@@ -1,0 +1,7 @@
+{
+  "name": "tabs",
+  "description": "Host for Automated Tab Organization",
+  "path": "/home/roland/git/uzh/automated-tab-organization/tab-group-heuristics/target/universal/stage/bin/tabs",
+  "type": "stdio",
+  "allowed_extensions": ["automated-tab-organization@rschlaefli"]
+}

@@ -82,8 +82,7 @@ object NativeMessaging extends LazyLogging {
       .flatten
       .map(byteArrayToString)
 
-    // TODO: is it any use to sleep here?
-    // Thread.sleep(100)
+    Thread.sleep(50)
 
     message
   }

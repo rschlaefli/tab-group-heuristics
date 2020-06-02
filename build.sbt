@@ -1,6 +1,6 @@
 import Dependencies._
 
-ThisBuild / version := "0.2.0-alpha.2"
+ThisBuild / version := "0.2.0"
 ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / organization := "ch.uzh.rschlaefli"
 
@@ -59,7 +59,7 @@ mappings in Windows += file(
 ) -> "manifest-firefox-win.json"
 
 wixFiles := Seq(
-  file("deployment/wix/package.wxs"),
+  file("deployment/wix/package.wxs")
 )
 
 enablePlugins(JavaAppPackaging)

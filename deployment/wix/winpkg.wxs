@@ -1,9 +1,22 @@
-<?xml version='1.0' encoding='windows-1252'?>
-<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
-    <RegistryKey Id='ChromeManifestLocation' Root='HKLM' Key='SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
-        <RegistryValue Type='string' Value='[INSTALLDIR]manifest-chrome-win.json'/>
-    </RegistryKey>
-
-    <RegistryKey Id='FirefoxManifestLocation' Root='HKLM' Key='Software\Mozilla\NativeMessagingHosts\tabs' Action='createAndRemoveOnUninstall'>
-        <RegistryValue Type='string' Value='[INSTALLDIR]manifest-firefox-win.json'/>
-    </RegistryKey>
+<DirectoryRef Id="INSTALLDIR">
+    <Component Id="RegistryEntries" Guid="53c6553a-58ae-4ec6-a96c-33309f15a144">
+        <RegistryKey Id="ChromeManifestLocation" Root="HKLM" Key="SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs" Action="createAndRemoveOnUninstall">
+            <RegistryValue Type="string" Value="[INSTALLDIR]manifest-chrome-win.json" />
+        </RegistryKey>
+        <RegistryKey Id="FirefoxManifestLocation" Root="HKLM" Key="SOFTWARE\Mozilla\NativeMessagingHosts\tabs" Action="createAndRemoveOnUninstall">
+            <RegistryValue Type="string" Value="[INSTALLDIR]manifest-firefox-win.json" />
+        </RegistryKey>
+    </Component>
+    <Component Id="RegistryEntries64" Guid="18392396-dae0-42dc-b112-9c431d315da4" Win64="yes">
+        <RegistryKey Id="ChromeManifestLocation64" Root="HKLM" Key="SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs" Action="createAndRemoveOnUninstall">
+            <RegistryValue Type="string" Value="[INSTALLDIR]manifest-chrome-win.json" />
+        </RegistryKey>
+        <RegistryKey Id="FirefoxManifestLocation64" Root="HKLM" Key="SOFTWARE\Mozilla\NativeMessagingHosts\tabs" Action="createAndRemoveOnUninstall">
+            <RegistryValue Type="string" Value="[INSTALLDIR]manifest-firefox-win.json" />
+        </RegistryKey>
+    </Component>
+</DirectoryRef>
+<Feature Id="RegistryEntries" Title="Registry Entries" Description="Registry Entries for Native Messaging" Level="1" Absent="disallow">
+    <ComponentRef Id="RegistryEntries" />
+    <ComponentRef Id="RegistryEntries64" />
+</Feature>

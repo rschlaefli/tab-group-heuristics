@@ -30,7 +30,7 @@ object StatisticsEngine extends LazyLogging {
       logger.info("> Starting to collect statistics")
 
       while (true) {
-        Thread.sleep(20370)
+        Thread.sleep(14851)
 
         // derive the current window for aggregation
         val currentTimestamp = Instant.now.getEpochSecond()

@@ -30,13 +30,13 @@ object StatisticsEngine extends LazyLogging {
       logger.info("> Starting to collect statistics")
 
       while (true) {
-        Thread.sleep(20370)
+        Thread.sleep(14851)
 
         // derive the current window for aggregation
         val currentTimestamp = Instant.now.getEpochSecond()
-        val fiveMinBlock = (currentTimestamp / 300).toLong
+        val minuteBlock = (currentTimestamp / 60).toLong
         logger.debug(
-          s"> Current timestamp: ${currentTimestamp}, assigned block: $fiveMinBlock, currentMap: ${aggregationWindows.size}"
+          s"> Current timestamp: ${currentTimestamp}, assigned block: $minuteBlock, currentMap: ${aggregationWindows.size}"
         )
 
         // collect the current internal state for statistics computations
@@ -123,7 +123,7 @@ object StatisticsEngine extends LazyLogging {
         aggregationWindows.synchronized {
 
           // push the values into a window
-          aggregationWindows.updateWith(fiveMinBlock) {
+          aggregationWindows.updateWith(minuteBlock) {
             _.map(_.appended(dataPoint)).orElse(Some(List(dataPoint)))
           }
 
@@ -134,7 +134,7 @@ object StatisticsEngine extends LazyLogging {
           // expire windows that are older than 5min (or similar)
           // and log the aggregate statistics for the previous window
           aggregationWindows.filterInPlace((window, dataPoints) => {
-            val isWindowExpired = window <= fiveMinBlock - 1
+            val isWindowExpired = window < minuteBlock
 
             logger.debug(
               s"> Filtering window $window with data: ${dataPoints}, expired: ${isWindowExpired}"

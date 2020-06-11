@@ -25,17 +25,26 @@ import java.net.ServerSocket
 
 object Main extends App with LazyLogging {
 
+  // wait for 10 seconds before cootstrapping
+  // this helps ensure that the previous instance has shut down when reloading
+  logger.info("> Bootstrapping tab grouping heuristics")
+  Thread.sleep(10000)
+
   // try to bind to a server socket (to ensure we can only have one instance at a time)
   var serverSocket: ServerSocket = null
   Try { new ServerSocket(12345) } match {
     case Success(socket) => {
-      logger.info("> Bootstrapping tab grouping heuristics")
       serverSocket = socket
     }
     case Failure(e) => {
       logger.error(
         "> Unable to bind to the socket (there might be another instance running). Exiting..."
       )
+      NativeMessaging
+        .writeNativeMessage(
+          IO.out,
+          HeuristicsAction.HEURISTICS_STATUS("ALREADY_RUNNING")
+        )
       System.exit(0)
     }
   }
@@ -78,12 +87,22 @@ object Main extends App with LazyLogging {
   tabGroupUpdateThread.start()
 
   logger.info(s"> Daemons started (${Thread.activeCount()})")
+  NativeMessaging
+    .writeNativeMessage(
+      IO.out,
+      HeuristicsAction.HEURISTICS_STATUS("RUNNING")
+    )
 
   // add a shutdown hook that persists data upon shutdown
   sys.addShutdownHook({
     logger.info("> Shutting down...")
     serverSocket.close()
     PersistenceEngine.persistCurrentState
+    NativeMessaging
+      .writeNativeMessage(
+        IO.out,
+        HeuristicsAction.HEURISTICS_STATUS("STOPPED")
+      )
     System.exit(143)
   })
 

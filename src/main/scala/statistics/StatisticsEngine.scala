@@ -6,6 +6,7 @@ import org.slf4j.MarkerFactory
 import scala.collection.mutable
 import java.time.Instant
 import smile.math.MathEx._
+import io.circe.Json
 
 import tabstate.{Tab, TabState}
 import util.Utils
@@ -14,7 +15,6 @@ import statistics._
 import messaging.NativeMessaging
 import messaging.HeuristicsAction
 import messaging.IO
-import io.circe.Json
 
 object StatisticsEngine extends LazyLogging {
   val logToCsv = MarkerFactory.getMarker("CSV")
@@ -149,10 +149,6 @@ object StatisticsEngine extends LazyLogging {
             !isWindowExpired
           })
         }
-
-        // refresh the manual tab groups for the next iteration
-        NativeMessaging
-          .writeNativeMessage(IO.out, HeuristicsAction.QUERY_GROUPS)
       }
     })
 

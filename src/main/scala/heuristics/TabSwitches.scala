@@ -16,57 +16,20 @@ import scala.util.Try
 import smile.math.MathEx._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.slf4j.MarkerFactory
 
 import statistics.StatisticsEngine
 import tabstate.{TabState, Tab}
 import persistence.Persistable
 
 object TabSwitches extends LazyLogging with Persistable {
+  val logToCsv = MarkerFactory.getMarker("CSV")
 
   var tabSwitches = Map[String, Map[String, Int]]()
   var tabHashes = Map[String, String]()
   var tabGraph = Graph[Tab, WDiEdge]()
 
-  def cleanupGraph(graph: Graph[Tab, WDiEdge]): Graph[Tab, WDiEdge] = {
-
-    // remove all edges that are recursive
-    val graphWithoutSelfEdges = graph --
-      graph.edges.filter(edge => edge.from.equals(edge.to))
-
-    // remove the new tab page from the graph
-    val graphWithoutNewTab =
-      graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
-        node.value.title == "New Tab"
-      )
-
-    // extract all edge weights
-    val edgeWeightsThreshold = median(
-      graphWithoutNewTab.edges.map(edge => edge.weight).toArray
-    )
-    logger.debug(s"> Computed threshold for edge weights $edgeWeightsThreshold")
-
-    // remove all edges that have been traversed only few times
-    // i.e., get rid of tab switches that have only occured few times
-    val irrelevantEdges =
-      graphWithoutNewTab.edges.filter(edge =>
-        edge.weight < edgeWeightsThreshold
-      )
-    val graphWithoutIrrelevantEdges = graphWithoutNewTab -- irrelevantEdges
-
-    // remove all nodes that have a very low incoming weight
-    // i.e., remove nodes that have been switched to few times
-    val irrelevantNodes = graphWithoutIrrelevantEdges.nodes.filter(node =>
-      node.incoming.map(edge => edge.weight).sum < edgeWeightsThreshold
-    )
-    val cleanGraph = graphWithoutIrrelevantEdges -- irrelevantNodes
-
-    logger.debug(
-      s"> Performed graph cleanup: removed ${irrelevantEdges.size} edges and ${irrelevantNodes.size} nodes - " +
-        s"left with ${cleanGraph.edges.size}/${cleanGraph.nodes.size} of ${graph.edges.size}/${graph.nodes.size} edges/nodes"
-    )
-
-    cleanGraph
-  }
+  var temp: Option[Tab] = None
 
   def processInitialTabs(initialTabs: List[Tab]) = {
     tabHashes ++= initialTabs.map(tab => (tab.hash, tab.baseUrl + tab.title))
@@ -91,30 +54,95 @@ object TabSwitches extends LazyLogging with Persistable {
     if (previousTab.isDefined) {
       val prevTab = previousTab.get
 
+      val switchFromNewTab = prevTab.title == "New Tab"
+      val switchToNewTab = currentTab.title == "New Tab"
+
+      logger.debug(
+        s"Switch toNewTab=$switchToNewTab fromNewTab=$switchFromNewTab"
+      )
+
       if (prevTab.hash != currentTab.hash) {
-        Future {
-          StatisticsEngine.tabSwitchQueue.synchronized {
-            // add the tab switch to the statistics switch queue
-            StatisticsEngine.tabSwitchQueue.enqueue((prevTab, currentTab))
-          }
+        if (switchToNewTab && !switchFromNewTab) {
+          temp = Some(prevTab)
+          return
         }
 
-        tabSwitches.updateWith(prevTab.hash)((switchMap) => {
-          val map = switchMap.getOrElse(Map((currentTab.hash, 0)))
-
-          val previousCount = map.getOrElse(currentTab.hash, 0)
-
-          tabGraph -= WDiEdge((prevTab, currentTab))(previousCount)
-          tabGraph += WDiEdge((prevTab, currentTab))(
-            previousCount + 1
-          )
-
-          map.update(currentTab.hash, previousCount + 1)
-
-          Some(map)
-        })
+        if (temp.isDefined && switchFromNewTab && !switchToNewTab) {
+          processSwitch(temp.get, currentTab)
+          temp = None
+        } else {
+          processSwitch(prevTab, currentTab)
+        }
       }
     }
+  }
+
+  def processSwitch(prevTab: Tab, currentTab: Tab): Unit = {
+    Future {
+      StatisticsEngine.tabSwitchQueue.synchronized {
+        // add the tab switch to the statistics switch queue
+        StatisticsEngine.tabSwitchQueue.enqueue((prevTab, currentTab))
+      }
+    }
+
+    logger.info(
+      logToCsv,
+      s"${prevTab.id};${prevTab.hash};${prevTab.baseUrl};${prevTab.normalizedTitle};${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
+    )
+
+    tabSwitches.updateWith(prevTab.hash)((switchMap) => {
+      val map = switchMap.getOrElse(Map((currentTab.hash, 0)))
+
+      val previousCount = map.getOrElse(currentTab.hash, 0)
+
+      tabGraph -= WDiEdge((prevTab, currentTab))(previousCount)
+      tabGraph += WDiEdge((prevTab, currentTab))(previousCount + 1)
+
+      map.update(currentTab.hash, previousCount + 1)
+
+      Some(map)
+    })
+  }
+
+  def cleanupGraph(graph: Graph[Tab, WDiEdge]): Graph[Tab, WDiEdge] = {
+    // remove all edges that are recursive
+    val graphWithoutSelfEdges = graph --
+      graph.edges.filter(edge => edge.from.equals(edge.to))
+
+    // remove the new tab page from the graph
+    val graphWithoutNewTab =
+      graphWithoutSelfEdges -- graphWithoutSelfEdges.nodes.filter(node =>
+        node.value.title == "New Tab"
+      )
+
+    // extract all edge weights
+    val edgeWeightsThreshold = median(
+      graphWithoutNewTab.edges.map(edge => edge.weight).toArray
+    ) / 2
+    logger.debug(s"> Computed threshold for edge weights $edgeWeightsThreshold")
+
+    // remove all nodes that have a very low incoming weight
+    // i.e., remove nodes that have been switched to few times
+    val irrelevantNodes = graphWithoutNewTab.nodes.filter(node =>
+      node.incoming.map(edge => edge.weight).sum < edgeWeightsThreshold
+    )
+    val graphWithoutIrrelevantNodes = graphWithoutNewTab -- irrelevantNodes
+
+    // remove all edges that have been traversed only few times
+    // i.e., get rid of tab switches that have only occured few times
+    val irrelevantEdges =
+      graphWithoutIrrelevantNodes.edges.filter(edge =>
+        edge.weight < edgeWeightsThreshold
+      )
+    val graphWithoutIrrelevantEdges =
+      graphWithoutIrrelevantNodes -- irrelevantEdges
+
+    logger.debug(
+      s"> Performed graph cleanup: removed ${irrelevantEdges.size} edges and ${irrelevantNodes.size} nodes - " +
+        s"left with ${graphWithoutIrrelevantEdges.edges.size}/${graphWithoutIrrelevantEdges.nodes.size} of ${graph.edges.size}/${graph.nodes.size} edges/nodes"
+    )
+
+    graphWithoutIrrelevantEdges
   }
 
   val jsonTabDescriptor = new NodeDescriptor[Tab](typeId = "Tabs") {

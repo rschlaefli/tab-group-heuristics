@@ -6,6 +6,8 @@ import scalax.collection.Graph
 import scalax.collection.edge.WDiEdge
 import org.slf4j.MarkerFactory
 import io.circe.Json
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import messaging._
 import heuristics._
@@ -59,7 +61,7 @@ object TabState extends LazyLogging {
         currentTabs ++= initialTabs.map(tab => {
           logger.info(
             logToCsv,
-            s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};;;;"
+            s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
           )
           (tab.id, tab)
         })
@@ -76,7 +78,7 @@ object TabState extends LazyLogging {
           s"> Updating tab groups to $tabGroups"
         )
 
-        logger.info(logToCsv, s"UPDATE_GROUPS;;;;;;;;")
+        logger.info(logToCsv, s"UPDATE_GROUPS;;;;")
 
         HeuristicsEngine.updateManualClusters(tabGroups)
       }
@@ -85,18 +87,29 @@ object TabState extends LazyLogging {
         // build a new tab object from the received tab data
         val tab = Tab.fromEvent(updateEvent)
 
-        logger.info(
-          logToCsv,
-          s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};;;;"
-        )
+        Future {
+          currentTabs.synchronized {
+            val prevTabState = currentTabs.get(tab.id)
 
-        currentTabs.synchronized {
-          TabSwitches.processTabSwitch(currentTabs.get(tab.id), tab)
-          currentTabs.update(tab.id, tab)
+            logger.debug(s"Updating tab from $prevTabState to $tab")
+
+            logger.info(
+              logToCsv,
+              s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
+            )
+
+            currentTabs.update(tab.id, tab)
+
+            if (prevTabState.isDefined) {
+              TabSwitches.processTabSwitch(prevTabState, tab)
+            }
+          }
         }
       }
 
-      case TabActivateEvent(id, windowId, previousTabId) => {
+      case activateEvent: TabActivateEvent => {
+        val TabActivateEvent(id, windowId, previousTabId) = activateEvent
+
         activeTab = id
         activeWindow = windowId
 
@@ -105,26 +118,34 @@ object TabState extends LazyLogging {
         )
 
         // update the map of tab switches based on the new event
-        if (currentTabs.contains(id) && previousTabId.isDefined) {
-          val previousTab = currentTabs.get(previousTabId.get)
-          val currentTab = currentTabs.get(id).get
+        currentTabs.synchronized {
+          if (previousTabId.isDefined) {
+            val previousTab = currentTabs.get(previousTabId.get)
+            val currentTab = currentTabs.get(id)
+            if (!currentTab.isDefined) {
+              Future {
+                Thread.sleep(333)
+                logger.debug(
+                  "> Tab switch to non-existent tab, pushing back to queue..."
+                )
+                tabEventsQueue.synchronized {
+                  tabEventsQueue.enqueue(activateEvent)
+                }
+              }
+            } else {
+              logger.info(
+                logToCsv,
+                s"ACTIVATE;${currentTab.get.id};${currentTab.get.hash};${currentTab.get.baseUrl};${currentTab.get.normalizedTitle}"
+              )
 
-          val csvRow = previousTab match {
-            case Some(tab) =>
-              s"SWITCH;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle};${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
-            case None =>
-              s"SWITCH;;;;;${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
+              TabSwitches.processTabSwitch(previousTab, currentTab.get)
+            }
           }
-
-          logger.info(logToCsv, csvRow)
-
-          TabSwitches.processTabSwitch(previousTab, currentTab)
         }
-
       }
 
       case TabRemoveEvent(id, windowId) => {
-        logger.info(logToCsv, s"REMOVE;${id};;;;;;;")
+        logger.info(logToCsv, s"REMOVE;${id};;;")
 
         currentTabs.synchronized {
           currentTabs -= (id)

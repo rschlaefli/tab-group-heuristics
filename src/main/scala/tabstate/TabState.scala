@@ -124,7 +124,7 @@ object TabState extends LazyLogging {
             val currentTab = currentTabs.get(id)
             if (!currentTab.isDefined) {
               Future {
-                Thread.sleep(500)
+                Thread.sleep(333)
                 logger.debug(
                   "> Tab switch to non-existent tab, pushing back to queue..."
                 )

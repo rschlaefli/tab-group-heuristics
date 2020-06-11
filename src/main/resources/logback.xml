@@ -11,7 +11,7 @@
     </encoder>
   </appender>
 
-<appender name="MAIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender name="MAIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>main.log</file>
     <append>true</append>
     <encoder>
@@ -54,8 +54,6 @@
     </rollingPolicy>
   </appender>
 
-
-
   <appender name="StatisticsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>statistics.csv</file>
     <append>true</append>
@@ -96,6 +94,26 @@
     </rollingPolicy>
   </appender>
 
+  <appender name="TabSwitchesCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>tab_switches.csv</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date;%msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker != null &amp;&amp; marker.contains("CSV")</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>tab_switches.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
   <root level="debug">
     <appender-ref ref="MAIN" />
     <appender-ref ref="DEBUG" />
@@ -104,11 +122,15 @@
 
   <logger name="heuristics.HeuristicsEngine" level="debug" />
 
+  <logger name="heuristics.TabSwitches" level="debug">
+    <appender-ref ref="TabSwitchesCSV" />
+  </logger>
+
   <logger name="statistics.StatisticsEngine" level="debug">
     <appender-ref ref="StatisticsCSV" />
   </logger>
 
-  <logger name="tabstate.TabState" level="info">
+  <logger name="tabstate.TabState" level="debug">
     <appender-ref ref="TabEventsCSV" />
   </logger>
 

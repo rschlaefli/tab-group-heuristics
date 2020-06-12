@@ -93,8 +93,7 @@ object Main extends App with LazyLogging {
       HeuristicsAction.HEURISTICS_STATUS("RUNNING")
     )
 
-  // add a shutdown hook that persists data upon shutdown
-  sys.addShutdownHook({
+  def shutdown = {
     logger.info("> Shutting down...")
     serverSocket.close()
     PersistenceEngine.persistCurrentState
@@ -103,11 +102,15 @@ object Main extends App with LazyLogging {
         IO.out,
         HeuristicsAction.HEURISTICS_STATUS("STOPPED")
       )
-    System.exit(143)
-  })
+    System.exit(0)
+  }
+
+  // add a shutdown hook that persists data upon shutdown
+  sys.addShutdownHook(shutdown)
 
   // setup a continually running
   val heuristicsThread = HeuristicsEngine()
 
   heuristicsThread.join()
+
 }

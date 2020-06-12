@@ -10,6 +10,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import util.Utils
+import main.Main
 
 object NativeMessaging extends LazyLogging {
   def apply(
@@ -45,7 +46,10 @@ object NativeMessaging extends LazyLogging {
   def readToByteArray(in: InputStream, length: Int): Option[Array[Byte]] = {
     val byteArray = new Array[Byte](length)
     val count = in.read(byteArray)
-    if (count == -1) return None
+    if (count == -1) {
+      Main.shutdown
+      return None
+    }
     Some(byteArray)
   }
 

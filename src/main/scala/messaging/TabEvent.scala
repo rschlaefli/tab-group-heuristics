@@ -108,6 +108,16 @@ object TabEvent extends LazyLogging {
         )
       }
 
+      case "PAUSE" => {
+        logger.warn("> PAUSING")
+        None
+      }
+
+      case "RESUME" => {
+        logger.warn("> RESUMING")
+        None
+      }
+
       case _ => {
         logger.warn(s"> Unknown tab event received: $action")
         None

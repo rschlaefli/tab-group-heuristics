@@ -110,39 +110,39 @@ object TabState extends LazyLogging {
       case activateEvent: TabActivateEvent => {
         val TabActivateEvent(id, windowId, previousTabId) = activateEvent
 
-        activeTab = id
-        activeWindow = windowId
-
-        logger.debug(
-          s"> Processing switch from $previousTabId to $id in window $windowId"
-        )
-
         // update the map of tab switches based on the new event
         currentTabs.synchronized {
-          if (previousTabId.isDefined) {
-            val previousTab = currentTabs.get(previousTabId.get)
-            val currentTab = currentTabs.get(id)
-            if (!currentTab.isDefined) {
-              Future {
-                Thread.sleep(333)
-                logger.debug(
-                  "> Tab switch to non-existent tab, pushing back to queue..."
-                )
-                tabEventsQueue.synchronized {
-                  tabEventsQueue.enqueue(activateEvent)
-                  tabEventsQueue.notifyAll()
-                }
-              }
-            } else {
-              logger.info(
-                logToCsv,
-                s"ACTIVATE;${currentTab.get.id};${currentTab.get.hash};${currentTab.get.baseUrl};${currentTab.get.normalizedTitle}"
-              )
+          val previousTab = currentTabs.get(previousTabId.getOrElse(activeTab))
+          val currentTab = currentTabs.get(id)
 
-              TabSwitches.processTabSwitch(previousTab, currentTab.get)
+          logger.debug(
+            s"> Processing switch from $previousTab to $currentTab in window $windowId"
+          )
+
+          if (!currentTab.isDefined) {
+            Future {
+              Thread.sleep(333)
+              logger.debug(
+                "> Tab switch to non-existent tab, pushing back to queue..."
+              )
+              tabEventsQueue.synchronized {
+                tabEventsQueue.enqueue(activateEvent)
+                tabEventsQueue.notifyAll()
+              }
             }
+          } else {
+            activeTab = id
+            activeWindow = windowId
+
+            logger.info(
+              logToCsv,
+              s"ACTIVATE;${currentTab.get.id};${currentTab.get.hash};${currentTab.get.baseUrl};${currentTab.get.normalizedTitle}"
+            )
+
+            TabSwitches.processTabSwitch(previousTab, currentTab.get)
           }
         }
+
       }
 
       case TabRemoveEvent(id, windowId) => {

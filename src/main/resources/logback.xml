@@ -137,6 +137,6 @@
   <logger name="persistence.Persistable" level="warn" />
   <logger name="persistence.PersistenceEngine" level="info" />
 
-  <logger name="messaging.NativeMessaging" level="info" />
+  <logger name="messaging.NativeMessaging" level="warn" />
 
 </configuration>

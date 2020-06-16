@@ -78,6 +78,7 @@ object Main extends App with LazyLogging {
         .writeNativeMessage(IO.out, HeuristicsAction.QUERY_GROUPS)
     }
   })
+  tabGroupUpdateThread.setName("TabGroupUpdates")
   tabGroupUpdateThread.setDaemon(true)
 
   tabStateThread.start()

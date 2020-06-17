@@ -3,14 +3,13 @@ package heuristics
 import scala.collection.JavaConverters._
 import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable
-import scalax.collection.mutable.Graph
-import scalax.collection.edge.WDiEdge
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._
 import java.{util => ju}
 
 import tabstate._
 import messaging._
+import graph._
 
 object HeuristicsEngine extends LazyLogging {
   var automatedClusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
@@ -27,19 +26,15 @@ object HeuristicsEngine extends LazyLogging {
       while (true) {
         Thread.sleep(590000)
 
-        if (TabSwitches.tabGraph != null) {
+        val tabSwitchGraph = TabSwitchGraph()
+        if (tabSwitchGraph != null) {
 
           // TODO: incorporate the manually created clusters in some way
-
-          // cleaning the switch graph
-          logger.debug(s"> Cleaning the tab switch graph")
-          val cleanTabSwitchGraph =
-            TabSwitches.cleanupGraph(TabSwitches.tabGraph)
 
           // computing clusters
           logger.debug(s"> Computing tab clusters")
           automatedClusters.synchronized {
-            val computedClusters = Watset(cleanTabSwitchGraph)
+            val computedClusters = Watset(tabSwitchGraph)
             automatedClusters = processClusters(computedClusters)
           }
 

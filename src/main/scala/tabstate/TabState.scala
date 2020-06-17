@@ -1,9 +1,7 @@
 package tabstate
 
 import com.typesafe.scalalogging.LazyLogging
-import scala.collection.mutable.{Map, Queue}
-import scalax.collection.Graph
-import scalax.collection.edge.WDiEdge
+import scala.collection.mutable
 import org.slf4j.MarkerFactory
 import io.circe.Json
 import scala.concurrent.Future
@@ -19,9 +17,9 @@ object TabState extends LazyLogging {
   var activeTab = -1
   var activeWindow = -1
 
-  var currentTabs = Map[Int, Tab]()
+  var currentTabs = mutable.Map[Int, Tab]()
 
-  var tabEventsQueue: Queue[TabEvent] = new Queue[TabEvent](20)
+  var tabEventsQueue: mutable.Queue[TabEvent] = new mutable.Queue[TabEvent](20)
 
   def apply(): Thread = {
 
@@ -47,7 +45,7 @@ object TabState extends LazyLogging {
     thread
   }
 
-  def dequeueTabEvent[T](queue: Queue[T]): T = {
+  def dequeueTabEvent[T](queue: mutable.Queue[T]): T = {
     queue.synchronized {
       if (queue.isEmpty) {
         queue.wait()
@@ -68,8 +66,6 @@ object TabState extends LazyLogging {
           )
           (tab.id, tab)
         })
-
-        TabSwitches.processInitialTabs(initialTabs)
 
         logger.info(
           s"> Initialized current tabs to $currentTabs"

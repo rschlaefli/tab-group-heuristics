@@ -1,11 +1,8 @@
-package heuristics
+package graph
 
 import scala.collection.JavaConverters._
-import scalax.collection.Graph
-import scalax.collection.edge.WDiEdge
-import scalax.collection.io.dot._
-import scalax.collection.edge.Implicits._
 import scala.collection.mutable
+import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.nlpub.watset.graph.SimplifiedWatset
@@ -19,10 +16,11 @@ import java.{util => ju}
 
 import tabstate.Tabs
 import tabstate.Tab
+import org.jgrapht.graph.DefaultUndirectedWeightedGraph
 
 object Watset extends App with LazyLogging {
   def apply(
-      graph: Graph[Tab, WDiEdge]
+      graph: Graph[Tab, DefaultWeightedEdge]
   ): List[Set[Tab]] = {
     if (graph == null) {
       return List()
@@ -42,32 +40,13 @@ object Watset extends App with LazyLogging {
   }
 
   def buildWatsetGraph(
-      graph: Graph[Tab, WDiEdge]
-  ): SimpleWeightedGraph[Tab, DefaultWeightedEdge] = {
-    val graphBuilder =
-      SimpleWeightedGraph
-        .createBuilder[Tab, DefaultWeightedEdge](
-          classOf[DefaultWeightedEdge]
-        )
-
-    graph.nodes.foreach(node => {
-      graphBuilder.addVertex(node.value)
-    })
-
-    graph.edges.foreach(edge => {
-      graphBuilder.addEdge(edge.from.value, edge.to.value, edge.weight)
-    })
-
-    val newGraph = graphBuilder.build()
-    logger.debug(
-      s"> Constructed watset graph with ${newGraph.vertexSet().size()} vertices and ${newGraph.edgeSet().size()} edges"
-    )
-
-    newGraph
+      graph: Graph[Tab, DefaultWeightedEdge]
+  ): Graph[Tab, DefaultWeightedEdge] = {
+    graph
   }
 
   def computeClustersMarkov(
-      graph: SimpleWeightedGraph[Tab, DefaultWeightedEdge]
+      graph: Graph[Tab, DefaultWeightedEdge]
   ): List[ju.Collection[Tab]] = {
     val markovClusters = new MarkovClustering(graph, 2, 2)
     markovClusters.fit()

@@ -66,7 +66,7 @@ object TabSwitchMap extends LazyLogging with Persistable {
     */
   def processTabSwitch(prevTab: Tab, currentTab: Tab): Unit = {
     // do not track a switch that has the same tab as source and target
-    if (prevTab.hash == currentTab) return
+    if (prevTab.hash == currentTab.hash) return
 
     logger.info(
       logToCsv,

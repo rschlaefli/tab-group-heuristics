@@ -19,16 +19,50 @@ object TabSwitchMap extends LazyLogging with Persistable {
 
   var tabSwitches = mutable.Map[String, TabSwitchMeta]()
 
+  var temp: Option[Tab] = None
+
   /**
     * Add a new tab switch to the tab switch graph
     *
     * @param prevTab The tab being switched from
     * @param currentTab The tab being switched to
     */
+  def processTabSwitch(prevTab: Option[Tab], currentTab: Tab): Unit = {
+    if (prevTab.isDefined) {
+      val previousTab = prevTab.get
+
+      val irrelevantTabs = List("New Tab", "Tab Groups")
+      val switchFromIrrelevantTab = irrelevantTabs.contains(previousTab.title)
+      val switchToIrrelevantTab = irrelevantTabs.contains(currentTab.title)
+
+      (switchFromIrrelevantTab, switchToIrrelevantTab) match {
+        // process a normal tab switch
+        case (false, false) if previousTab.hash != currentTab.hash => {
+          processTabSwitch(previousTab, currentTab)
+          temp = None
+        }
+        // process a switch to an irrelevant tab
+        case (false, true) => {
+          temp = Some(previousTab)
+        }
+        // process a switch from an irrelevant tab
+        case (true, false) => {
+          if (temp.isDefined) processTabSwitch(temp.get, currentTab)
+          temp = None
+        }
+        case _ =>
+          logger.debug(
+            s"[TabSwitch] Ignored switch from $previousTab to $currentTab"
+          )
+      }
+    }
+  }
+
   def processTabSwitch(prevTab: Tab, currentTab: Tab) = {
     logger.info(
       logToCsv,
-      s"${prevTab.id};${prevTab.hash};${prevTab.baseUrl};${prevTab.normalizedTitle};${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
+      s"${prevTab.id};${prevTab.hash};${prevTab.baseUrl};${prevTab.normalizedTitle};" +
+        s"${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
     )
 
     val List(meta1, meta2) =
@@ -36,9 +70,8 @@ object TabSwitchMap extends LazyLogging with Persistable {
         .map(TabMeta.apply)
         .sortBy(tabMeta => tabMeta.hash)
 
-    val switchIdentifier = s"${meta1.hash}_${meta2.hash}"
-
     // update the tab switch meta information
+    val switchIdentifier = s"${meta1.hash}_${meta2.hash}"
     tabSwitches.updateWith(switchIdentifier)(TabSwitchMeta(_, meta1, meta2))
 
     // add the tab switch to the statistics switch queue

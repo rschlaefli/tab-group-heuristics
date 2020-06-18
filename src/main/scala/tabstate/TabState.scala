@@ -10,6 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import messaging._
 import heuristics._
 import util.Utils
+import graph.TabSwitchMap
 
 object TabState extends LazyLogging {
   val logToCsv = MarkerFactory.getMarker("CSV")
@@ -100,7 +101,7 @@ object TabState extends LazyLogging {
             currentTabs.update(tab.id, tab)
 
             if (prevTabState.isDefined) {
-              TabSwitches.processTabSwitch(prevTabState, tab)
+              TabSwitchMap.processTabSwitch(prevTabState, tab)
             }
           }
         }
@@ -138,7 +139,7 @@ object TabState extends LazyLogging {
               s"ACTIVATE;${currentTab.get.id};${currentTab.get.hash};${currentTab.get.baseUrl};${currentTab.get.normalizedTitle}"
             )
 
-            TabSwitches.processTabSwitch(previousTab, currentTab.get)
+            TabSwitchMap.processTabSwitch(previousTab, currentTab.get)
           }
         }
 

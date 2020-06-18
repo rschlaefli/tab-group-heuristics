@@ -22,7 +22,7 @@ object TabSwitchMap extends LazyLogging with Persistable {
   var temp: Option[Tab] = None
 
   /**
-    * Add a new tab switch to the tab switch graph
+    * Process a tab switch event
     *
     * @param prevTab The tab being switched from
     * @param currentTab The tab being switched to
@@ -37,7 +37,7 @@ object TabSwitchMap extends LazyLogging with Persistable {
 
       (switchFromIrrelevantTab, switchToIrrelevantTab) match {
         // process a normal tab switch
-        case (false, false) if previousTab.hash != currentTab.hash => {
+        case (false, false) => {
           processTabSwitch(previousTab, currentTab)
           temp = None
         }
@@ -58,7 +58,16 @@ object TabSwitchMap extends LazyLogging with Persistable {
     }
   }
 
-  def processTabSwitch(prevTab: Tab, currentTab: Tab) = {
+  /**
+    * Add a new tab switch to the tab switch graph
+    *
+    * @param prevTab The tab being switched from
+    * @param currentTab The tab being switched to
+    */
+  def processTabSwitch(prevTab: Tab, currentTab: Tab): Unit = {
+    // do not track a switch that has the same tab as source and target
+    if (prevTab.hash == currentTab) return
+
     logger.info(
       logToCsv,
       s"${prevTab.id};${prevTab.hash};${prevTab.baseUrl};${prevTab.normalizedTitle};" +

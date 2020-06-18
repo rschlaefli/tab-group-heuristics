@@ -31,6 +31,12 @@ object Dependencies {
     "org.jgrapht" % "jgrapht-opt"
   ).map(_ % jgraphVersion)
 
+  val akkaVersion = "2.6.6"
+  val akka = Seq(
+    "com.typesafe.akka" %% "akka-actor",
+    "com.typesafe.akka" %% "akka-testkit"
+  ).map(_ % akkaVersion)
+
   val runtimeDependencies =
     Seq(
       scalaz,
@@ -41,6 +47,6 @@ object Dependencies {
       smileCore,
       smileScala,
       nscalaTime
-    ) ++ circe ++ jgraph
+    ) ++ circe ++ jgraph ++ akka
   val testingDependencies = Seq(scalatest % "test")
 }

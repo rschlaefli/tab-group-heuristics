@@ -49,7 +49,7 @@ object Main extends App with LazyLogging {
     }
   }
 
-  val io = IO()
+  IO()
 
   // read persisted state and initialize
   PersistenceEngine.restoreInitialState

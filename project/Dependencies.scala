@@ -34,7 +34,10 @@ object Dependencies {
   val akkaVersion = "2.6.6"
   val akka = Seq(
     "com.typesafe.akka" %% "akka-actor",
-    "com.typesafe.akka" %% "akka-testkit"
+    "com.typesafe.akka" %% "akka-testkit",
+    "com.typesafe.akka" %% "akka-stream",
+    "com.typesafe.akka" %% "akka-stream-testkit",
+    "com.typesafe.akka" %% "akka-slf4j"
   ).map(_ % akkaVersion)
 
   val runtimeDependencies =

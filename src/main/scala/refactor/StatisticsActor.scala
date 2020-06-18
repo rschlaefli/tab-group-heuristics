@@ -1,13 +1,15 @@
-package statistics
+package refactor
 
 import scala.collection.mutable
 import akka.actor.Actor
 import akka.actor.ActorLogging
 
 import tabstate.Tab
-import statistics.StatisticsActor.PushTabSwitch
+import statistics._
 
 class StatisticsActor extends Actor with ActorLogging {
+
+  import StatisticsActor._
 
   // initialize a data structure for aggregating data across windows
   val aggregationWindows: mutable.Map[Long, List[DataPoint]] = mutable.Map()

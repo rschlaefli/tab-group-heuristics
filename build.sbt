@@ -17,7 +17,7 @@ lazy val tabs = (project in file("."))
   )
 
 // ensure that only the main entrypoint is bundled into the package
-mainClass in Compile := Some("main.Main")
+mainClass in Compile := Some("refactor.Main")
 discoveredMainClasses in Compile := Seq()
 
 // ensure that javadoc is not built on every stage

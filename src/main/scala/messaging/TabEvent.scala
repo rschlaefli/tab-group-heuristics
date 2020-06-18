@@ -6,7 +6,6 @@ import com.typesafe.scalalogging.LazyLogging
 import util._
 import tabstate.Tab
 import heuristics.TabGroup
-import main.Main
 
 sealed class TabEvent
 

@@ -16,6 +16,8 @@ object IO extends LazyLogging {
       System.in.available()
       in = new BufferedInputStream(System.in)
       out = new BufferedOutputStream(System.out)
+
+      logger.info(s"Initialized IO to $in/$out")
     } catch {
       case ioException: IOException => {
         // TODO: send a message to the browser (IO unavailable)

@@ -41,12 +41,7 @@ object TabSwitchMap extends LazyLogging with Persistable {
     val switchIdentifier = s"${hash1}_${hash2}"
 
     // update the tab switch meta information
-    tabSwitches.updateWith(switchIdentifier) {
-      case None =>
-        Some(TabSwitchMeta(1))
-      case Some(switchMeta) =>
-        Some(TabSwitchMeta(switchMeta.count + 1))
-    }
+    tabSwitches.updateWith(switchIdentifier)(TabSwitchMeta.apply)
 
     // add the tab switch to the statistics switch queue
     Future {
@@ -67,7 +62,7 @@ object TabSwitchMap extends LazyLogging with Persistable {
   override def restore: Try[Unit] = Try {
     Persistable
       .restoreJson("tab_hashes.json")
-      .map(decode[mutable.Map[String, String]])
+      .map(decode[mutable.Map[String, TabMeta]])
       .foreach {
         case Right(restoredMap) => tabHashes = restoredMap
       }

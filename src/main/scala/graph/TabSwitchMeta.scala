@@ -12,11 +12,13 @@ object TabSwitchMeta {
   implicit val encoder: Encoder[TabSwitchMeta] = deriveEncoder
   implicit val decoder: Decoder[TabSwitchMeta] = deriveDecoder
 
-  def apply(count: Int): TabSwitchMeta = {
+  def apply(count: Int = 1): TabSwitchMeta = {
     TabSwitchMeta(count = count, lastUsed = DateTime.now().getMillis())
   }
 
-  def incremented: TabSwitchMeta = {
-    TabSwitchMeta(count + 1)
-  }
+  def apply(existingMeta: Option[TabSwitchMeta]): Option[TabSwitchMeta] =
+    existingMeta match {
+      case Some(existing) => Some(TabSwitchMeta(existing.count + 1))
+      case None           => Some(TabSwitchMeta())
+    }
 }

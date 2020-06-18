@@ -23,7 +23,7 @@ object Dependencies {
 
   val nscalaTime = "com.github.nscala-time" %% "nscala-time" % "2.24.0"
 
-  val jgraphVersion = "1.4.0"
+  val jgraphVersion = "1.5.0"
   val jgraph = Seq(
     "org.jgrapht" % "jgrapht-core",
     "org.jgrapht" % "jgrapht-ext",

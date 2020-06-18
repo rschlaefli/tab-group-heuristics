@@ -15,7 +15,7 @@ import statistics.StatisticsEngine
 import tabstate.{TabState, Tab}
 import persistence.Persistable
 
-object TabSwitches extends LazyLogging with Persistable {
+object TabSwitches extends LazyLogging {
   val logToCsv = MarkerFactory.getMarker("CSV")
 
   var temp: Option[Tab] = None
@@ -154,36 +154,36 @@ object TabSwitches extends LazyLogging with Persistable {
   //   graph.toDot(dotRoot, edgeTransformer)
   // }
 
-  def persist: Try[Unit] = Try {
-    // Persistable
-    //   .persistString(
-    //     "tab_switch_graph.json",
-    //     toJsonString(tabGraph)
-    //   )
+  // def persist: Try[Unit] = Try {
+  //   // Persistable
+  //   //   .persistString(
+  //   //     "tab_switch_graph.json",
+  //   //     toJsonString(tabGraph)
+  //   //   )
 
-    // Persistable
-    //   .persistString(
-    //     "tab_switch_graph.dot",
-    //     toDotString(tabGraph)
-    //   )
-    // Persistable.persistString(
-    //   "tab_switch_graph_clean.dot",
-    //   toDotString(cleanupGraph(tabGraph))
-    // )
-  }
+  //   // Persistable
+  //   //   .persistString(
+  //   //     "tab_switch_graph.dot",
+  //   //     toDotString(tabGraph)
+  //   //   )
+  //   // Persistable.persistString(
+  //   //   "tab_switch_graph_clean.dot",
+  //   //   toDotString(cleanupGraph(tabGraph))
+  //   // )
+  // }
 
-  def restore: Try[Unit] = Try {
-    // Persistable
-    //   .restoreJson("tab_switches.json")
-    //   .map(decode[Map[String, Map[String, Int]]])
-    //   .foreach {
-    //     case Left(value)        =>
-    //     case Right(restoredMap) => tabSwitches = restoredMap
-    //   }
+  // def restore: Try[Unit] = Try {
+  //   // Persistable
+  //   //   .restoreJson("tab_switches.json")
+  //   //   .map(decode[Map[String, Map[String, Int]]])
+  //   //   .foreach {
+  //   //     case Left(value)        =>
+  //   //     case Right(restoredMap) => tabSwitches = restoredMap
+  //   //   }
 
-    // Persistable
-    //   .restoreJson("tab_switch_graph.json")
-    //   .map(TabSwitches.fromJsonString)
-    //   .foreach(tabGraph = _)
-  }
+  //   // Persistable
+  //   //   .restoreJson("tab_switch_graph.json")
+  //   //   .map(TabSwitches.fromJsonString)
+  //   //   .foreach(tabGraph = _)
+  // }
 }

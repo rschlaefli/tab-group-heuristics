@@ -17,7 +17,7 @@ import statistics.StatisticsEngine
 object TabSwitchMap extends LazyLogging with Persistable {
   val logToCsv = MarkerFactory.getMarker("CSV")
 
-  var tabHashes = mutable.Map[String, String]()
+  var tabHashes = mutable.Map[String, TabMeta]()
   var tabSwitches = mutable.Map[String, TabSwitchMeta]()
 
   /**
@@ -32,6 +32,10 @@ object TabSwitchMap extends LazyLogging with Persistable {
       s"${prevTab.id};${prevTab.hash};${prevTab.baseUrl};${prevTab.normalizedTitle};${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
     )
 
+    // persist the tab hash mapping for the tab
+    tabHashes.update(prevTab.hash, TabMeta(prevTab))
+    tabHashes.update(currentTab.hash, TabMeta(currentTab))
+
     // order prevTab and currentTab hash so that we only get one identifier per pair
     val List(hash1, hash2) = List(prevTab.hash, currentTab.hash).sorted
     val switchIdentifier = s"${hash1}_${hash2}"
@@ -39,19 +43,9 @@ object TabSwitchMap extends LazyLogging with Persistable {
     // update the tab switch meta information
     tabSwitches.updateWith(switchIdentifier) {
       case None =>
-        Some(
-          TabSwitchMeta(
-            count = 1,
-            lastUsed = DateTime.now().getMillis()
-          )
-        )
+        Some(TabSwitchMeta(1))
       case Some(switchMeta) =>
-        Some(
-          TabSwitchMeta(
-            count = switchMeta.count + 1,
-            lastUsed = DateTime.now().getMillis()
-          )
-        )
+        Some(TabSwitchMeta(switchMeta.count + 1))
     }
 
     // add the tab switch to the statistics switch queue

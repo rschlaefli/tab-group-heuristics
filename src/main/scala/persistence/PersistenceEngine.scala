@@ -2,7 +2,7 @@ package persistence
 
 import com.typesafe.scalalogging.LazyLogging
 
-import heuristics.TabSwitches
+import graph.TabSwitchMap
 
 object PersistenceEngine extends LazyLogging {
 
@@ -11,7 +11,7 @@ object PersistenceEngine extends LazyLogging {
       logger.info("> Starting to persist state")
 
       while (true) {
-        Thread.sleep(129000)
+        Thread.sleep(10000)
         persistCurrentState
       }
     })
@@ -24,11 +24,12 @@ object PersistenceEngine extends LazyLogging {
   def restoreInitialState = {
     logger.info("> Restoring initial state")
 
-    TabSwitches.restore
+    TabSwitchMap.restore
   }
 
   def persistCurrentState = {
     logger.info("> Persisting current state")
-    TabSwitches.persist
+
+    TabSwitchMap.persist
   }
 }

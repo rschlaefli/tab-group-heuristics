@@ -124,7 +124,7 @@
 
   <logger name="heuristics.TabSwitches" level="info" />
 
-  <logger name="graph.TabSwitchMap" level="info">
+  <logger name="graph.TabSwitchMap" level="debug">
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
 

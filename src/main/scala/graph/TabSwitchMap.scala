@@ -17,7 +17,6 @@ import statistics.StatisticsEngine
 object TabSwitchMap extends LazyLogging with Persistable {
   val logToCsv = MarkerFactory.getMarker("CSV")
 
-  var tabHashes = mutable.Map[String, TabMeta]()
   var tabSwitches = mutable.Map[String, TabSwitchMeta]()
 
   /**
@@ -32,16 +31,15 @@ object TabSwitchMap extends LazyLogging with Persistable {
       s"${prevTab.id};${prevTab.hash};${prevTab.baseUrl};${prevTab.normalizedTitle};${currentTab.id};${currentTab.hash};${currentTab.baseUrl};${currentTab.normalizedTitle}"
     )
 
-    // persist the tab hash mapping for the tab
-    tabHashes.update(prevTab.hash, TabMeta(prevTab))
-    tabHashes.update(currentTab.hash, TabMeta(currentTab))
+    val List(meta1, meta2) =
+      List(prevTab, currentTab)
+        .map(TabMeta.apply)
+        .sortBy(tabMeta => tabMeta.hash)
 
-    // order prevTab and currentTab hash so that we only get one identifier per pair
-    val List(hash1, hash2) = List(prevTab.hash, currentTab.hash).sorted
-    val switchIdentifier = s"${hash1}_${hash2}"
+    val switchIdentifier = s"${meta1.hash}_${meta2.hash}"
 
     // update the tab switch meta information
-    tabSwitches.updateWith(switchIdentifier)(TabSwitchMeta.apply)
+    tabSwitches.updateWith(switchIdentifier)(TabSwitchMeta(_, meta1, meta2))
 
     // add the tab switch to the statistics switch queue
     Future {
@@ -53,20 +51,10 @@ object TabSwitchMap extends LazyLogging with Persistable {
 
   override def persist: Try[Unit] = Try {
     Persistable
-      .persistJson("tab_hashes.json", tabHashes.asJson)
-
-    Persistable
       .persistJson("tab_switches.json", tabSwitches.asJson)
   }
 
   override def restore: Try[Unit] = Try {
-    Persistable
-      .restoreJson("tab_hashes.json")
-      .map(decode[mutable.Map[String, TabMeta]])
-      .foreach {
-        case Right(restoredMap) => tabHashes = restoredMap
-      }
-
     Persistable
       .restoreJson("tab_switches.json")
       .map(decode[mutable.Map[String, TabSwitchMeta]])

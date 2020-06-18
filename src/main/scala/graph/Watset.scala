@@ -20,8 +20,8 @@ import org.jgrapht.graph.DefaultUndirectedWeightedGraph
 
 object Watset extends App with LazyLogging {
   def apply(
-      graph: Graph[Tab, DefaultWeightedEdge]
-  ): List[Set[Tab]] = {
+      graph: Graph[TabMeta, DefaultWeightedEdge]
+  ): List[Set[TabMeta]] = {
     if (graph == null) {
       return List()
     }
@@ -40,14 +40,14 @@ object Watset extends App with LazyLogging {
   }
 
   def buildWatsetGraph(
-      graph: Graph[Tab, DefaultWeightedEdge]
-  ): Graph[Tab, DefaultWeightedEdge] = {
+      graph: Graph[TabMeta, DefaultWeightedEdge]
+  ): Graph[TabMeta, DefaultWeightedEdge] = {
     graph
   }
 
   def computeClustersMarkov(
-      graph: Graph[Tab, DefaultWeightedEdge]
-  ): List[ju.Collection[Tab]] = {
+      graph: Graph[TabMeta, DefaultWeightedEdge]
+  ): List[ju.Collection[TabMeta]] = {
     val markovClusters = new MarkovClustering(graph, 2, 2)
     markovClusters.fit()
 

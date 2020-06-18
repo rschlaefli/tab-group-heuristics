@@ -31,20 +31,21 @@ object TabSwitches extends LazyLogging {
     if (previousTab.isDefined) {
       val prevTab = previousTab.get
 
-      val switchFromNewTab = prevTab.title == "New Tab"
-      val switchToNewTab = currentTab.title == "New Tab"
+      val irrelevantTabs = List("New Tab", "Tab Groups")
+      val switchFromIrrelevantTab = irrelevantTabs.contains(prevTab.title)
+      val switchToIrrelevantTab = irrelevantTabs.contains(currentTab.title)
 
       logger.debug(
-        s"Switch toNewTab=$switchToNewTab fromNewTab=$switchFromNewTab"
+        s"Switch toNewTab=$switchToIrrelevantTab fromNewTab=$switchFromIrrelevantTab"
       )
 
       if (prevTab.hash != currentTab.hash) {
-        if (switchToNewTab && !switchFromNewTab) {
+        if (switchToIrrelevantTab && !switchFromIrrelevantTab) {
           temp = Some(prevTab)
           return
         }
 
-        if (temp.isDefined && switchFromNewTab && !switchToNewTab) {
+        if (temp.isDefined && switchFromIrrelevantTab && !switchToIrrelevantTab) {
           TabSwitchMap.processTabSwitch(temp.get, currentTab)
           temp = None
         } else {

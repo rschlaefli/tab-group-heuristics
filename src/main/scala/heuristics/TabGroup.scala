@@ -3,12 +3,13 @@ package heuristics
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 
 import tabstate.Tab
+import graph.TabMeta
 
 // a group of tabs
 case class TabGroup(
     id: String,
     name: String,
-    tabs: List[Tab]
+    tabs: List[TabMeta]
 )
 
 object TabGroup {

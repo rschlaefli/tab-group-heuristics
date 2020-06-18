@@ -12,11 +12,11 @@ import messaging._
 import graph._
 
 object HeuristicsEngine extends LazyLogging {
-  var automatedClusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
+  var automatedClusters: (mutable.Map[Int, Int], List[Set[TabMeta]]) =
     (mutable.Map(), List())
   var automatedTitles: List[String] = List()
 
-  var manualClusters: (mutable.Map[Int, Int], List[Set[Tab]]) =
+  var manualClusters: (mutable.Map[Int, Int], List[Set[TabMeta]]) =
     (mutable.Map(), List())
 
   def apply(): Thread = {
@@ -24,7 +24,7 @@ object HeuristicsEngine extends LazyLogging {
       logger.info("> Starting to observe current tab state")
 
       while (true) {
-        Thread.sleep(590000)
+        Thread.sleep(30000)
 
         val tabSwitchGraph = TabSwitchGraph()
         if (tabSwitchGraph != null) {
@@ -48,13 +48,13 @@ object HeuristicsEngine extends LazyLogging {
             automatedTitles = clustersWithTitles.map(_._1)
 
             // update the markov clusters stored in the webextension
-            if (clustersWithTitles.size >= 0) {
-              logger.debug(s"> Updating tab clusters in the webextension")
-              NativeMessaging.writeNativeMessage(
-                IO.out,
-                HeuristicsAction.UPDATE_GROUPS(clustersWithTitles.asJson)
-              )
-            }
+            // if (clustersWithTitles.size >= 0) {
+            //   logger.debug(s"> Updating tab clusters in the webextension")
+            //   NativeMessaging.writeNativeMessage(
+            //     IO.out,
+            //     HeuristicsAction.UPDATE_GROUPS(clustersWithTitles.asJson)
+            //   )
+            // }
           }
         }
       }
@@ -65,8 +65,8 @@ object HeuristicsEngine extends LazyLogging {
   }
 
   def processClusters(
-      clusters: List[Set[Tab]]
-  ): (mutable.Map[Int, Int], List[Set[Tab]]) = {
+      clusters: List[Set[TabMeta]]
+  ): (mutable.Map[Int, Int], List[Set[TabMeta]]) = {
     // preapre an index for which tab is stored in which cluster
     val clusterIndex = mutable.Map[Int, Int]()
 

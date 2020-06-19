@@ -3,13 +3,35 @@ package refactor
 import akka.actor.ActorLogging
 import akka.actor.Actor
 import akka.actor.Props
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.language.postfixOps
+import scala.concurrent.duration._
+import scala.util.Success
+import scala.util.Failure
+import akka.actor.Timers
 
 import heuristics.TabGroup
 import refactor.HeuristicsActor.UpdateCuratedGroups
+import refactor.HeuristicsActor.ApplyTabSwitchHeuristic
+import refactor.TabSwitchActor.ComputeGroups
+import graph.TabMeta
 
-class HeuristicsActor extends Actor with ActorLogging {
+class HeuristicsActor extends Actor with ActorLogging with Timers {
+
+  import HeuristicsActor._
+
+  implicit val executionContext = context.dispatcher
 
   val tabSwitches = context.actorOf(Props[TabSwitchActor], "TabSwitches")
+
+  override def preStart(): Unit = {
+    timers.startTimerAtFixedRate(
+      "tabSwitchHeuristic",
+      ApplyTabSwitchHeuristic,
+      20 seconds
+    )
+  }
 
   override def receive: Actor.Receive = {
 
@@ -17,13 +39,26 @@ class HeuristicsActor extends Actor with ActorLogging {
       log.info(s"Received tab groups $tabGroups")
     }
 
+    case ApplyTabSwitchHeuristic => {
+      implicit val timeout = Timeout(20 seconds)
+      tabSwitches ? ComputeGroups onComplete {
+        case Success(TabSwitchHeuristicsResults(tabGroups)) => {
+          log.info(tabGroups.toString())
+        }
+
+        case Failure(ex) => log.error(ex.getMessage())
+      }
+    }
+
     case message => {
       log.info(s"Received message $message")
-      tabSwitches ! message
     }
   }
 }
 
 object HeuristicsActor {
   case class UpdateCuratedGroups(tabGroups: List[TabGroup])
+  case class TabSwitchHeuristicsResults(tabGroups: List[(String, Set[TabMeta])])
+
+  case object ApplyTabSwitchHeuristic
 }

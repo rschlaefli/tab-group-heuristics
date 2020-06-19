@@ -5,7 +5,7 @@ import akka.actor.ActorLogging
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.jgrapht.graph.DefaultWeightedEdge
 import scala.util.Success
-import akka.pattern.ask
+import akka.pattern.{ask, pipe}
 import scala.language.postfixOps
 import org.jgrapht.nio.dot.DOTExporter
 import java.io.StringWriter
@@ -21,35 +21,42 @@ import graph.TabMeta
 import graph.TabSwitchMeta
 import scala.util.Failure
 import akka.actor.Timers
+import refactor.TabSwitchActor.CurrentSwitchGraph
 
-class SwitchGraphActor extends Actor with ActorLogging with Timers {
+class SwitchGraphActor extends Actor with ActorLogging {
 
   import SwitchGraphActor._
 
   implicit val executionContext = context.dispatcher
 
-  override def preStart() = {
-    timers.startTimerAtFixedRate("compute", TriggerComputation, 10 seconds)
-  }
-
   override def receive: Actor.Receive = {
-    case TriggerComputation =>
-      context.actorSelection(
+
+    case ComputeGraph => {
+      implicit val timeout = Timeout(2 seconds)
+      val switchMap = context.actorSelection(
         "/user/Heuristics/TabSwitches/TabSwitchMap"
-      ) ! QueryTabSwitchMap
-
-    case ComputeGraph(tabSwitchMap) => {
-      log.debug(
-        s"Constructing tab switch graph from switch map with ${tabSwitchMap.size} entries"
       )
+      (switchMap ? QueryTabSwitchMap)
+        .mapTo[CurrentSwitchMap]
+        .map {
+          case CurrentSwitchMap(tabSwitchMap) => {
+            log.debug(
+              s"Constructing tab switch graph from switch map with ${tabSwitchMap.size} entries"
+            )
 
-      val tabSwitchGraph = processSwitchMap(tabSwitchMap)
+            val tabSwitchGraph = processSwitchMap(tabSwitchMap)
 
-      log.debug(
-        s"Contructed tab switch graph with ${tabSwitchGraph.vertexSet().size()} nodes and ${tabSwitchGraph.edgeSet().size()} edges"
-      )
+            log.debug(
+              s"Contructed tab switch graph with ${tabSwitchGraph.vertexSet().size()}" +
+                s"nodes and ${tabSwitchGraph.edgeSet().size()} edges"
+            )
 
-      self ! ExportGraph(tabSwitchGraph)
+            self ! ExportGraph(tabSwitchGraph)
+
+            CurrentSwitchGraph(tabSwitchGraph)
+          }
+        }
+        .pipeTo(sender())
     }
 
     case ExportGraph(graph) => {
@@ -80,11 +87,12 @@ class SwitchGraphActor extends Actor with ActorLogging with Timers {
 }
 
 object SwitchGraphActor {
-  case object TriggerComputation
-  case class ComputeGraph(switchMap: Map[String, TabSwitchMeta])
+  case class CurrentSwitchMap(switchMap: Map[String, TabSwitchMeta])
   case class ExportGraph(
       graph: SimpleWeightedGraph[TabMeta, DefaultWeightedEdge]
   )
+
+  case object ComputeGraph
 
   def processSwitchMap(
       tabSwitchMap: Map[String, TabSwitchMeta]

@@ -72,10 +72,20 @@ object TabUpdateEvent {
 
 object TabEvent extends LazyLogging {
 
+  def parseJsonString(message: String): Json = {
+    var json: Json = parse(message).getOrElse(Json.Null)
+
+    if (json == Json.Null) {
+      val fixedMessage = "{ \"ac" + message
+      json = parse(fixedMessage).getOrElse(Json.Null)
+      logger.warn(s"Fixed payload for message $fixedMessage to $json")
+    }
+
+    json
+  }
+
   def decodeEventFromMessage(message: String): Option[TabEvent] = {
-    // parse the incoming JSON
-    val json: Json = parse(message).getOrElse(Json.Null)
-    // logger.debug(s"> Parsed JSON from message => ${json.toString()}")
+    val json = parseJsonString(message)
 
     // get the action type from the json message
     val cursor = json.hcursor
@@ -118,7 +128,7 @@ object TabEvent extends LazyLogging {
       }
 
       case _ => {
-        logger.warn(s"> Unknown tab event received: $action")
+        logger.warn(s"> Unknown tab event received: $action ($message)")
         None
       }
 

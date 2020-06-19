@@ -31,10 +31,11 @@ class CurrentTabsActor extends Actor with ActorLogging {
       if (currentTabs.contains(tabId)) {
         activeTab = tabId
         activeWindow = windowId
+        sender() ! TabActivated(currentTabs(tabId))
       } else {
         context.system.scheduler.scheduleOnce(400 millisecond) {
           log.debug("Tab switch to non-existent tab, pushing back to queue...")
-          self ! activateEvent
+          self forward activateEvent
         }(context.system.dispatcher)
       }
     }
@@ -54,8 +55,12 @@ class CurrentTabsActor extends Actor with ActorLogging {
 
 object CurrentTabsActor {
   case class InitializeTabs(initialTabs: List[Tab])
+
   case class UpdateTab(tab: Tab)
+
   case class ActivateTab(tabId: Int, windowId: Int)
+  case class TabActivated(tab: Tab)
+
   case class RemoveTab(tabId: Int)
 
   case object QueryTabs

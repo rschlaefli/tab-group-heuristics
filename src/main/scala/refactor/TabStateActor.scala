@@ -7,6 +7,10 @@ import com.typesafe.scalalogging.LazyLogging
 import org.slf4j.MarkerFactory
 import scala.concurrent.duration._
 import akka.actor.Props
+import akka.pattern.ask
+import scala.concurrent.duration._
+import akka.util.Timeout
+import scala.language.postfixOps
 
 import Main.StreamInit
 import Main.StreamAck
@@ -14,15 +18,21 @@ import Main.StreamComplete
 import Main.StreamFail
 import messaging._
 import tabstate.Tab
-import refactor.CurrentTabsActor.InitializeTabs
-import refactor.CurrentTabsActor.UpdateTab
-import refactor.CurrentTabsActor.ActivateTab
-import refactor.CurrentTabsActor.RemoveTab
+import CurrentTabsActor.InitializeTabs
+import CurrentTabsActor.UpdateTab
+import CurrentTabsActor.ActivateTab
+import CurrentTabsActor.RemoveTab
+import CurrentTabsActor.TabActivated
+import scala.util.Success
+import scala.util.Failure
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
   val logToCsv = MarkerFactory.getMarker("CSV")
 
   val currentTabs = context.actorOf(Props[CurrentTabsActor], "CurrentTabs")
+
+  implicit val executionContext = context.dispatcher
+  implicit val timeout = Timeout(1 second)
 
   override def preStart(): Unit = {
     log.info("Starting to process tab events")
@@ -46,6 +56,13 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     case TabInitializationEvent(initialTabs) => {
       currentTabs ! InitializeTabs(initialTabs)
 
+      initialTabs.foreach(tab =>
+        logger.info(
+          logToCsv,
+          s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
+        )
+      )
+
       sender() ! StreamAck
     }
 
@@ -55,13 +72,25 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
       currentTabs ! UpdateTab(tab)
 
+      logger.info(
+        logToCsv,
+        s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
+      )
+
       sender() ! StreamAck
     }
 
     case activateEvent: TabActivateEvent => {
       val TabActivateEvent(id, windowId, previousTabId) = activateEvent
 
-      currentTabs ! ActivateTab(id, windowId)
+      currentTabs ? ActivateTab(id, windowId) onComplete {
+        case Success(TabActivated(tab)) =>
+          logger.info(
+            logToCsv,
+            s"ACTIVATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
+          )
+        case Failure(ex) => log.warning(ex.toString)
+      }
 
       sender() ! StreamAck
     }
@@ -73,6 +102,10 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     }
 
     case TabGroupUpdateEvent(tabGroups) => {
+      logger.info(logToCsv, s"UPDATE_GROUPS;;;;")
+
+      // TODO: implementation
+
       sender() ! StreamAck
     }
 

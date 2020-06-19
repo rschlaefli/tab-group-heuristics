@@ -46,6 +46,8 @@ class CurrentTabsActorSpec
 
     "activate a tab" in {
       currentTabs ! ActivateTab(1, 0)
+      expectMsg(TabActivated)
+
       currentTabs ! QueryActiveTab
       val result = expectMsg(
         ActiveTab(
@@ -81,6 +83,7 @@ class CurrentTabsActorSpec
 
       // TODO: akka paradigm?
       Thread.sleep(500)
+      expectMsg(TabActivated(TabFixtures.Tab3))
 
       currentTabs ! QueryActiveTab
       val result3 = expectMsg(ActiveTab(Some(TabFixtures.Tab3), 2, 0))

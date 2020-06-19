@@ -35,13 +35,28 @@ class CurrentTabsActor extends Actor with ActorLogging {
         // remove the old scheduled event to make space for other ones
         scheduledEvent
           .filter(_._1 == tabId)
-          .foreach(_ => scheduledEvent = None)
+          .foreach(_ => {
+            log.debug("Previous activation job removed")
+            scheduledEvent = None
+          })
 
+        // update internal representations of active tab and window
         activeTab = tabId
         activeWindow = windowId
 
+        // let the sender know that we have completed tab activation
         sender() ! TabActivated(currentTabs(tabId))
       } else {
+        // if an activate event is scheduled for another tab, cancel it
+        // to prevent that we change order of tab activations
+        scheduledEvent
+          .filter(_._1 != tabId)
+          .foreach(job => {
+            log.debug("Activation job cancelled before scheduling another one")
+            job._2.cancel()
+          })
+
+        // schedule a new activate event
         val cancellable =
           context.system.scheduler.scheduleOnce(400 millisecond) {
             log.debug(
@@ -60,6 +75,7 @@ class CurrentTabsActor extends Actor with ActorLogging {
       scheduledEvent
         .filter(_._1 == tabId)
         .foreach(job => {
+          log.debug("Activation job cancelled due to tab removal")
           job._2.cancel()
           scheduledEvent = None
         })

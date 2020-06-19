@@ -55,12 +55,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     case TabInitializationEvent(initialTabs) => {
       currentTabs ! InitializeTabs(initialTabs)
 
-      initialTabs.foreach(tab =>
-        logger.info(
-          logToCsv,
+      initialTabs.foreach(tab => {
+        val message =
           s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-        )
-      )
+        logger.info(logToCsv, message)
+      })
 
       sender() ! StreamAck
     }
@@ -71,10 +70,9 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
       currentTabs ! UpdateTab(tab)
 
-      logger.info(
-        logToCsv,
+      val message =
         s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-      )
+      logger.info(logToCsv, message)
 
       sender() ! StreamAck
     }
@@ -85,10 +83,9 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       implicit val timeout = Timeout(3 seconds)
       currentTabs ? ActivateTab(id, windowId) onComplete {
         case Success(TabActivated(tab)) =>
-          logger.info(
-            logToCsv,
+          val message =
             s"ACTIVATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-          )
+          logger.info(logToCsv, message)
         case Failure(ex) => log.warning(ex.toString)
       }
 

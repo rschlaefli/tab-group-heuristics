@@ -1,4 +1,4 @@
-package graph
+package tabswitches
 
 import org.joda.time.DateTime
 import io.circe._, io.circe.generic.semiauto._

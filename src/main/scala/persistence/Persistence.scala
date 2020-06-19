@@ -5,12 +5,7 @@ import io.circe.Json
 import com.typesafe.scalalogging.LazyLogging
 import java.io.PrintWriter
 
-trait Persistable {
-  def persist: Try[Unit]
-  def restore: Try[Unit]
-}
-
-object Persistable extends LazyLogging {
+object Persistence extends LazyLogging {
   def persistJson(fileName: String, jsonData: => Json): Try[Unit] = Try {
     logger.info(s"> Persisted $fileName")
     persistString(fileName, jsonData.toString())

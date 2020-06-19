@@ -1,4 +1,4 @@
-package messaging
+package tabstate
 
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 import com.typesafe.scalalogging.LazyLogging

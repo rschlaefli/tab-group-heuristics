@@ -1,4 +1,4 @@
-package messaging
+package heuristics
 
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._

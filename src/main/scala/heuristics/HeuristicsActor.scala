@@ -1,4 +1,4 @@
-package refactor
+package heuristics
 
 import akka.actor.ActorLogging
 import akka.actor.Actor
@@ -12,10 +12,11 @@ import scala.util.Failure
 import akka.actor.Timers
 
 import heuristics.TabGroup
-import refactor.HeuristicsActor.UpdateCuratedGroups
-import refactor.HeuristicsActor.ApplyTabSwitchHeuristic
-import refactor.TabSwitchActor.ComputeGroups
-import graph.TabMeta
+import HeuristicsActor.UpdateCuratedGroups
+import HeuristicsActor.ApplyTabSwitchHeuristic
+import tabswitches.TabSwitchActor.ComputeGroups
+import tabswitches.TabMeta
+import tabswitches.TabSwitchActor
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 

@@ -9,60 +9,10 @@ import java.io.OutputStream
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import heuristics.HeuristicsAction
 import util.Utils
-import main.Main
 
 object NativeMessaging extends LazyLogging {
-  def apply(
-      in: InputStream,
-      tabEventsQueue: mutable.Queue[TabEvent]
-  ): Thread = {
-    val thread = new Thread(() => {
-      logger.info("> Starting to listen for messages")
-
-      Iterator
-        .continually(readNativeMessage(in))
-        // flatten to get rid of any null values (None)
-        .flatten
-        // try to decode the messages into tab events
-        .flatMap(TabEvent.decodeEventFromMessage)
-        // add all the processed tab events to the queue
-        .foreach(tabEvent => {
-          logger.debug(
-            s"> Processing tab event $tabEvent, current queue size ${tabEventsQueue.size}"
-          )
-          tabEventsQueue.synchronized {
-            tabEventsQueue.enqueue(tabEvent)
-            tabEventsQueue.notify()
-          }
-        })
-    })
-
-    thread.setName("NativeMessaging")
-    thread.setDaemon(true)
-    thread
-  }
-
-  def readToByteArray(in: InputStream, length: Int): Option[Array[Byte]] = {
-    val byteArray = new Array[Byte](length)
-    val count = in.read(byteArray)
-    if (count == -1) {
-      Main.shutdown
-      return None
-    }
-    Some(byteArray)
-  }
-
-  def byteArrayToInt(byteArray: Array[Byte]): Int = {
-    java.nio.ByteBuffer
-      .wrap(byteArray)
-      .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-      .getInt
-  }
-
-  def byteArrayToString(byteArray: Array[Byte]): String = {
-    new String(byteArray, "UTF8")
-  }
 
   def intToByteArray(int: Int): Array[Byte] = {
     List[Byte](
@@ -75,20 +25,6 @@ object NativeMessaging extends LazyLogging {
 
   def asByte(value: Int): Byte = {
     (value & 0xFF).toByte
-  }
-
-  def readNativeMessage(in: InputStream): Option[String] = {
-    // read the length of the message
-    val message = readToByteArray(in, 4)
-      .map(byteArrayToInt)
-      // read the actual message based on its length
-      .map(readToByteArray(in, _))
-      .flatten
-      .map(byteArrayToString)
-
-    Thread.sleep(50)
-
-    message
   }
 
   def writeNativeMessage(

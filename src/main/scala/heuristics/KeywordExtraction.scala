@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import smile.nlp._
 
 import tabstate.Tab
-import graph.TabMeta
+import tabswitches.TabMeta
 
 object KeywordExtraction extends LazyLogging {
 

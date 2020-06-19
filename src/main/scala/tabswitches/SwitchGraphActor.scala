@@ -1,4 +1,4 @@
-package refactor
+package tabswitches
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
@@ -15,13 +15,12 @@ import collection.JavaConverters._
 import akka.util.Timeout
 import org.jgrapht.nio.Attribute
 import org.jgrapht.nio.DefaultAttribute
-
-import SwitchMapActor.QueryTabSwitchMap
-import graph.TabMeta
-import graph.TabSwitchMeta
 import scala.util.Failure
 import akka.actor.Timers
-import refactor.TabSwitchActor.CurrentSwitchGraph
+
+import persistence.Persistence
+import SwitchMapActor.QueryTabSwitchMap
+import TabSwitchActor.CurrentSwitchGraph
 
 class SwitchGraphActor extends Actor with ActorLogging {
 

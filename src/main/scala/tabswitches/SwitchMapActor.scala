@@ -1,4 +1,4 @@
-package refactor
+package tabswitches
 
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
 io.circe.syntax._
@@ -10,9 +10,8 @@ import org.slf4j.MarkerFactory
 import scala.language.postfixOps
 import scala.concurrent.duration._
 
-import graph.TabSwitchMeta
+import persistence.Persistence
 import tabstate.Tab
-import graph.TabMeta
 import SwitchGraphActor.{ComputeGraph, CurrentSwitchMap}
 
 class SwitchMapActor extends Actor with ActorLogging with LazyLogging {

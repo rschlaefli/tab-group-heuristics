@@ -1,4 +1,4 @@
-package refactor
+package statistics
 
 import scala.collection.mutable
 import akka.actor.Actor

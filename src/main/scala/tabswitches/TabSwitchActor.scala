@@ -1,4 +1,4 @@
-package refactor
+package tabswitches
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
@@ -13,16 +13,14 @@ import akka.util.Timeout
 import scala.collection.mutable
 
 import tabstate.Tab
-import refactor.SwitchMapActor.ProcessTabSwitch
-import refactor.SwitchGraphActor.ComputeGraph
+import SwitchMapActor.ProcessTabSwitch
+import SwitchGraphActor.ComputeGraph
 import scala.util.Success
 import org.jgrapht.graph.SimpleWeightedGraph
-import graph.TabMeta
 import org.jgrapht.graph.DefaultWeightedEdge
 import scala.util.Failure
-import graph.Watset
 import heuristics.KeywordExtraction
-import refactor.HeuristicsActor.TabSwitchHeuristicsResults
+import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
 
 class TabSwitchActor extends Actor with ActorLogging {
 

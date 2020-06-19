@@ -3,7 +3,7 @@ package heuristics
 import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 
 import tabstate.Tab
-import graph.TabMeta
+import tabswitches.TabMeta
 
 // a group of tabs
 case class TabGroup(

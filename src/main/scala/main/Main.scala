@@ -1,34 +1,35 @@
-/*
-  see https://github.com/rschlaefli/jfreesteel/blob/master/eidnativemessaging/src/main/java/net/devbase/jfreesteel/nativemessaging/EidWebExtensionApp.java
- */
-
 package main
 
-import java.io.{PrintWriter, File}
-import java.io.IOException
-import java.io.InputStream
+import akka.actor.ActorSystem
+import akka.actor.Props
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.StreamConverters
 import com.typesafe.scalalogging.LazyLogging
-import java.io.BufferedOutputStream
-import java.io.BufferedInputStream
-import scala.util.{Either, Try, Success, Failure}
-import java.io.OutputStream
-import scala.collection.mutable.{Map, Queue}
-import io.circe.Json
-
-import util._
-import tabstate._
-import heuristics._
-import messaging._
-import persistence._
-import statistics._
+import akka.util.ByteString
 import java.net.ServerSocket
+import scala.util.{Either, Try, Success, Failure}
+import akka.actor.CoordinatedShutdown
+
+import tabstate.TabStateActor
+import heuristics.HeuristicsActor
+import messaging.IO
+import messaging.NativeMessaging
+import heuristics.HeuristicsAction
+import tabstate.TabEvent
 
 object Main extends App with LazyLogging {
 
-  // wait for 10 seconds before cootstrapping
-  // this helps ensure that the previous instance has shut down when reloading
-  logger.info("> Bootstrapping tab grouping heuristics")
-  Thread.sleep(10000)
+  case object StreamInit
+  case object StreamAck
+  case object StreamComplete
+  case class StreamFail(ex: Throwable)
+
+  logger.info("Bootstrapping application")
+  Thread.sleep(5000)
+
+  IO()
 
   // try to bind to a server socket (to ensure we can only have one instance at a time)
   var serverSocket: ServerSocket = null
@@ -49,43 +50,36 @@ object Main extends App with LazyLogging {
     }
   }
 
-  IO()
+  implicit val system = ActorSystem("Application")
+  implicit val materializer = ActorMaterializer()
 
-  // read persisted state and initialize
-  PersistenceEngine.restoreInitialState
+  // create a stream source from standard input
+  // map every incoming message to the content part and decode the contained JSON string
+  // the chunksize has to be high as we can get big json payloads from the extension (e.g., for tab groups)
+  val source = StreamConverters
+    .fromInputStream(() => IO.in, 65536)
+    .map(_.drop(4).utf8String)
+    .map(TabEvent.decodeEventFromMessage)
+    .filter(_.isDefined)
+    .map(_.get)
 
-  logger.info("> Starting threads")
+  // setup actors
+  val tabState = system.actorOf(Props[TabStateActor], "TabState")
+  val heuristics = system.actorOf(Props[HeuristicsActor], "Heuristics")
+  // val statisticsActor = system.actorOf(Props[StatisticsActor], "Statistics")
 
-  // setup a continuous iterator for native message retrieval
-  val nativeMessagingThread = NativeMessaging(IO.in, TabState.tabEventsQueue)
+  // create a stream sink for the message processing actor
+  val sink = Sink
+    .actorRefWithAck[TabEvent](
+      tabState,
+      onInitMessage = StreamInit,
+      onCompleteMessage = StreamComplete,
+      ackMessage = StreamAck,
+      onFailureMessage = throwable => StreamFail(throwable)
+    )
 
-  // setup a continuous iterator for event processing
-  val tabStateThread = TabState()
-
-  // setup a thread for the persistence engine
-  val persistenceThread = PersistenceEngine()
-
-  // setup a thread for the statistics collector
-  val statisticsThread = StatisticsEngine()
-
-  // setup a thread that regularly requests a tab group update
-  val tabGroupUpdateThread = new Thread(() => {
-    while (true) {
-      Thread.sleep(120000)
-
-      // refresh the manual tab groups for the next iteration
-      NativeMessaging
-        .writeNativeMessage(IO.out, HeuristicsAction.QUERY_GROUPS)
-    }
-  })
-  tabGroupUpdateThread.setName("TabGroupUpdates")
-  tabGroupUpdateThread.setDaemon(true)
-
-  tabStateThread.start()
-  nativeMessagingThread.start()
-  persistenceThread.start()
-  statisticsThread.start()
-  tabGroupUpdateThread.start()
+  // start processing incoming events
+  val graph = source.to(sink).run()
 
   logger.info(s"> Daemons started (${Thread.activeCount()})")
   NativeMessaging
@@ -94,24 +88,18 @@ object Main extends App with LazyLogging {
       HeuristicsAction.HEURISTICS_STATUS("RUNNING")
     )
 
-  def shutdown = {
-    logger.info("> Shutting down...")
+  CoordinatedShutdown(system).addJvmShutdownHook {
+    logger.info("Shutting down...")
+
     serverSocket.close()
-    PersistenceEngine.persistCurrentState
+    serverSocket = null
+
     NativeMessaging
       .writeNativeMessage(
         IO.out,
         HeuristicsAction.HEURISTICS_STATUS("STOPPED")
       )
-    System.exit(0)
+
+    // TODO: trigger persistence
   }
-
-  // add a shutdown hook that persists data upon shutdown
-  sys.addShutdownHook(shutdown)
-
-  // setup a continually running
-  val heuristicsThread = HeuristicsEngine()
-
-  heuristicsThread.join()
-
 }

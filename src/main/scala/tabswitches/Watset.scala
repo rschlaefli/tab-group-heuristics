@@ -1,4 +1,4 @@
-package graph
+package tabswitches
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable

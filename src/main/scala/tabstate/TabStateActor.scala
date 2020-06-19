@@ -1,4 +1,4 @@
-package refactor
+package tabstate
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
@@ -16,17 +16,18 @@ import scala.util.Failure
 import messaging._
 import tabstate.Tab
 
-import Main.StreamInit
-import Main.StreamAck
-import Main.StreamComplete
-import Main.StreamFail
+import main.Main.StreamInit
+import main.Main.StreamAck
+import main.Main.StreamComplete
+import main.Main.StreamFail
 
 import CurrentTabsActor.InitializeTabs
 import CurrentTabsActor.UpdateTab
 import CurrentTabsActor.ActivateTab
 import CurrentTabsActor.RemoveTab
-import refactor.HeuristicsActor.UpdateCuratedGroups
-import refactor.TabSwitchActor.TabSwitch
+import tabswitches.TabSwitchActor.TabSwitch
+import heuristics.HeuristicsAction
+import heuristics.HeuristicsActor.UpdateCuratedGroups
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 

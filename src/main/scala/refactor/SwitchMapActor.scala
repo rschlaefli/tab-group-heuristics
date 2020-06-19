@@ -13,6 +13,7 @@ import scala.concurrent.duration._
 import graph.TabSwitchMeta
 import tabstate.Tab
 import graph.TabMeta
+import SwitchGraphActor.ComputeGraph
 
 class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
 
@@ -54,10 +55,16 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
       // TODO: push the tab switch to statistics
     }
 
+    case QueryTabSwitchMap => {
+      sender() ! ComputeGraph(tabSwitches.toMap)
+    }
+
     case message => log.debug("Received message $message")
   }
 }
 
 object SwitchMapActor {
   case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
+  case class CurrentSwitchMap(switchMap: Map[String, TabSwitchMeta])
+  case object QueryTabSwitchMap
 }

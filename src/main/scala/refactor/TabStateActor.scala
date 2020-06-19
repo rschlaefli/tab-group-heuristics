@@ -8,7 +8,6 @@ import org.slf4j.MarkerFactory
 import scala.concurrent.duration._
 import akka.actor.Props
 import akka.pattern.ask
-import scala.concurrent.duration._
 import akka.util.Timeout
 import scala.language.postfixOps
 import scala.util.Success

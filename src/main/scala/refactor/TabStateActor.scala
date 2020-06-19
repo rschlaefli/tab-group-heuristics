@@ -47,7 +47,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     NativeMessaging.writeNativeMessage(IO.out, HeuristicsAction.QUERY_TABS)
 
     // query the webextension for the list of current tab groups repeatedly
-    context.system.scheduler.scheduleWithFixedDelay(10 seconds, 10 seconds) {
+    context.system.scheduler.scheduleWithFixedDelay(10 seconds, 1 minute) {
       () =>
         NativeMessaging.writeNativeMessage(
           IO.out,

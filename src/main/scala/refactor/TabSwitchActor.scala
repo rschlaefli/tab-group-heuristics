@@ -5,7 +5,7 @@ import akka.actor.ActorLogging
 import com.typesafe.scalalogging.LazyLogging
 import org.slf4j.MarkerFactory
 import akka.actor.Props
-import akka.pattern.ask
+import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import scala.language.postfixOps
 import scala.concurrent.duration._

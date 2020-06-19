@@ -8,9 +8,14 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import com.typesafe.scalalogging.LazyLogging
 import akka.util.ByteString
+import java.net.ServerSocket
+import scala.util.{Either, Try, Success, Failure}
 
 import messaging.TabEvent
 import messaging.IO
+import messaging.NativeMessaging
+import messaging.HeuristicsAction
+import akka.actor.CoordinatedShutdown
 
 object Main extends App with LazyLogging {
 
@@ -20,8 +25,28 @@ object Main extends App with LazyLogging {
   case class StreamFail(ex: Throwable)
 
   logger.info("Bootstrapping application")
+  Thread.sleep(5000)
 
   IO()
+
+  // try to bind to a server socket (to ensure we can only have one instance at a time)
+  var serverSocket: ServerSocket = null
+  Try { new ServerSocket(12345) } match {
+    case Success(socket) => {
+      serverSocket = socket
+    }
+    case Failure(e) => {
+      logger.error(
+        "> Unable to bind to the socket (there might be another instance running). Exiting..."
+      )
+      NativeMessaging
+        .writeNativeMessage(
+          IO.out,
+          HeuristicsAction.HEURISTICS_STATUS("ALREADY_RUNNING")
+        )
+      System.exit(0)
+    }
+  }
 
   implicit val system = ActorSystem("Application")
   implicit val materializer = ActorMaterializer()
@@ -54,4 +79,11 @@ object Main extends App with LazyLogging {
   // start processing incoming events
   val graph = source.to(sink).run()
 
+  CoordinatedShutdown(system).addJvmShutdownHook {
+    logger.info("Shutting down...")
+
+    serverSocket = null
+
+    // TODO: trigger persistence
+  }
 }

@@ -29,7 +29,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     timers.startTimerAtFixedRate(
       "tabSwitchHeuristic",
       ApplyTabSwitchHeuristic,
-      20 seconds
+      2 minutes
     )
   }
 

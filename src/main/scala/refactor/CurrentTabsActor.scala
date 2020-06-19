@@ -1,10 +1,12 @@
-package tabstate
+package refactor
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.collection.mutable
+
+import tabstate.Tab
 
 class CurrentTabsActor extends Actor with ActorLogging {
 

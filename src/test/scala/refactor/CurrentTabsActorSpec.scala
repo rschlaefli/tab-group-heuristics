@@ -1,4 +1,4 @@
-package tabstate
+package refactor
 
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 import akka.testkit.ImplicitSender
@@ -7,11 +7,11 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.pattern.ask
 import scala.concurrent.duration._
-
-import tabstate.CurrentTabsActor._
 import akka.util.Timeout
 import scala.util.Success
 import scala.language.postfixOps
+
+import refactor.CurrentTabsActor._
 
 class CurrentTabsActorSpec
     extends TestKit(ActorSystem("CurrentTabsActorSystem"))

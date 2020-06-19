@@ -7,10 +7,10 @@ import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import com.typesafe.scalalogging.LazyLogging
+import akka.util.ByteString
 
 import messaging.TabEvent
 import messaging.IO
-import akka.util.ByteString
 
 object Main extends App with LazyLogging {
 
@@ -36,13 +36,12 @@ object Main extends App with LazyLogging {
     .map(_.get)
 
   // setup actors
-  val tabStateActor =
-    system.actorOf(Props[TabStateActor], "TabState")
+  val tabState = system.actorOf(Props[TabStateActor], "TabState")
 
   // create a stream sink for the message processing actor
   val sink = Sink
     .actorRefWithAck[TabEvent](
-      tabStateActor,
+      tabState,
       onInitMessage = StreamInit,
       onCompleteMessage = StreamComplete,
       ackMessage = StreamAck,

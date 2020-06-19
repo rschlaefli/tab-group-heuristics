@@ -1,4 +1,6 @@
-package tabstate
+package refactor
+
+import tabstate.Tab
 
 object TabFixtures {
   val Tab1 = Tab(

@@ -32,7 +32,6 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
   val currentTabs = context.actorOf(Props[CurrentTabsActor], "CurrentTabs")
 
   implicit val executionContext = context.dispatcher
-  implicit val timeout = Timeout(1 second)
 
   override def preStart(): Unit = {
     log.info("Starting to process tab events")
@@ -83,6 +82,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     case activateEvent: TabActivateEvent => {
       val TabActivateEvent(id, windowId, previousTabId) = activateEvent
 
+      implicit val timeout = Timeout(3 seconds)
       currentTabs ? ActivateTab(id, windowId) onComplete {
         case Success(TabActivated(tab)) =>
           logger.info(
@@ -96,6 +96,8 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     }
 
     case TabRemoveEvent(id, windowId) => {
+      logger.info(logToCsv, s"REMOVE;${id};;;")
+
       currentTabs ! RemoveTab(id)
 
       sender() ! StreamAck

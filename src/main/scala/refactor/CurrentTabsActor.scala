@@ -33,11 +33,7 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
     case activateEvent: ActivateTab => {
       val ActivateTab(prevTabId, tabId, windowId) = activateEvent
 
-      log.debug(context.parent.toString())
-
       if (currentTabs.contains(tabId)) {
-        log.debug("Immediate activation")
-
         // get the previous tab
         val previousTab = currentTabs.get(prevTabId.getOrElse(activeTab))
 
@@ -51,8 +47,6 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
           currentTabs(tabId)
         )
       } else {
-        log.debug("Activation postponed due to missing tab")
-
         timers.startSingleTimer(
           s"activate-$tabId",
           activateEvent,

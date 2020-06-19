@@ -45,7 +45,7 @@ class CurrentTabsActorSpec
     }
 
     "activate a tab" in {
-      currentTabs ! ActivateTab(1, 0)
+      currentTabs ! ActivateTab(None, 1, 0)
       expectMsg(TabActivated)
 
       currentTabs ! QueryActiveTab
@@ -67,7 +67,7 @@ class CurrentTabsActorSpec
     }
 
     "activate a non-existent tab" in {
-      currentTabs ! ActivateTab(2, 0)
+      currentTabs ! ActivateTab(Some(1), 2, 0)
       currentTabs ! QueryActiveTab
       val result1 = expectMsg(ActiveTab(Some(TabFixtures.Tab2Updated), 1, 0))
       println("ACTIVE", result1)
@@ -83,7 +83,7 @@ class CurrentTabsActorSpec
 
       // TODO: akka paradigm?
       Thread.sleep(500)
-      expectMsg(TabActivated(TabFixtures.Tab3))
+      expectMsg(TabActivated(Some(TabFixtures.Tab2Updated), TabFixtures.Tab3))
 
       currentTabs ! QueryActiveTab
       val result3 = expectMsg(ActiveTab(Some(TabFixtures.Tab3), 2, 0))

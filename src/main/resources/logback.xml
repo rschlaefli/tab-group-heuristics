@@ -138,6 +138,10 @@
     <appender-ref ref="TabEventsCSV" />
   </logger>
 
+  <logger name="refactor.TabSwitchActor" level="debug">
+    <appender-ref ref="TabSwitchesCSV" />
+  </logger>
+
   <!-- <logger name="main.Application" level="debug">
     <appender-ref ref="AsyncMain" />
     <appender-ref ref="AsyncDebug" />

@@ -24,11 +24,13 @@ class CurrentTabsActor extends Actor with ActorLogging {
     }
 
     case UpdateTab(tab) => {
+      val prevTabState = currentTabs.get(tab.id)
       currentTabs(tab.id) = tab
+      sender() ! TabUpdated(prevTabState, tab)
     }
 
     case activateEvent: ActivateTab => {
-      val ActivateTab(tabId, windowId) = activateEvent
+      val ActivateTab(prevTabId, tabId, windowId) = activateEvent
 
       if (currentTabs.contains(tabId)) {
         // if we are activating an event, and there is a leftover scheduled event for the current tab
@@ -40,12 +42,15 @@ class CurrentTabsActor extends Actor with ActorLogging {
             scheduledEvent = None
           })
 
+        // get the previous tab
+        val previousTab = currentTabs.get(prevTabId.getOrElse(activeTab))
+
         // update internal representations of active tab and window
         activeTab = tabId
         activeWindow = windowId
 
         // let the sender know that we have completed tab activation
-        sender() ! TabActivated(currentTabs(tabId))
+        sender() ! TabActivated(previousTab, currentTabs(tabId))
       } else {
         // if an activate event is scheduled for another tab, cancel it
         // to prevent that we change order of tab activations
@@ -97,9 +102,10 @@ object CurrentTabsActor {
   case class InitializeTabs(initialTabs: List[Tab])
 
   case class UpdateTab(tab: Tab)
+  case class TabUpdated(prevState: Option[Tab], newState: Tab)
 
-  case class ActivateTab(tabId: Int, windowId: Int)
-  case class TabActivated(tab: Tab)
+  case class ActivateTab(prevTabId: Option[Int], tabId: Int, windowId: Int)
+  case class TabActivated(prevTab: Option[Tab], tab: Tab)
 
   case class RemoveTab(tabId: Int)
 
@@ -108,5 +114,4 @@ object CurrentTabsActor {
 
   case object QueryActiveTab
   case class ActiveTab(tab: Option[Tab], tabId: Int, windowId: Int)
-
 }

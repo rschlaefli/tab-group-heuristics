@@ -78,7 +78,7 @@ object TabEvent extends LazyLogging {
     if (json == Json.Null) {
       val fixedMessage = "{ \"ac" + message
       json = parse(fixedMessage).getOrElse(Json.Null)
-      logger.warn(s"Fixed payload for message $fixedMessage to $json")
+      logger.warn(s"Fixed payload for message ${fixedMessage.substring(0, 50)}")
     }
 
     json

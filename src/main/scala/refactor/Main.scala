@@ -28,8 +28,9 @@ object Main extends App with LazyLogging {
 
   // create a stream source from standard input
   // map every incoming message to the content part and decode the contained JSON string
+  // the chunksize has to be high as we can get big json payloads from the extension (e.g., for tab groups)
   val source = StreamConverters
-    .fromInputStream(() => IO.in)
+    .fromInputStream(() => IO.in, 65536)
     .map(_.drop(4).utf8String)
     .map(TabEvent.decodeEventFromMessage)
     .filter(_.isDefined)
@@ -37,6 +38,8 @@ object Main extends App with LazyLogging {
 
   // setup actors
   val tabState = system.actorOf(Props[TabStateActor], "TabState")
+  val heuristics = system.actorOf(Props[HeuristicsActor], "Heuristics")
+  // val statisticsActor = system.actorOf(Props[StatisticsActor], "Statistics")
 
   // create a stream sink for the message processing actor
   val sink = Sink
@@ -47,8 +50,6 @@ object Main extends App with LazyLogging {
       ackMessage = StreamAck,
       onFailureMessage = throwable => StreamFail(throwable)
     )
-
-  // val statisticsActor = system.actorOf(Props[StatisticsActor], "Statistics")
 
   // start processing incoming events
   val graph = source.to(sink).run()

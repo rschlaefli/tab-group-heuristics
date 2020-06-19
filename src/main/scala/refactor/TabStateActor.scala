@@ -5,8 +5,7 @@ import akka.actor.ActorLogging
 import scala.collection.mutable
 import com.typesafe.scalalogging.LazyLogging
 import org.slf4j.MarkerFactory
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration._
 
 import Main.StreamInit
 import Main.StreamAck
@@ -41,6 +40,8 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     case StreamFail(ex) =>
       log.warning(s"Stream failed with $ex")
 
+    case StreamAck => ()
+
     case TabInitializationEvent(initialTabs) => {
       currentTabs ++= initialTabs.map(tab => {
         logger.info(
@@ -53,17 +54,6 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       log.info(
         s"Initialized current tabs to $currentTabs"
       )
-
-      sender() ! StreamAck
-    }
-
-    case TabGroupUpdateEvent(tabGroups) => {
-      log.debug(s"Updating tab groups to $tabGroups")
-
-      logger.info(logToCsv, s"UPDATE_GROUPS;;;;")
-
-      // TODO: messaging
-      // HeuristicsEngine.updateManualClusters(tabGroups)
 
       sender() ! StreamAck
     }
@@ -102,14 +92,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       )
 
       if (!currentTab.isDefined) {
-        // TODO: replace with scheduling
-        Future {
-          Thread.sleep(333)
-          log.debug(
-            "Tab switch to non-existent tab, pushing back to queue..."
-          )
+        import scala.language.postfixOps
+        context.system.scheduler.scheduleOnce(500 millisecond) {
+          log.debug("Tab switch to non-existent tab, pushing back to queue...")
           self ! activateEvent
-        }
+        }(context.system.dispatcher)
       } else {
         activeTab = id
         activeWindow = windowId
@@ -127,14 +114,25 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     }
 
     case TabRemoveEvent(id, windowId) => {
-      logger.info(logToCsv, s"REMOVE;${id};;;")
-
-      currentTabs -= (id)
+      import scala.language.postfixOps
+      context.system.scheduler.scheduleOnce(1 second) {
+        logger.info(logToCsv, s"REMOVE;${id};;;")
+        currentTabs -= (id)
+      }(context.system.dispatcher)
 
       sender() ! StreamAck
     }
 
-    case StreamAck => ()
+    case TabGroupUpdateEvent(tabGroups) => {
+      log.debug(s"Updating tab groups to $tabGroups")
+
+      logger.info(logToCsv, s"UPDATE_GROUPS;;;;")
+
+      // TODO: messaging
+      // HeuristicsEngine.updateManualClusters(tabGroups)
+
+      sender() ! StreamAck
+    }
 
     case message =>
       log.info(s"Received unknown TabEvent $message")

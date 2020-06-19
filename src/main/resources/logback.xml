@@ -138,7 +138,7 @@
     <appender-ref ref="TabEventsCSV" />
   </logger>
 
-  <logger name="refactor.TabSwitchActor" level="debug">
+  <logger name="refactor.SwitchMapActor" level="debug">
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
 

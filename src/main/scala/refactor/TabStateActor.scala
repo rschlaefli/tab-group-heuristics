@@ -26,12 +26,13 @@ import CurrentTabsActor.InitializeTabs
 import CurrentTabsActor.UpdateTab
 import CurrentTabsActor.ActivateTab
 import CurrentTabsActor.RemoveTab
-import CurrentTabsActor.TabActivated
 import refactor.HeuristicsActor.UpdateCuratedGroups
 import refactor.TabSwitchActor.TabSwitch
-import refactor.CurrentTabsActor.TabUpdated
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
+
+  import TabStateActor._
+
   val logToCsv = MarkerFactory.getMarker("CSV")
 
   implicit val executionContext = context.dispatcher
@@ -102,18 +103,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     case activateEvent: TabActivateEvent => {
       val TabActivateEvent(id, windowId, previousTabId) = activateEvent
 
-      implicit val timeout = Timeout(3 seconds)
-      currentTabs ? ActivateTab(previousTabId, id, windowId) onComplete {
-        case Success(TabActivated(prevTab, tab)) => {
-          val message =
-            s"ACTIVATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-          logger.info(logToCsv, message)
-
-          tabSwitches ! TabSwitch(prevTab, tab)
-        }
-
-        case Failure(ex) => log.warning(ex.toString)
-      }
+      currentTabs ! ActivateTab(previousTabId, id, windowId)
 
       sender() ! StreamAck
     }
@@ -134,6 +124,14 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       sender() ! StreamAck
     }
 
+    case TabActivated(prevTab, tab) => {
+      val message =
+        s"ACTIVATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
+      logger.info(logToCsv, message)
+
+      tabSwitches ! TabSwitch(prevTab, tab)
+    }
+
     case message =>
       log.info(s"Received unknown TabEvent $message")
 
@@ -142,4 +140,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
 }
 
-object TabStateActor {}
+object TabStateActor {
+  case class TabActivated(prevTab: Option[Tab], tab: Tab)
+  case class TabUpdated(prevState: Option[Tab], newState: Tab)
+}

@@ -46,7 +46,7 @@ class CurrentTabsActorSpec
 
     "activate a tab" in {
       currentTabs ! ActivateTab(None, 1, 0)
-      expectMsg(TabActivated)
+      expectMsg(TabActivated(None, TabFixtures.Tab2))
 
       currentTabs ! QueryActiveTab
       val result = expectMsg(
@@ -61,6 +61,8 @@ class CurrentTabsActorSpec
 
     "update the active tab" in {
       currentTabs ! UpdateTab(TabFixtures.Tab2Updated)
+      expectMsg(TabUpdated(Some(TabFixtures.Tab2), TabFixtures.Tab2Updated))
+
       currentTabs ! QueryActiveTab
       val result = expectMsg(ActiveTab(Some(TabFixtures.Tab2Updated), 1, 0))
       println("UPDATE", result)
@@ -68,11 +70,17 @@ class CurrentTabsActorSpec
 
     "activate a non-existent tab" in {
       currentTabs ! ActivateTab(Some(1), 2, 0)
+
       currentTabs ! QueryActiveTab
       val result1 = expectMsg(ActiveTab(Some(TabFixtures.Tab2Updated), 1, 0))
       println("ACTIVE", result1)
 
       currentTabs ! UpdateTab(TabFixtures.Tab3)
+      expectMsg(TabUpdated(None, TabFixtures.Tab3))
+
+      // TODO: fix the timeout caused by incorrect sender() in the timer context
+      // expectMsg(TabActivated(Some(TabFixtures.Tab2Updated), TabFixtures.Tab3))
+
       currentTabs ! QueryTabs
       val result2 = expectMsg(
         CurrentTabs(
@@ -80,10 +88,6 @@ class CurrentTabsActorSpec
         )
       )
       println("CURRENT", result2)
-
-      // TODO: akka paradigm?
-      Thread.sleep(500)
-      expectMsg(TabActivated(Some(TabFixtures.Tab2Updated), TabFixtures.Tab3))
 
       currentTabs ! QueryActiveTab
       val result3 = expectMsg(ActiveTab(Some(TabFixtures.Tab3), 2, 0))

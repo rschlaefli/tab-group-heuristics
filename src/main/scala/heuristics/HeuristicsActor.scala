@@ -12,11 +12,10 @@ import scala.util.Failure
 import akka.actor.Timers
 
 import heuristics.TabGroup
-import HeuristicsActor.UpdateCuratedGroups
-import HeuristicsActor.ApplyTabSwitchHeuristic
 import tabswitches.TabSwitchActor.ComputeGroups
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
+import tabswitches.TabSwitchActor.TabSwitch
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 
@@ -28,8 +27,8 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
   override def preStart(): Unit = {
     timers.startTimerAtFixedRate(
-      "tabSwitchHeuristic",
-      ApplyTabSwitchHeuristic,
+      "heuristics",
+      ComputeHeuristics,
       2 minutes
     )
   }
@@ -40,15 +39,17 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
       log.info(s"Received tab groups $tabGroups")
     }
 
-    case ApplyTabSwitchHeuristic => {
+    case ComputeHeuristics => {
       implicit val timeout = Timeout(20 seconds)
-      tabSwitches ? ComputeGroups onComplete {
-        case Success(TabSwitchHeuristicsResults(tabGroups)) => {
-          log.info(tabGroups.toString())
+
+      (tabSwitches ? ComputeGroups)
+        .mapTo[TabSwitchHeuristicsResults]
+        .map {
+          case TabSwitchHeuristicsResults(tabGroups) => {
+            log.info(tabGroups.toString())
+          }
         }
 
-        case Failure(ex) => log.error(ex.getMessage())
-      }
     }
 
     case message => {
@@ -61,5 +62,5 @@ object HeuristicsActor {
   case class UpdateCuratedGroups(tabGroups: List[TabGroup])
   case class TabSwitchHeuristicsResults(tabGroups: List[(String, Set[TabMeta])])
 
-  case object ApplyTabSwitchHeuristic
+  case object ComputeHeuristics
 }

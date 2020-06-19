@@ -63,29 +63,30 @@ class TabSwitchActor extends Actor with ActorLogging {
 
     case ComputeGroups => {
       implicit val timeout = Timeout(10 seconds)
-      switchGraph ? ComputeGraph onComplete {
-        case Success(CurrentSwitchGraph(graph)) => {
-          log.debug(s"Computing tab clusters")
+      (switchGraph ? ComputeGraph)
+        .mapTo[CurrentSwitchGraph]
+        .map {
+          case CurrentSwitchGraph(graph) => {
+            log.debug(s"Computing tab clusters")
 
-          val computedClusters = Watset(graph)
-          val automatedClusters = processClusters(computedClusters)
+            val computedClusters = Watset(graph)
+            val automatedClusters = processClusters(computedClusters)
 
-          // generating cluster titles
-          log.debug(s"> Generating tab cluster titles")
+            // generating cluster titles
+            log.debug(s"> Generating tab cluster titles")
 
-          val clustersWithTitles = automatedClusters._2.map(tabCluster => {
-            val keywords = KeywordExtraction(tabCluster)
-            (keywords.mkString(" "), tabCluster)
-          })
-          val automatedTitles = clustersWithTitles.map(_._1)
+            val clustersWithTitles = automatedClusters._2.map(tabCluster => {
+              val keywords = KeywordExtraction(tabCluster)
+              (keywords.mkString(" "), tabCluster)
+            })
+            val automatedTitles = clustersWithTitles.map(_._1)
 
-          log.info(clustersWithTitles.toString())
+            log.info(clustersWithTitles.toString())
 
-          sender() ! TabSwitchHeuristicsResults(clustersWithTitles)
+            TabSwitchHeuristicsResults(clustersWithTitles)
+          }
         }
-
-        case Failure(ex) => log.error(ex.getMessage())
-      }
+        .pipeTo(sender())
     }
 
     case message => log.debug(s"Received message $message")

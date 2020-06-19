@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.slf4j.MarkerFactory
 import scala.concurrent.duration._
 import akka.actor.Props
-import akka.pattern.ask
+import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import scala.language.postfixOps
 import scala.util.Success
@@ -15,12 +15,10 @@ import scala.util.Failure
 
 import messaging._
 import tabstate.Tab
-
 import main.Main.StreamInit
 import main.Main.StreamAck
 import main.Main.StreamComplete
 import main.Main.StreamFail
-
 import CurrentTabsActor.InitializeTabs
 import CurrentTabsActor.UpdateTab
 import CurrentTabsActor.ActivateTab
@@ -86,12 +84,17 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       val tab = Tab.fromEvent(updateEvent)
 
       implicit val timeout = Timeout(1 seconds)
-      currentTabs ? UpdateTab(tab) onComplete {
-        case Success(TabUpdated(prevTab, newTab)) => {
-          tabSwitches ! TabSwitch(prevTab, newTab)
+
+      val tabSwitchFuture = (currentTabs ? UpdateTab(tab))
+        .mapTo[TabUpdated]
+        .map {
+          case TabUpdated(prevTab, newTab) => TabSwitch(prevTab, newTab)
         }
-        case _ =>
-      }
+
+      for {
+        tabSwitch <- tabSwitchFuture
+        tabSwitchesRef <- tabSwitches.resolveOne
+      } yield (tabSwitchesRef ! tabSwitch)
 
       val message =
         s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"

@@ -19,10 +19,6 @@ object Main extends App with LazyLogging {
   case object StreamComplete
   case class StreamFail(ex: Throwable)
 
-  // TODO: query the initial tabs!
-
-  // wait for 10 seconds before cootstrapping
-  // this helps ensure that the previous instance has shut down when reloadin
   logger.info("Bootstrapping application")
 
   IO()
@@ -40,20 +36,19 @@ object Main extends App with LazyLogging {
     .map(_.get)
 
   // setup actors
-  val nativeMessagingActor =
-    system.actorOf(Props[TabStateActor], "NativeMessaging")
+  val tabStateActor =
+    system.actorOf(Props[TabStateActor], "TabState")
 
   // create a stream sink for the message processing actor
   val sink = Sink
     .actorRefWithAck[TabEvent](
-      nativeMessagingActor,
+      tabStateActor,
       onInitMessage = StreamInit,
       onCompleteMessage = StreamComplete,
       ackMessage = StreamAck,
       onFailureMessage = throwable => StreamFail(throwable)
     )
 
-  // val tabStateActor = system.actorOf(Props[TabStateActor], "TabState")
   // val statisticsActor = system.actorOf(Props[StatisticsActor], "Statistics")
 
   // start processing incoming events

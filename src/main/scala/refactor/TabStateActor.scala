@@ -22,8 +22,12 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
   var activeWindow = -1
   var currentTabs = mutable.Map[Int, Tab]()
 
-  override def preStart(): Unit =
+  override def preStart(): Unit = {
     log.info("Starting to process tab events")
+
+    // query the webextension for the list of current tabs
+    NativeMessaging.writeNativeMessage(IO.out, HeuristicsAction.QUERY_TABS)
+  }
 
   override def receive: Actor.Receive = {
     case StreamInit =>

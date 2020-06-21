@@ -25,6 +25,8 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
   val tabSwitches = context.actorOf(Props[TabSwitchActor], "TabSwitches")
 
+  var tabGroups = List[(String, Set[TabMeta])]()
+
   override def preStart(): Unit = {
     timers.startTimerAtFixedRate(
       "heuristics",
@@ -45,22 +47,25 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
       (tabSwitches ? ComputeGroups)
         .mapTo[TabSwitchHeuristicsResults]
         .map {
-          case TabSwitchHeuristicsResults(tabGroups) => {
-            log.info(tabGroups.toString())
+          case TabSwitchHeuristicsResults(newTabGroups) => {
+            log.info(newTabGroups.toString())
+            tabGroups = newTabGroups
           }
         }
-
     }
 
-    case message => {
-      log.info(s"Received message $message")
-    }
+    case QueryTabGroups => sender() ! CurrentTabGroups(tabGroups)
+
+    case message => log.info(s"Received message $message")
+
   }
 }
 
 object HeuristicsActor {
+  case object ComputeHeuristics
+  case object QueryTabGroups
+
+  case class CurrentTabGroups(tabGroups: List[(String, Set[TabMeta])])
   case class UpdateCuratedGroups(tabGroups: List[TabGroup])
   case class TabSwitchHeuristicsResults(tabGroups: List[(String, Set[TabMeta])])
-
-  case object ComputeHeuristics
 }

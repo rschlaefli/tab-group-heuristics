@@ -142,30 +142,7 @@
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
 
-  <!-- <logger name="main.Application" level="debug">
-    <appender-ref ref="AsyncMain" />
-    <appender-ref ref="AsyncDebug" />
-  </logger> -->
-
-  <!-- <logger name="heuristics.HeuristicsEngine" level="info" />
-
-  <logger name="heuristics.TabSwitches" level="info" />
-
-  <logger name="graph.TabSwitchMap" level="debug">
-    <appender-ref ref="TabSwitchesCSV" />
-  </logger>
-
-  <logger name="statistics.StatisticsEngine" level="info">
+  <logger name="statistics.StatisticsActor" level="debug">
     <appender-ref ref="StatisticsCSV" />
   </logger>
-
-  <logger name="tabstate.TabState" level="info">
-    <appender-ref ref="TabEventsCSV" />
-  </logger>
-
-  <logger name="persistence.Persistable" level="warn" />
-  <logger name="persistence.PersistenceEngine" level="info" />
-
-  <logger name="messaging.NativeMessaging" level="warn" /> -->
-
 </configuration>

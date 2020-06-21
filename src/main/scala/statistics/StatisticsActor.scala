@@ -8,14 +8,30 @@ import com.typesafe.scalalogging.LazyLogging
 import java.time.Instant
 import scala.language.postfixOps
 import scala.concurrent.duration._
+import akka.pattern.ask
+import akka.actor.Timers
+import akka.util.Timeout
 
+import heuristics.HeuristicsActor.QueryTabGroups
 import tabstate.Tab
 import statistics._
-import akka.actor.Timers
+import tabstate.CurrentTabsActor.QueryTabs
+import tabstate.CurrentTabsActor.CurrentTabs
+import heuristics.HeuristicsActor.CurrentTabGroups
+import scala.util.Success
 
-class StatisticsActor extends Actor with ActorLogging with Timers {
+class StatisticsActor
+    extends Actor
+    with ActorLogging
+    with Timers
+    with LazyLogging {
 
   import StatisticsActor._
+
+  implicit val executionContext = context.dispatcher
+
+  val heuristicsActor = context.actorSelection("/user/Heuristics")
+  val currentTabsActor = context.actorSelection("/user/TabState/CurrentTabs")
 
   val logToCsv = MarkerFactory.getMarker("CSV")
 
@@ -45,6 +61,69 @@ class StatisticsActor extends Actor with ActorLogging with Timers {
           s"assigned block: $minuteBlock, currentMap: ${aggregationWindows.size}"
       )
 
+      // query the current tabs and tab groups from the other actors
+      implicit val timeout = Timeout(1 second)
+      val currentTabsQuery = currentTabsActor ? QueryTabs
+      val tabGroupsQuery = heuristicsActor ? QueryTabGroups
+
+      val results = for {
+        CurrentTabs(tabs) <- currentTabsQuery
+        CurrentTabGroups(groups) <- tabGroupsQuery
+      } yield (tabs, groups)
+
+      results foreach {
+        case (currentTabs, tabGroups) => {
+          log.debug(s"Queried current tabs and tab groups from other actors")
+
+          val openTabHashes = currentTabs.map(_.hashCode()).toSet
+          val clusterTabHashes = tabGroups.flatMap(_._2.map(_.hashCode())).toSet
+
+          // compute the number of tabs that is currently open and not in any group
+          // as well as the number of tabs that are not grouped
+          val openTabsGrouped = openTabHashes.intersect(clusterTabHashes).size
+          val openTabsUngrouped = openTabHashes.size - openTabsGrouped
+
+          // prepare a new data point
+          val dataPoint = new DataPoint(
+            openTabHashes.size,
+            openTabsUngrouped,
+            openTabsGrouped
+          )
+
+          // process the tab switch queue
+          log.debug(
+            s"Elements in tab switch queue: ${tabSwitchQueue.toString()}"
+          )
+
+          // push the values into a window
+          // TODO: aggregationWindows.updateWith(minuteBlock) {
+          //   _.map(_.appended(dataPoint)).orElse(Some(List(dataPoint)))
+          // }
+
+          log.debug(
+            s"Updated aggregation windows to new state: $aggregationWindows"
+          )
+
+          // expire windows that are older than 5min (or similar)
+          // and log the aggregate statistics for the previous window
+          aggregationWindows.filterInPlace((window, dataPoints) => {
+            val isWindowExpired = window < minuteBlock
+
+            log.debug(
+              s"Filtering window $window with data: ${dataPoints}, expired: ${isWindowExpired}"
+            )
+
+            if (isWindowExpired) {
+              val statistics = computeAggregateStatistics(dataPoints)
+              log.debug(s"Aggregated window $window: ${statistics}")
+              logger.info(logToCsv, s"$window;${statistics.asCsv}")
+            }
+
+            !isWindowExpired
+          })
+        }
+      }
+
     }
 
     case message => log.info(s"Received unknown message ${message.toString}")
@@ -53,9 +132,9 @@ class StatisticsActor extends Actor with ActorLogging with Timers {
 }
 
 object StatisticsActor extends LazyLogging {
-  case class TabSwitch(fromTab: Tab, toTab: Tab)
-
   case object AggregateWindows
+
+  case class TabSwitch(fromTab: Tab, toTab: Tab)
 
   def computeAggregateStatistics(
       dataPoints: List[DataPoint]
@@ -63,7 +142,7 @@ object StatisticsActor extends LazyLogging {
     val output = dataPoints.foldLeft(new StatisticsData()) {
       case (acc, dataPoint) => acc.withDataPoint(dataPoint)
     }
-    logger.debug(s"> Combined data into a single object ${output.toString()}")
+    logger.debug(s"Combined data into a single object ${output.toString()}")
     output.aggregated
   }
 }

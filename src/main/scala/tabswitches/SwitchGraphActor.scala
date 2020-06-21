@@ -50,7 +50,9 @@ class SwitchGraphActor extends Actor with ActorLogging {
                 s"nodes and ${tabSwitchGraph.edgeSet().size()} edges"
             )
 
-            self ! ExportGraph(tabSwitchGraph)
+            context.actorSelection(
+              "/user/Heuristics/TabSwitches/TabSwitchGraph"
+            ) ! ExportGraph(tabSwitchGraph)
 
             CurrentSwitchGraph(tabSwitchGraph)
           }

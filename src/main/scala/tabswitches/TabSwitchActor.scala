@@ -94,12 +94,12 @@ class TabSwitchActor extends Actor with ActorLogging {
 }
 
 object TabSwitchActor extends LazyLogging {
+  case object ComputeGroups
+
   case class TabSwitch(tab1: Option[Tab], tab2: Tab)
   case class CurrentSwitchGraph(
       graph: SimpleWeightedGraph[TabMeta, DefaultWeightedEdge]
   )
-
-  case object ComputeGroups
 
   def processClusters(
       clusters: List[Set[TabMeta]]

@@ -59,6 +59,8 @@ class SwitchGraphActor extends Actor with ActorLogging {
     }
 
     case ExportGraph(graph) => {
+      log.debug(s"Exporting tab switch graph")
+
       val exporter =
         new DOTExporter[TabMeta, DefaultWeightedEdge](_.hashCode().toString())
       exporter.setVertexAttributeProvider((tabMeta) => {
@@ -86,12 +88,12 @@ class SwitchGraphActor extends Actor with ActorLogging {
 }
 
 object SwitchGraphActor {
+  case object ComputeGraph
+
   case class CurrentSwitchMap(switchMap: Map[String, TabSwitchMeta])
   case class ExportGraph(
       graph: SimpleWeightedGraph[TabMeta, DefaultWeightedEdge]
   )
-
-  case object ComputeGraph
 
   def processSwitchMap(
       tabSwitchMap: Map[String, TabSwitchMeta]

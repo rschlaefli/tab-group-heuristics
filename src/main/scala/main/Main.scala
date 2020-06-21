@@ -18,6 +18,7 @@ import messaging.IO
 import messaging.NativeMessaging
 import heuristics.HeuristicsAction
 import tabstate.TabEvent
+import statistics.StatisticsActor
 
 object Main extends App with LazyLogging {
 
@@ -66,7 +67,7 @@ object Main extends App with LazyLogging {
   // setup actors
   val tabState = system.actorOf(Props[TabStateActor], "TabState")
   val heuristics = system.actorOf(Props[HeuristicsActor], "Heuristics")
-  // val statisticsActor = system.actorOf(Props[StatisticsActor], "Statistics")
+  val statistics = system.actorOf(Props[StatisticsActor], "Statistics")
 
   // create a stream sink for the message processing actor
   val sink = Sink

@@ -134,11 +134,11 @@
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="refactor.TabStateActor" level="debug">
+  <logger name="tabstate.TabStateActor" level="debug">
     <appender-ref ref="TabEventsCSV" />
   </logger>
 
-  <logger name="refactor.SwitchMapActor" level="debug">
+  <logger name="tabswitches.SwitchMapActor" level="debug">
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
 

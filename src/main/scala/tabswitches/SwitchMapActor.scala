@@ -13,10 +13,13 @@ import scala.concurrent.duration._
 import persistence.Persistence
 import tabstate.Tab
 import SwitchGraphActor.{ComputeGraph, CurrentSwitchMap}
+import statistics.StatisticsActor.TabSwitch
 
 class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
 
   import SwitchMapActor._
+
+  val statistics = context.actorSelection("/user/Statistics")
 
   val logToCsv = MarkerFactory.getMarker("CSV")
 
@@ -51,7 +54,8 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
       val switchIdentifier = s"${meta1.hash}_${meta2.hash}"
       tabSwitches.updateWith(switchIdentifier)(TabSwitchMeta(_, meta1, meta2))
 
-      // TODO: push the tab switch to statistics
+      // push the tab switch to statistics
+      statistics ! TabSwitch(prevTab, newTab)
     }
 
     case QueryTabSwitchMap => {

@@ -39,7 +39,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     timers.startTimerAtFixedRate(
       "heuristics",
       ComputeHeuristics,
-      2 minutes
+      5 minutes
     )
   }
 
@@ -56,15 +56,16 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     case ComputeHeuristics => {
       implicit val timeout = Timeout(20 seconds)
 
+      log.debug("Starting heuristics computation")
+
       (tabSwitches ? ComputeGroups)
         .mapTo[TabSwitchHeuristicsResults]
-        .map {
+        .foreach {
           case TabSwitchHeuristicsResults(groupIndex, newTabGroups) => {
-            log.info(newTabGroups.toString())
             tabGroupIndex = groupIndex
             tabGroups = newTabGroups
 
-            if (tabGroups.size >= 0) {
+            if (tabGroups.size > 0) {
               log.debug(s"Updating tab clusters in the webextension")
               NativeMessaging.writeNativeMessage(
                 IO.out,
@@ -72,6 +73,8 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
               )
             }
           }
+
+          case message => log.debug(s"Received $message $message")
         }
     }
 

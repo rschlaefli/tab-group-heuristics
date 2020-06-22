@@ -21,6 +21,8 @@ import akka.actor.Timers
 import persistence.Persistence
 import SwitchMapActor.QueryTabSwitchMap
 import TabSwitchActor.CurrentSwitchGraph
+import com.typesafe.scalalogging.LazyLogging
+import scala.util.Try
 
 class SwitchGraphActor extends Actor with ActorLogging {
 
@@ -89,7 +91,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
 
 }
 
-object SwitchGraphActor {
+object SwitchGraphActor extends LazyLogging {
   case object ComputeGraph
 
   case class CurrentSwitchMap(switchMap: Map[String, TabSwitchMeta])
@@ -101,19 +103,25 @@ object SwitchGraphActor {
       tabSwitchMap: Map[String, TabSwitchMeta]
   ): SimpleWeightedGraph[TabMeta, DefaultWeightedEdge] = {
 
-    // compute a tab graph from the tab switch map
     var tabGraph =
       new SimpleWeightedGraph[TabMeta, DefaultWeightedEdge](
         classOf[DefaultWeightedEdge]
       )
 
-    tabSwitchMap.values.foreach((switchData: TabSwitchMeta) => {
-      tabGraph.addVertex(switchData.tab1)
-      tabGraph.addVertex(switchData.tab2)
-      tabGraph.addEdge(switchData.tab1, switchData.tab2)
-      tabGraph
-        .setEdgeWeight(switchData.tab1, switchData.tab2, switchData.count)
-    })
+    tabSwitchMap.values
+      .map((switchData: TabSwitchMeta) =>
+        Try {
+          tabGraph.addVertex(switchData.tab1)
+          tabGraph.addVertex(switchData.tab2)
+          tabGraph.addEdge(switchData.tab1, switchData.tab2)
+          tabGraph
+            .setEdgeWeight(switchData.tab1, switchData.tab2, switchData.count)
+        }
+      )
+      .filter(_.isFailure)
+      .foreach {
+        case Failure(ex) => logger.error(ex.getMessage())
+      }
 
     tabGraph
   }

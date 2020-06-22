@@ -30,9 +30,9 @@ class StatisticsData() {
 
   def aggregated: StatisticsOutput =
     StatisticsOutput(
-      mean(numCurrentTabs.toArray),
-      mean(openTabsGrouped.toArray),
-      mean(openTabsUngrouped.toArray),
+      round(mean(numCurrentTabs.toArray), 2),
+      round(mean(openTabsGrouped.toArray), 2),
+      round(mean(openTabsUngrouped.toArray), 2),
       tabSwitchWithinGroups.sum,
       tabSwitchBetweenGroups.sum,
       tabSwitchFromGroup.sum,

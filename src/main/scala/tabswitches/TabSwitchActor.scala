@@ -83,7 +83,7 @@ class TabSwitchActor extends Actor with ActorLogging {
 
             log.info(clustersWithTitles.toString())
 
-            TabSwitchHeuristicsResults(clustersWithTitles)
+            TabSwitchHeuristicsResults(automatedClusters._1, clustersWithTitles)
           }
         }
         .pipeTo(sender())
@@ -103,13 +103,12 @@ object TabSwitchActor extends LazyLogging {
 
   def processClusters(
       clusters: List[Set[TabMeta]]
-  ): (mutable.Map[Int, Int], List[Set[TabMeta]]) = {
+  ): (Map[Int, Int], List[Set[TabMeta]]) = {
     // preapre an index for which tab is stored in which cluster
     val clusterIndex = mutable.Map[Int, Int]()
 
     // prepare a return container for the clusters
     val clusterList = clusters.zipWithIndex.flatMap {
-      // case (cluster, index) if cluster.size > 3 => {
       case (clusterMembers, index) if clusterMembers.size > 1 => {
         clusterMembers.foreach(tab => {
           clusterIndex(tab.hashCode()) = index
@@ -126,6 +125,6 @@ object TabSwitchActor extends LazyLogging {
       s"Computed overall index $clusterIndex for ${clusterList.length} clusters"
     )
 
-    (clusterIndex, clusterList)
+    (Map.from(clusterIndex), clusterList)
   }
 }

@@ -1,4 +1,3 @@
 {
-  "editor.formatOnSave": true,
-  "metals.bloopVersion": "1.4.1"
+  "editor.formatOnSave": true
 }

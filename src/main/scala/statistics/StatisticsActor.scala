@@ -1,5 +1,6 @@
 package statistics
 
+import scalaz._, Scalaz._
 import org.slf4j.MarkerFactory
 import scala.collection.mutable
 import akka.actor.Actor
@@ -68,11 +69,11 @@ class StatisticsActor
 
       val results = for {
         CurrentTabs(tabs) <- currentTabsQuery
-        CurrentTabGroups(groups) <- tabGroupsQuery
-      } yield (tabs, groups)
+        CurrentTabGroups(groupIndex, groups) <- tabGroupsQuery
+      } yield (tabs, groups, groupIndex)
 
       results foreach {
-        case (currentTabs, tabGroups) => {
+        case (currentTabs, tabGroups, groupIndex) => {
           log.debug(s"Queried current tabs and tab groups from other actors")
 
           val openTabHashes = currentTabs.map(_.hashCode()).toSet
@@ -92,13 +93,50 @@ class StatisticsActor
 
           // process the tab switch queue
           log.debug(
-            s"Elements in tab switch queue: ${tabSwitchQueue.toString()}"
+            s"Elements in tab switch queue: ${tabSwitchQueue.size}"
           )
 
+          val switchStatistics =
+            SwitchStatistics.fromTuple(
+              tabSwitchQueue
+                .dequeueAll(_ => true)
+                .map {
+                  case TabSwitch(prevTab, newTab) => {
+                    val isPrevTabClustered =
+                      clusterTabHashes.contains(prevTab.hashCode())
+                    val isNewTabClustered =
+                      clusterTabHashes.contains(newTab.hashCode())
+
+                    (isPrevTabClustered, isNewTabClustered) match {
+                      case (true, true) => {
+                        if (groupIndex(prevTab.hashCode())
+                              == groupIndex(newTab.hashCode())) {
+                          SwitchStatistics.SwitchWithinGroup
+                        } else {
+                          SwitchStatistics.SwitchBetweenGroups
+                        }
+                      }
+                      case (true, false)  => SwitchStatistics.SwitchFromGroup
+                      case (false, true)  => SwitchStatistics.SwitchToGroup
+                      case (false, false) => SwitchStatistics.SwitchOutside
+                    }
+                  }
+                }
+                .foldLeft(0, 0, 0, 0, 0) {
+                  case (acc, switch) => acc |+| switch.value
+                }
+            )
+
+          log.debug(
+            s"Tab switch queue aggregated to ${switchStatistics}"
+          )
+
+          dataPoint.updateSwitchStatistics(switchStatistics)
+
           // push the values into a window
-          // TODO: aggregationWindows.updateWith(minuteBlock) {
-          //   _.map(_.appended(dataPoint)).orElse(Some(List(dataPoint)))
-          // }
+          aggregationWindows.updateWith(minuteBlock) {
+            _.map(_.appended(dataPoint)).orElse(Some(List(dataPoint)))
+          }
 
           log.debug(
             s"Updated aggregation windows to new state: $aggregationWindows"

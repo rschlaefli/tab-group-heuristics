@@ -10,6 +10,8 @@ import scala.concurrent.duration._
 import scala.util.Success
 import scala.util.Failure
 import akka.actor.Timers
+import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
+io.circe.syntax._
 
 import heuristics.TabGroup
 import tabswitches.TabSwitchActor.ComputeGroups
@@ -17,6 +19,8 @@ import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 import tabswitches.TabSwitchActor.TabSwitch
 import util.Utils
+import messaging.NativeMessaging
+import messaging.IO
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 
@@ -59,6 +63,14 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
             log.info(newTabGroups.toString())
             tabGroupIndex = groupIndex
             tabGroups = newTabGroups
+
+            if (tabGroups.size >= 0) {
+              log.debug(s"Updating tab clusters in the webextension")
+              NativeMessaging.writeNativeMessage(
+                IO.out,
+                HeuristicsAction.UPDATE_GROUPS(tabGroups.map(_._2).asJson)
+              )
+            }
           }
         }
     }

@@ -11,16 +11,17 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 import akka.util.Timeout
 import scala.collection.mutable
-
-import tabstate.Tab
-import SwitchMapActor.ProcessTabSwitch
-import SwitchGraphActor.ComputeGraph
 import scala.util.Success
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.jgrapht.graph.DefaultWeightedEdge
 import scala.util.Failure
+
+import tabstate.Tab
+import SwitchMapActor.ProcessTabSwitch
+import SwitchGraphActor.ComputeGraph
 import heuristics.KeywordExtraction
 import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
+import util.Utils
 
 class TabSwitchActor extends Actor with ActorLogging {
 
@@ -70,7 +71,7 @@ class TabSwitchActor extends Actor with ActorLogging {
             log.debug(s"Computing tab clusters")
 
             val computedClusters = Watset(graph)
-            val automatedClusters = processClusters(computedClusters)
+            val automatedClusters = Utils.processClusters(computedClusters)
 
             // generating cluster titles
             log.debug(s"> Generating tab cluster titles")
@@ -100,31 +101,4 @@ object TabSwitchActor extends LazyLogging {
   case class CurrentSwitchGraph(
       graph: SimpleWeightedGraph[TabMeta, DefaultWeightedEdge]
   )
-
-  def processClusters(
-      clusters: List[Set[TabMeta]]
-  ): (Map[Int, Int], List[Set[TabMeta]]) = {
-    // preapre an index for which tab is stored in which cluster
-    val clusterIndex = mutable.Map[Int, Int]()
-
-    // prepare a return container for the clusters
-    val clusterList = clusters.zipWithIndex.flatMap {
-      case (clusterMembers, index) if clusterMembers.size > 1 => {
-        clusterMembers.foreach(tab => {
-          clusterIndex(tab.hashCode()) = index
-        })
-
-        logger.debug(s"Cluster $index contains ${clusterMembers.toString()}")
-
-        List(clusterMembers)
-      }
-      case _ => List()
-    }
-
-    logger.debug(
-      s"Computed overall index $clusterIndex for ${clusterList.length} clusters"
-    )
-
-    (Map.from(clusterIndex), clusterList)
-  }
 }

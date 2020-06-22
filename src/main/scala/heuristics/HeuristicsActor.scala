@@ -16,6 +16,7 @@ import tabswitches.TabSwitchActor.ComputeGroups
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 import tabswitches.TabSwitchActor.TabSwitch
+import util.Utils
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 
@@ -27,6 +28,8 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
   var tabGroupIndex = Map[Int, Int]()
   var tabGroups = List[(String, Set[TabMeta])]()
+  var curatedGroups = List[(String, Set[TabMeta])]()
+  var curatedGroupIndex = Map[Int, Int]()
 
   override def preStart(): Unit = {
     timers.startTimerAtFixedRate(
@@ -39,7 +42,11 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
   override def receive: Actor.Receive = {
 
     case UpdateCuratedGroups(tabGroups) => {
-      log.info(s"Received tab groups $tabGroups")
+      curatedGroups = tabGroups.map(_.asTuple)
+      val (curatedIndex, _) =
+        Utils.processClusters(curatedGroups.map(_._2))
+      log.info(s"Received tab groups $tabGroups with index $curatedIndex")
+      curatedGroupIndex = curatedIndex
     }
 
     case ComputeHeuristics => {

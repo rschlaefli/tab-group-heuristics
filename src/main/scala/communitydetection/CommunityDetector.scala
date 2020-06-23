@@ -4,7 +4,7 @@ import tabswitches.TabMeta
 
 trait Parameters
 
-trait CommunityDetector[T] {
+trait CommunityDetector[S, T] {
 
   import tabswitches.TabSwitchActor.TabSwitchGraph
 
@@ -13,13 +13,6 @@ trait CommunityDetector[T] {
     if (graph == null) return List()
 
     val preparedGraph = prepareGraph(graph)
-
-    val isGraphTooSmall = preparedGraph
-      .vertexSet()
-      .size() < 2
-    val isGraphUnconnected = preparedGraph.edgeSet().size() == 0
-
-    if (isGraphTooSmall || isGraphUnconnected) return List()
 
     val tabGroups = computeGroups(preparedGraph, params)
 
@@ -33,7 +26,7 @@ trait CommunityDetector[T] {
     * @param graph The raw tab switch graph
     * @return The pre-processed tab switch graph
     */
-  def prepareGraph(graph: TabSwitchGraph): TabSwitchGraph
+  def prepareGraph(graph: TabSwitchGraph): S
 
   /**
     * Apply the community detection algorithm to the tab switch graph
@@ -42,7 +35,7 @@ trait CommunityDetector[T] {
     * @return The generated list of tab groups
     */
   def computeGroups(
-      graph: TabSwitchGraph,
+      graph: S,
       params: T
   ): List[Set[TabMeta]]
 

@@ -54,7 +54,9 @@ class SwitchGraphActor extends Actor with ActorLogging {
 
     case ExportGraph(graph) => {
       val dotString = GraphUtils.exportToDot(graph)
+      val csvString = GraphUtils.exportToCsv(graph)
       Persistence.persistString("tab_switches.dot", dotString)
+      Persistence.persistString("tab_switches.txt", csvString)
     }
 
     case _ =>

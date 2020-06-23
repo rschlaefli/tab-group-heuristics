@@ -14,6 +14,8 @@ import org.jgrapht.nio.dot.DOTExporter
 
 import collection.mutable
 import collection.JavaConverters._
+import org.jgrapht.nio.csv.CSVExporter
+import org.jgrapht.nio.csv.CSVFormat
 
 object GraphUtils extends LazyLogging {
 
@@ -45,6 +47,32 @@ object GraphUtils extends LazyLogging {
       }
 
     tabGraph
+  }
+
+  def exportToCsv(graph: TabSwitchGraph): String = {
+    val exporter =
+      new CSVExporter[TabMeta, DefaultWeightedEdge](
+        CSVFormat.EDGE_LIST
+      )
+    exporter.setParameter(CSVFormat.Parameter.EDGE_WEIGHTS, true)
+
+    exporter.setVertexAttributeProvider((tabMeta) => {
+      val map = mutable.Map[String, Attribute]()
+      map.put("label", DefaultAttribute.createAttribute(tabMeta.title))
+      map.asJava
+    })
+
+    exporter.setEdgeAttributeProvider((edge) => {
+      val map = mutable.Map[String, Attribute]()
+      val weight = DefaultAttribute.createAttribute(graph.getEdgeWeight(edge))
+      map.put("label", weight)
+      map.put("weight", weight)
+      map.asJava
+    })
+
+    val writer = new StringWriter()
+    exporter.exportGraph(graph, writer)
+    writer.toString()
   }
 
   def exportToDot(graph: TabSwitchGraph): String = {

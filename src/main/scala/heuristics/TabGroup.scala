@@ -17,4 +17,8 @@ case class TabGroup(
 object TabGroup {
   implicit val tabGroupDecoder: Decoder[TabGroup] = deriveDecoder
   implicit val tabGroupEncoder: Encoder[TabGroup] = deriveEncoder
+
+  def apply(tuple: (String, Set[TabMeta])): TabGroup = {
+    TabGroup(tuple.hashCode().toString(), tuple._1, tuple._2.toList)
+  }
 }

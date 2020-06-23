@@ -65,8 +65,9 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
             if (tabGroups.size > 0) {
               log.debug(s"Updating tab clusters in the webextension")
+              val tabGroupEntities = tabGroups.map(TabGroup.apply)
               NativeMessaging.writeNativeMessage(
-                HeuristicsAction.UPDATE_GROUPS(tabGroups.map(_._2).asJson)
+                HeuristicsAction.UPDATE_GROUPS(tabGroupEntities.asJson)
               )
             }
           }

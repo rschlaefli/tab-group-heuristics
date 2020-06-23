@@ -5,41 +5,15 @@ import java.{util => ju}
 import scala.collection.JavaConverters._
 
 import com.typesafe.scalalogging.LazyLogging
-import org.jgrapht.Graph
-import org.jgrapht.graph.DefaultWeightedEdge
 import org.nlpub.watset.graph.MarkovClustering
 
+object Watset extends App with LazyLogging with CommunityDetector {
 
-object Watset extends App with LazyLogging {
-  def apply(
-      graph: Graph[TabMeta, DefaultWeightedEdge]
-  ): List[Set[TabMeta]] = {
-    if (graph == null) {
-      return List()
-    }
-
-    val watsetGraph = buildWatsetGraph(graph)
-
-    if (watsetGraph
-          .vertexSet()
-          .size() < 2 || watsetGraph.edgeSet().size() == 0) {
-      return List()
-    }
-
-    val clusters = computeClustersMarkov(watsetGraph)
-
-    clusters.map(cluster => cluster.asScala.toSet)
-  }
-
-  def buildWatsetGraph(
-      graph: Graph[TabMeta, DefaultWeightedEdge]
-  ): Graph[TabMeta, DefaultWeightedEdge] = {
+  def prepareGraph(graph: TabSwitchGraph): TabSwitchGraph =
     graph
-  }
 
-  def computeClustersMarkov(
-      graph: Graph[TabMeta, DefaultWeightedEdge]
-  ): List[ju.Collection[TabMeta]] = {
+  def computeGroups(graph: TabSwitchGraph): List[Set[TabMeta]] = {
+
     val markovClusters = new MarkovClustering(graph, 2, 2)
     markovClusters.fit()
 
@@ -47,6 +21,14 @@ object Watset extends App with LazyLogging {
       s"Clusters (markov): ${markovClusters.getClusters().toString()}"
     )
 
-    markovClusters.getClusters().asScala.toList
+    markovClusters
+      .getClusters()
+      .asScala
+      .map(_.asScala.toSet)
+      .toList
   }
+
+  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]] =
+    tabGroups
+
 }

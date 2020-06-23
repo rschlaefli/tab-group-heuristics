@@ -1,17 +1,16 @@
 package communitydetection
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+
 import com.typesafe.scalalogging.LazyLogging
-import tabswitches.TabMeta
-import tabswitches.TabSwitchActor
-import network.extendedmapequation.CPMap
-import network.optimization.CPMapParameters
+import network.core.Graph
 import network.core.GraphIO
+import network.core.ListMatrix
 import network.core.SiGraph
 import network.optimization.CPM
-import network.core.Graph
-import network.core.ListMatrix
-import scala.collection.mutable
+import tabswitches.TabMeta
+import tabswitches.TabSwitchActor
 
 case class SiMapParams() extends Parameters
 
@@ -62,8 +61,8 @@ object SiMap
     //     0.002.floatValue()
     //   )
 
-    val cpm: CPM = new CPM(0.002.floatValue())
-      .setThreadCount(1)
+    val cpm: CPM = new CPM(0.1.floatValue())
+      .setThreadCount(2)
       .asInstanceOf[CPM]
 
     val partition = cpm.detect(siGraph)

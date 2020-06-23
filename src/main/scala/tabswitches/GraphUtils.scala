@@ -10,12 +10,12 @@ import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.jgrapht.nio.Attribute
 import org.jgrapht.nio.DefaultAttribute
+import org.jgrapht.nio.csv.CSVExporter
+import org.jgrapht.nio.csv.CSVFormat
 import org.jgrapht.nio.dot.DOTExporter
 
 import collection.mutable
 import collection.JavaConverters._
-import org.jgrapht.nio.csv.CSVExporter
-import org.jgrapht.nio.csv.CSVFormat
 
 object GraphUtils extends LazyLogging {
 

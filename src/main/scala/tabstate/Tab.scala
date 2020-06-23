@@ -1,8 +1,7 @@
 package tabstate
 
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
-
-import messaging.TabUpdateEvent
+import io.circe._
+import io.circe.generic.semiauto._
 
 // create a trait that all nodes in the tab switch graph will be sharing
 sealed trait Tabs

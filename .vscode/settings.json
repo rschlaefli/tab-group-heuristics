@@ -1,4 +1,7 @@
 {
   "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
   "metals.bloopVersion": "1.4.1"
 }

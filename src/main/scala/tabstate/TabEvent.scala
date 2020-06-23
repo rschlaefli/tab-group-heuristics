@@ -1,12 +1,12 @@
-package messaging
+package tabstate
 
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
 import com.typesafe.scalalogging.LazyLogging
-
-import util._
-import tabstate.Tab
 import heuristics.TabGroup
-import main.Main
+import io.circe._
+import io.circe.generic.semiauto._
+import io.circe.parser._
+import tabstate.Tab
+import util._
 
 sealed class TabEvent
 
@@ -73,10 +73,23 @@ object TabUpdateEvent {
 
 object TabEvent extends LazyLogging {
 
+  def parseJsonString(message: String): Json = {
+    var json: Json = parse(message).getOrElse(Json.Null)
+
+    if (json == Json.Null) {
+      val fixedMessage = "{ \"ac" + message
+      json = parse(fixedMessage).getOrElse(Json.Null)
+      logger.warn(
+        s"Fixed payload for message ${if (fixedMessage.length() > 50) fixedMessage.substring(0, 50)
+        else fixedMessage}"
+      )
+    }
+
+    json
+  }
+
   def decodeEventFromMessage(message: String): Option[TabEvent] = {
-    // parse the incoming JSON
-    val json: Json = parse(message).getOrElse(Json.Null)
-    // logger.debug(s"> Parsed JSON from message => ${json.toString()}")
+    val json = parseJsonString(message)
 
     // get the action type from the json message
     val cursor = json.hcursor
@@ -119,7 +132,7 @@ object TabEvent extends LazyLogging {
       }
 
       case _ => {
-        logger.warn(s"> Unknown tab event received: $action")
+        logger.warn(s"> Unknown tab event received: $action ($message)")
         None
       }
 

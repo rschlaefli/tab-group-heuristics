@@ -1,19 +1,29 @@
 import Dependencies._
 
-ThisBuild / version := "0.2.8"
-ThisBuild / scalaVersion := "2.13.2"
-ThisBuild / organization := "ch.uzh.rschlaefli"
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
+inThisBuild(
+  List(
+    scalaVersion := "2.13.2",
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision,
+    scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.3.1-RC3"
+  )
+)
 
 lazy val tabs = (project in file("."))
   .settings(
     name := "tabs",
+    version := "0.3.0",
+    organization := "ch.uzh.rschlaefli",
     maintainer := "rolandschlaefli@gmail.com",
     packageSummary := "Automated Tab Organization",
     packageDescription := """Heuristics backend for the Automated Tab Organization WebExtension""",
     wixProductId := "25695a01-bd23-4155-a430-6ef8be4babfa",
     wixProductUpgradeId := "9b2f86fa-aa0d-4b12-ac73-6831f4628329",
     libraryDependencies ++= runtimeDependencies,
-    libraryDependencies ++= testingDependencies
+    libraryDependencies ++= testingDependencies,
+    scalacOptions += "-Wunused"
   )
 
 // ensure that only the main entrypoint is bundled into the package

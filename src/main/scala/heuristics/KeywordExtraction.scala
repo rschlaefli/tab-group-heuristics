@@ -2,12 +2,11 @@ package heuristics
 
 import com.typesafe.scalalogging.LazyLogging
 import smile.nlp._
-
-import tabstate.Tab
+import tabswitches.TabMeta
 
 object KeywordExtraction extends LazyLogging {
 
-  def apply(tabSet: Set[Tab]): List[String] = {
+  def apply(tabSet: Set[TabMeta]): List[String] = {
     logger.debug(s"> Extracting keywords from set of tabs ${tabSet.toString()}")
 
     val allTitles = tabSet
@@ -32,8 +31,8 @@ object KeywordExtraction extends LazyLogging {
     sortedFrequencyMap.take(4).map(_._1).toList
   }
 
-  def deriveTabKeywordString(tab: Tab) = {
-    s"${tab.normalizedTitle} ${tab.origin.split("/").drop(2).mkString(" ")}"
+  def deriveTabKeywordString(tab: TabMeta) = {
+    s"${tab.title} ${tab.url.split("/").drop(2).mkString(" ")}"
   }
 
 }

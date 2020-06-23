@@ -1,8 +1,18 @@
 import Dependencies._
 
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 ThisBuild / version := "0.3.0"
 ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / organization := "ch.uzh.rschlaefli"
+
+inThisBuild(
+  List(
+    scalaVersion := "2.13.2",
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision
+  )
+)
 
 lazy val tabs = (project in file("."))
   .settings(
@@ -13,7 +23,8 @@ lazy val tabs = (project in file("."))
     wixProductId := "25695a01-bd23-4155-a430-6ef8be4babfa",
     wixProductUpgradeId := "9b2f86fa-aa0d-4b12-ac73-6831f4628329",
     libraryDependencies ++= runtimeDependencies,
-    libraryDependencies ++= testingDependencies
+    libraryDependencies ++= testingDependencies,
+    scalacOptions += "-Ywarn-unused"
   )
 
 // ensure that only the main entrypoint is bundled into the package

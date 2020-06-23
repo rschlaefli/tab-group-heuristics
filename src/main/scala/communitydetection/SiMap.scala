@@ -8,18 +8,25 @@ import network.core.Graph
 import network.core.GraphIO
 import network.core.ListMatrix
 import network.core.SiGraph
-import network.optimization.CPM
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 import network.optimization.CPMapParameters
 import network.extendedmapequation.CPMap
 import persistence.Persistence
+import network.Shared
 
 case class SiMapParams() extends Parameters
 
 object SiMap
-    extends LazyLogging
+    extends App
+    with LazyLogging
     with CommunityDetector[ListMatrix, SiMapParams] {
+
+  val testGraph = loadTestGraph
+
+  val tabGroups = apply(testGraph, SiMapParams())
+
+  println(tabGroups)
 
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph
@@ -49,21 +56,21 @@ object SiMap
         .mkString("\n")
     )
 
-    // .filter(_._3 > 1)
-    val unzipped: (Array[Int], Array[Int], Array[Float]) =
-      tuples.unzip3[Int, Int, Float]
+    val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 
-    new ListMatrix().init(unzipped._1, unzipped._2, unzipped._3, true)
+    new ListMatrix().init(rows, cols, values, true)
   }
 
   override def computeGroups(
       listMatrix: ListMatrix,
       params: SiMapParams
   ): List[Set[TabMeta]] = {
-    val graph = new Graph(listMatrix.sort().normalize());
+
+    Shared.setVerbose(true)
+
+    val graph = new Graph(listMatrix.symmetrize.sort.normalize);
     val siGraph = new SiGraph(graph)
 
-    val cpMap = new CPMap()
     val cpMapParams =
       new CPMapParameters(
         0.15.floatValue(),
@@ -75,14 +82,13 @@ object SiMap
         0.002.floatValue()
       )
 
-    // val cpm: CPM = new CPM(0.002.floatValue())
-    //   .setThreadCount(2)
+    val detectedPartition = CPMap.detect(graph, cpMapParams)
+    println(detectedPartition)
 
-    // val partition = cpm.detect(siGraph)
+    GraphIO.writePartition(siGraph, detectedPartition, "partition_out.txt");
 
-    // println(partition)
-    // GraphIO.writePartition(siGraph, partition, "graph_output.txt")
     List()
+
   }
 
   override def processGroups(

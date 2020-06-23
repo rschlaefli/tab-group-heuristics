@@ -102,14 +102,14 @@ class CommunityDetectorSpec
   //   )
   // }
 
-  "SiMap" should "produce a valid clustering" in {
-    val tabGroups = SiMap(tabSwitchGraph, SiMapParams())
-    assert(tabGroups.size > 0)
+  // "SiMap" should "produce a valid clustering" in {
+  //   val tabGroups = SiMap(tabSwitchGraph, SiMapParams())
+  //   assert(tabGroups.size > 0)
 
-    Persistence.persistString(
-      "clusters_simap.txt",
-      tabGroups.map(_.toString()).mkString("\n")
-    )
-  }
+  //   Persistence.persistString(
+  //     "clusters_simap.txt",
+  //     tabGroups.map(_.toString()).mkString("\n")
+  //   )
+  // }
 
 }

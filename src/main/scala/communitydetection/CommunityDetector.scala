@@ -1,6 +1,9 @@
 package communitydetection
 
 import tabswitches.TabMeta
+import tabswitches.TabSwitchMeta
+import tabswitches.SwitchMapActor
+import tabswitches.GraphUtils
 
 trait Parameters
 
@@ -18,6 +21,22 @@ trait CommunityDetector[S, T] {
 
     processGroups(tabGroups)
 
+  }
+
+  def loadTestGraph: TabSwitchGraph = {
+
+    var tabSwitchMap: Map[String, TabSwitchMeta] = null
+    var tabSwitchGraph: TabSwitchGraph = null
+
+    SwitchMapActor.restoreTabSwitchMap map {
+      case Right(restoredMap) => {
+        tabSwitchMap = restoredMap.toMap
+        tabSwitchGraph = GraphUtils.processSwitchMap(tabSwitchMap)
+      }
+      case _ =>
+    }
+
+    tabSwitchGraph
   }
 
   /**

@@ -20,7 +20,7 @@ case class SiMapParams() extends Parameters
 object SiMap
     extends App
     with LazyLogging
-    with CommunityDetector[ListMatrix, SiMapParams] {
+    with CommunityDetector[(Map[String, Int], ListMatrix), SiMapParams] {
 
   val testGraph = loadTestGraph
 
@@ -28,7 +28,7 @@ object SiMap
 
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph
-  ): ListMatrix = {
+  ): (Map[String, Int], ListMatrix) = {
 
     val index = mutable.Map[String, Int]()
 
@@ -56,17 +56,21 @@ object SiMap
 
     val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 
-    new ListMatrix().init(rows, cols, values, true)
+    (index.toMap, new ListMatrix().init(rows, cols, values, true))
   }
 
   override def computeGroups(
-      listMatrix: ListMatrix,
+      matrixAndIndex: (Map[String, Int], ListMatrix),
       params: SiMapParams
   ): List[Set[TabMeta]] = {
 
     Shared.setVerbose(true)
 
-    val graph = new Graph(listMatrix.symmetrize().sort().normalize());
+    // swap keys and values of the index
+    // this allows us to lookup tab hashes by the node id
+    val index = matrixAndIndex._1.map(_.swap)
+
+    val graph = new Graph(matrixAndIndex._2.symmetrize().sort().normalize());
     val siGraph = new SiGraph(graph)
 
     val cpMapParams =
@@ -81,7 +85,13 @@ object SiMap
       )
 
     val detectedPartition = CPMap.detect(graph, cpMapParams)
-    println(detectedPartition)
+    println(detectedPartition.toList)
+
+    // arr.foreach(partition => {
+    //   println(partition.toList.map(index.get))
+    // })
+
+    // TODO: build tab groups from the detected partitioning
 
     GraphIO.writePartition(siGraph, detectedPartition, "partition_out.txt");
 

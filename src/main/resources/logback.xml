@@ -134,15 +134,25 @@
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="tabstate.TabStateActor" level="debug">
+  <logger name="heuristics.HeuristicsActor" level="info" />
+
+  <logger name="messaging.NativeMessaging" level="info" />
+
+  <logger name="persistence.Persistence" level="info" />
+
+  <logger name="statistics.StatisticsActor" level="info">
+    <appender-ref ref="StatisticsCSV" />
+  </logger>
+
+  <logger name="tabstate.CurrentTabsActor" level="info" />
+  <logger name="tabstate.TabStateActor" level="info">
     <appender-ref ref="TabEventsCSV" />
   </logger>
 
+  <logger name="tabswitches.SwitchGraphActor" level="info" />
   <logger name="tabswitches.SwitchMapActor" level="debug">
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
+  <logger name="tabswitches.Watset" level="info" />
 
-  <logger name="statistics.StatisticsActor" level="debug">
-    <appender-ref ref="StatisticsCSV" />
-  </logger>
 </configuration>

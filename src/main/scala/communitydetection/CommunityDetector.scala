@@ -1,7 +1,8 @@
-package tabswitches
+package communitydetection
 
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
+import tabswitches.TabMeta
 
 trait CommunityDetector {
 

@@ -1,9 +1,10 @@
-package tabswitches
+package communitydetection
 
 import scala.collection.JavaConverters._
 
 import com.typesafe.scalalogging.LazyLogging
 import org.nlpub.watset.graph.MarkovClustering
+import tabswitches.TabMeta
 
 object Watset extends App with LazyLogging with CommunityDetector {
 

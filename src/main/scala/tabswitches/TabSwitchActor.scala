@@ -17,6 +17,7 @@ import org.slf4j.MarkerFactory
 import tabstate.Tab
 import util.Utils
 
+import communitydetection.Watset
 import SwitchMapActor.ProcessTabSwitch
 import SwitchGraphActor.ComputeGraph
 

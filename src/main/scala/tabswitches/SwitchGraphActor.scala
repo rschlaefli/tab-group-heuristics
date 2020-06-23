@@ -1,18 +1,20 @@
 package tabswitches
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import org.jgrapht.graph.SimpleWeightedGraph
-import org.jgrapht.graph.DefaultWeightedEdge
-import akka.pattern.{ask, pipe}
-import scala.language.postfixOps
 import scala.concurrent.duration._
-import akka.util.Timeout
+import scala.language.postfixOps
 import scala.util.Failure
-import com.typesafe.scalalogging.LazyLogging
 import scala.util.Try
 
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.pattern.ask
+import akka.pattern.pipe
+import akka.util.Timeout
+import com.typesafe.scalalogging.LazyLogging
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.graph.SimpleWeightedGraph
 import persistence.Persistence
+
 import SwitchMapActor.QueryTabSwitchMap
 import TabSwitchActor.CurrentSwitchGraph
 

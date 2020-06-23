@@ -1,24 +1,27 @@
 package statistics
 
-import scalaz._, Scalaz._
-import org.slf4j.MarkerFactory
+import java.time.Instant
+
 import scala.collection.mutable
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
-import com.typesafe.scalalogging.LazyLogging
-import java.time.Instant
-import scala.language.postfixOps
-import scala.concurrent.duration._
-import akka.pattern.ask
 import akka.actor.Timers
+import akka.pattern.ask
 import akka.util.Timeout
-
-import heuristics.HeuristicsActor.QueryTabGroups
-import tabstate.Tab
-import statistics._
-import tabstate.CurrentTabsActor.QueryTabs
-import tabstate.CurrentTabsActor.CurrentTabs
+import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsActor.CurrentTabGroups
+import heuristics.HeuristicsActor.QueryTabGroups
+import org.slf4j.MarkerFactory
+import scalaz._
+import statistics._
+import tabstate.CurrentTabsActor.CurrentTabs
+import tabstate.CurrentTabsActor.QueryTabs
+import tabstate.Tab
+
+import Scalaz._
 
 class StatisticsActor
     extends Actor

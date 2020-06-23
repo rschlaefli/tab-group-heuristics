@@ -1,19 +1,20 @@
 package tabswitches
 
-import io.circe.parser._,
-io.circe.syntax._
 import scala.collection.mutable
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import com.typesafe.scalalogging.LazyLogging
+import io.circe.parser._
+import io.circe.syntax._
 import org.slf4j.MarkerFactory
-import scala.language.postfixOps
-import scala.concurrent.duration._
-
 import persistence.Persistence
-import tabstate.Tab
-import SwitchGraphActor.CurrentSwitchMap
 import statistics.StatisticsActor.TabSwitch
+import tabstate.Tab
+
+import SwitchGraphActor.CurrentSwitchMap
 
 class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
 

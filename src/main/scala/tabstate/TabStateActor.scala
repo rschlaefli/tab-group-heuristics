@@ -1,29 +1,31 @@
 package tabstate
 
+import java.io.BufferedOutputStream
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
-import com.typesafe.scalalogging.LazyLogging
-import org.slf4j.MarkerFactory
-import scala.concurrent.duration._
 import akka.actor.Props
 import akka.pattern.ask
 import akka.util.Timeout
-import scala.language.postfixOps
-import java.io.BufferedOutputStream
-
-import messaging._
-import tabstate.Tab
-import main.Main.StreamInit
+import com.typesafe.scalalogging.LazyLogging
+import heuristics.HeuristicsAction
+import heuristics.HeuristicsActor.UpdateCuratedGroups
 import main.Main.StreamAck
 import main.Main.StreamComplete
 import main.Main.StreamFail
+import main.Main.StreamInit
+import messaging._
+import org.slf4j.MarkerFactory
+import tabstate.Tab
+import tabswitches.TabSwitchActor.TabSwitch
+
 import CurrentTabsActor.InitializeTabs
 import CurrentTabsActor.UpdateTab
 import CurrentTabsActor.ActivateTab
 import CurrentTabsActor.RemoveTab
-import tabswitches.TabSwitchActor.TabSwitch
-import heuristics.HeuristicsAction
-import heuristics.HeuristicsActor.UpdateCuratedGroups
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 

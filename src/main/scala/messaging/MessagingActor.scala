@@ -1,18 +1,19 @@
 package messaging
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import java.io.InputStream
-import java.io.OutputStream
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+
+import scala.concurrent.Future
+
+import akka.actor.Actor
+import akka.actor.ActorLogging
 import akka.actor.PoisonPill
 import com.typesafe.scalalogging.LazyLogging
-import scala.concurrent.Future
-import io.circe.syntax._
-
 import heuristics.HeuristicsAction
+import io.circe.syntax._
 
 class MessagingActor extends Actor with ActorLogging {
 

@@ -1,6 +1,7 @@
 package tabswitches
 
-import io.circe._, io.circe.generic.semiauto._
+import io.circe._
+import io.circe.generic.semiauto._
 import tabstate.Tab
 
 case class TabMeta(

@@ -1,7 +1,8 @@
 package tabswitches
 
+import io.circe._
+import io.circe.generic.semiauto._
 import org.joda.time.DateTime
-import io.circe._, io.circe.generic.semiauto._
 
 case class TabSwitchMeta(
     tab1: TabMeta,

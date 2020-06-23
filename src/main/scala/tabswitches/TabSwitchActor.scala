@@ -1,23 +1,25 @@
 package tabswitches
 
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
-import com.typesafe.scalalogging.LazyLogging
-import org.slf4j.MarkerFactory
 import akka.actor.Props
-import akka.pattern.{ask, pipe}
-import scala.language.postfixOps
-import scala.concurrent.duration._
+import akka.pattern.ask
+import akka.pattern.pipe
 import akka.util.Timeout
-import org.jgrapht.graph.SimpleWeightedGraph
+import com.typesafe.scalalogging.LazyLogging
+import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
+import heuristics.KeywordExtraction
 import org.jgrapht.graph.DefaultWeightedEdge
-
+import org.jgrapht.graph.SimpleWeightedGraph
+import org.slf4j.MarkerFactory
 import tabstate.Tab
+import util.Utils
+
 import SwitchMapActor.ProcessTabSwitch
 import SwitchGraphActor.ComputeGraph
-import heuristics.KeywordExtraction
-import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
-import util.Utils
 
 class TabSwitchActor extends Actor with ActorLogging {
 

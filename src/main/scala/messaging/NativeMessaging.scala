@@ -1,12 +1,13 @@
 package messaging
 
-import com.typesafe.scalalogging.LazyLogging
-import io.circe.syntax._
 import java.io.OutputStream
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
+import io.circe.syntax._
 
 object NativeMessaging extends LazyLogging {
 

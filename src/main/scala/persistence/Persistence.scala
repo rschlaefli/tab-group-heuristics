@@ -1,9 +1,11 @@
 package persistence
 
-import scala.util.Try
-import io.circe.Json
-import com.typesafe.scalalogging.LazyLogging
 import java.io.PrintWriter
+
+import scala.util.Try
+
+import com.typesafe.scalalogging.LazyLogging
+import io.circe.Json
 
 object Persistence extends LazyLogging {
   def persistJson(fileName: String, jsonData: => Json): Try[Unit] = Try {

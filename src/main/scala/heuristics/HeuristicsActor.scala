@@ -1,22 +1,23 @@
 package heuristics
 
-import akka.actor.ActorLogging
-import akka.actor.Actor
-import akka.actor.Props
-import akka.pattern.ask
-import akka.util.Timeout
-import scala.language.postfixOps
-import scala.concurrent.duration._
-import akka.actor.Timers
-import io.circe.syntax._
 import java.io.BufferedOutputStream
 
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.actor.Props
+import akka.actor.Timers
+import akka.pattern.ask
+import akka.util.Timeout
 import heuristics.TabGroup
-import tabswitches.TabSwitchActor.ComputeGroups
+import io.circe.syntax._
+import messaging.NativeMessaging
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
+import tabswitches.TabSwitchActor.ComputeGroups
 import util.Utils
-import messaging.NativeMessaging
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 

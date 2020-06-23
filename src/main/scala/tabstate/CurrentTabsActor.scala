@@ -1,14 +1,15 @@
 package tabstate
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.collection.mutable
+
+import akka.actor.Actor
+import akka.actor.ActorLogging
 import akka.actor.Timers
+import tabstate.Tab
 
 import TabStateActor._
-import tabstate.Tab
 
 class CurrentTabsActor extends Actor with ActorLogging with Timers {
 

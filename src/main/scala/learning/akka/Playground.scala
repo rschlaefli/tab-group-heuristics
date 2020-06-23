@@ -1,7 +1,7 @@
 package learning.akka
 
-import akka.actor.ActorSystem
 import akka.actor.Actor
+import akka.actor.ActorSystem
 import akka.actor.Props
 
 object Playground extends App {

@@ -1,13 +1,15 @@
 package tabswitches
 
-import com.typesafe.scalalogging.LazyLogging
-import org.jgrapht.nio.dot.DOTExporter
-import org.jgrapht.graph.DefaultWeightedEdge
 import java.io.StringWriter
-import collection.mutable
+
+import com.typesafe.scalalogging.LazyLogging
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.graph.SimpleWeightedGraph
 import org.jgrapht.nio.Attribute
 import org.jgrapht.nio.DefaultAttribute
-import org.jgrapht.graph.SimpleWeightedGraph
+import org.jgrapht.nio.dot.DOTExporter
+
+import collection.mutable
 import collection.JavaConverters._
 
 object GraphUtils extends LazyLogging {

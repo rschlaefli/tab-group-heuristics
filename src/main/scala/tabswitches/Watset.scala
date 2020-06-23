@@ -1,11 +1,13 @@
 package tabswitches
 
+import java.{util => ju}
+
 import scala.collection.JavaConverters._
+
+import com.typesafe.scalalogging.LazyLogging
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
-import com.typesafe.scalalogging.LazyLogging
 import org.nlpub.watset.graph.MarkovClustering
-import java.{util => ju}
 
 
 object Watset extends App with LazyLogging {

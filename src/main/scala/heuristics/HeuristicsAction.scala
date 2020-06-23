@@ -1,8 +1,8 @@
 package heuristics
 
-import io.circe._, io.circe.generic.semiauto._,
-io.circe.syntax._
-
+import io.circe._
+import io.circe.generic.semiauto._
+import io.circe.syntax._
 
 case class MessagePayload(message: String)
 object MessagePayload {

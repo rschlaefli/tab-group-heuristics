@@ -1,25 +1,28 @@
 package main
 
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.ServerSocket
+
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import akka.actor.ActorSystem
+import akka.actor.CoordinatedShutdown
 import akka.actor.Props
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import com.typesafe.scalalogging.LazyLogging
-import java.net.ServerSocket
-import scala.util.{Try, Success, Failure}
-import akka.actor.CoordinatedShutdown
-
-import tabstate.TabStateActor
+import heuristics.HeuristicsAction
 import heuristics.HeuristicsActor
 import messaging.NativeMessaging
-import heuristics.HeuristicsAction
-import tabstate.TabEvent
 import statistics.StatisticsActor
-import java.io.BufferedOutputStream
-import java.io.InputStream
-import java.io.OutputStream
-import java.io.BufferedInputStream
+import tabstate.TabEvent
+import tabstate.TabStateActor
 
 object Main extends App with LazyLogging {
 

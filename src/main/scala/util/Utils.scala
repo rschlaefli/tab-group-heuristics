@@ -1,9 +1,9 @@
 package util
 
-import com.typesafe.scalalogging.LazyLogging
-import io.circe.Decoder
 import scala.collection.mutable
 
+import com.typesafe.scalalogging.LazyLogging
+import io.circe.Decoder
 import tabswitches.TabMeta
 
 object Utils extends LazyLogging {

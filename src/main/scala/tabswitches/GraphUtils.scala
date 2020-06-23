@@ -31,6 +31,7 @@ object GraphUtils extends LazyLogging {
       )
 
     tabSwitchMap.values
+      .filter(switch => switch.tab1 != switch.tab2)
       .map((switchData: TabSwitchMeta) =>
         Try {
           tabGraph.addVertex(switchData.tab1)

@@ -11,6 +11,9 @@ import network.core.SiGraph
 import network.optimization.CPM
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
+import network.optimization.CPMapParameters
+import network.extendedmapequation.CPMap
+import persistence.Persistence
 
 case class SiMapParams() extends Parameters
 
@@ -24,7 +27,7 @@ object SiMap
 
     val index = mutable.Map[String, Int]()
 
-    val unzipped: (Array[Int], Array[Int], Array[Float]) = graph
+    val tuples = graph
       .edgeSet()
       .asScala
       .toArray
@@ -38,7 +41,18 @@ object SiMap
           weight
         )
       })
-      .unzip3[Int, Int, Float]
+
+    Persistence.persistString(
+      "raw_input.txt",
+      tuples
+        .map(tuple => s"${tuple._1}\t${tuple._2}\t${tuple._3}")
+        .mkString("\n")
+    )
+
+    // .filter(_._3 > 1)
+    val unzipped: (Array[Int], Array[Int], Array[Float]) =
+      tuples.unzip3[Int, Int, Float]
+
     new ListMatrix().init(unzipped._1, unzipped._2, unzipped._3, true)
   }
 
@@ -49,26 +63,25 @@ object SiMap
     val graph = new Graph(listMatrix.sort().normalize());
     val siGraph = new SiGraph(graph)
 
-    // val cpmap = new CPMap()
-    // val cpmapParams =
-    //   new CPMapParameters(
-    //     0.15.floatValue(),
-    //     false,
-    //     false,
-    //     4,
-    //     0.001.floatValue(),
-    //     0.05.floatValue(),
-    //     0.002.floatValue()
-    //   )
+    val cpMap = new CPMap()
+    val cpMapParams =
+      new CPMapParameters(
+        0.15.floatValue(),
+        false,
+        false,
+        4,
+        0.001.floatValue(),
+        0.05.floatValue(),
+        0.002.floatValue()
+      )
 
-    val cpm: CPM = new CPM(0.1.floatValue())
-      .setThreadCount(2)
-      .asInstanceOf[CPM]
+    // val cpm: CPM = new CPM(0.002.floatValue())
+    //   .setThreadCount(2)
 
-    val partition = cpm.detect(siGraph)
+    // val partition = cpm.detect(siGraph)
 
-    GraphIO.writePartition(siGraph, partition, "graph_output.txt")
-
+    // println(partition)
+    // GraphIO.writePartition(siGraph, partition, "graph_output.txt")
     List()
   }
 

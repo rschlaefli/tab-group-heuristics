@@ -11,7 +11,6 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
-import heuristics.KeywordExtraction
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.slf4j.MarkerFactory
@@ -66,23 +65,12 @@ class TabSwitchActor extends Actor with ActorLogging {
         .mapTo[CurrentSwitchGraph]
         .map {
           case CurrentSwitchGraph(graph) => {
-            log.debug(s"Computing tab clusters")
-
             val computedClusters = Watset(graph)
-            val automatedClusters = Utils.processClusters(computedClusters)
 
-            // generating cluster titles
-            log.debug(s"> Generating tab cluster titles")
+            val (clusterIndex, clusters) =
+              Utils.buildClusterIndex(computedClusters)
 
-            val clustersWithTitles = automatedClusters._2.map(tabCluster => {
-              val keywords = KeywordExtraction(tabCluster)
-              (keywords.mkString(" "), tabCluster)
-            })
-            clustersWithTitles.map(_._1)
-
-            log.info(clustersWithTitles.toString())
-
-            TabSwitchHeuristicsResults(automatedClusters._1, clustersWithTitles)
+            TabSwitchHeuristicsResults(clusterIndex, clusters)
           }
         }
         .pipeTo(sender())

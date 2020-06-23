@@ -1,7 +1,5 @@
 package tabswitches
 
-import java.{util => ju}
-
 import scala.collection.JavaConverters._
 
 import com.typesafe.scalalogging.LazyLogging

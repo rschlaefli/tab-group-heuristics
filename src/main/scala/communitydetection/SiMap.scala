@@ -26,8 +26,6 @@ object SiMap
 
   val tabGroups = apply(testGraph, SiMapParams())
 
-  println(tabGroups)
-
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph
   ): ListMatrix = {
@@ -68,7 +66,7 @@ object SiMap
 
     Shared.setVerbose(true)
 
-    val graph = new Graph(listMatrix.symmetrize.sort.normalize);
+    val graph = new Graph(listMatrix.symmetrize().sort().normalize());
     val siGraph = new SiGraph(graph)
 
     val cpMapParams =
@@ -76,7 +74,7 @@ object SiMap
         0.15.floatValue(),
         false,
         false,
-        4,
+        1,
         0.001.floatValue(),
         0.05.floatValue(),
         0.002.floatValue()

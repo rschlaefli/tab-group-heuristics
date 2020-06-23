@@ -1,6 +1,5 @@
 package learning
 
-import scala.annotation.tailrec
 
 trait MySet[A] extends (A => Boolean) {
   def apply(elem: A): Boolean =

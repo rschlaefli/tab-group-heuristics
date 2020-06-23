@@ -1,6 +1,6 @@
 package tabswitches
 
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
+import io.circe.parser._,
 io.circe.syntax._
 import scala.collection.mutable
 import akka.actor.Actor
@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 
 import persistence.Persistence
 import tabstate.Tab
-import SwitchGraphActor.{ComputeGraph, CurrentSwitchMap}
+import SwitchGraphActor.CurrentSwitchMap
 import statistics.StatisticsActor.TabSwitch
 
 class SwitchMapActor extends Actor with ActorLogging with LazyLogging {

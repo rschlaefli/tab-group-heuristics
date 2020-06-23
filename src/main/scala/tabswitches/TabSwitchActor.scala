@@ -6,15 +6,11 @@ import com.typesafe.scalalogging.LazyLogging
 import org.slf4j.MarkerFactory
 import akka.actor.Props
 import akka.pattern.{ask, pipe}
-import akka.util.Timeout
 import scala.language.postfixOps
 import scala.concurrent.duration._
 import akka.util.Timeout
-import scala.collection.mutable
-import scala.util.Success
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.jgrapht.graph.DefaultWeightedEdge
-import scala.util.Failure
 
 import tabstate.Tab
 import SwitchMapActor.ProcessTabSwitch
@@ -80,7 +76,7 @@ class TabSwitchActor extends Actor with ActorLogging {
               val keywords = KeywordExtraction(tabCluster)
               (keywords.mkString(" "), tabCluster)
             })
-            val automatedTitles = clustersWithTitles.map(_._1)
+            clustersWithTitles.map(_._1)
 
             log.info(clustersWithTitles.toString())
 

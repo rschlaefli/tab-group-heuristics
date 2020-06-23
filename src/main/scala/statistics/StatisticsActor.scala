@@ -19,7 +19,6 @@ import statistics._
 import tabstate.CurrentTabsActor.QueryTabs
 import tabstate.CurrentTabsActor.CurrentTabs
 import heuristics.HeuristicsActor.CurrentTabGroups
-import scala.util.Success
 
 class StatisticsActor
     extends Actor

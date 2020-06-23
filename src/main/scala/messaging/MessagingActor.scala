@@ -2,7 +2,6 @@ package messaging
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
-import io.circe.Json
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.BufferedInputStream
@@ -11,8 +10,7 @@ import java.io.IOException
 import akka.actor.PoisonPill
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.Future
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
-io.circe.syntax._
+import io.circe.syntax._
 
 import heuristics.HeuristicsAction
 

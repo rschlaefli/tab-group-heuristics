@@ -2,16 +2,13 @@ package tabstate
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
-import scala.collection.mutable
 import com.typesafe.scalalogging.LazyLogging
 import org.slf4j.MarkerFactory
 import scala.concurrent.duration._
 import akka.actor.Props
-import akka.pattern.{ask, pipe}
+import akka.pattern.ask
 import akka.util.Timeout
 import scala.language.postfixOps
-import scala.util.Success
-import scala.util.Failure
 import java.io.BufferedOutputStream
 
 import messaging._

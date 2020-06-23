@@ -3,7 +3,6 @@ package heuristics
 import com.typesafe.scalalogging.LazyLogging
 import smile.nlp._
 
-import tabstate.Tab
 import tabswitches.TabMeta
 
 object KeywordExtraction extends LazyLogging {

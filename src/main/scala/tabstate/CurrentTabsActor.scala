@@ -5,7 +5,6 @@ import akka.actor.ActorLogging
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.collection.mutable
-import akka.actor.Cancellable
 import akka.actor.Timers
 
 import TabStateActor._

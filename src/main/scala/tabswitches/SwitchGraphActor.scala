@@ -4,19 +4,11 @@ import akka.actor.Actor
 import akka.actor.ActorLogging
 import org.jgrapht.graph.SimpleWeightedGraph
 import org.jgrapht.graph.DefaultWeightedEdge
-import scala.util.Success
 import akka.pattern.{ask, pipe}
 import scala.language.postfixOps
-import org.jgrapht.nio.dot.DOTExporter
-import java.io.StringWriter
 import scala.concurrent.duration._
-import scala.collection.mutable
-import collection.JavaConverters._
 import akka.util.Timeout
-import org.jgrapht.nio.Attribute
-import org.jgrapht.nio.DefaultAttribute
 import scala.util.Failure
-import akka.actor.Timers
 import com.typesafe.scalalogging.LazyLogging
 import scala.util.Try
 

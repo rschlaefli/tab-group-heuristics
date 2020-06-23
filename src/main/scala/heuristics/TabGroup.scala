@@ -1,8 +1,7 @@
 package heuristics
 
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
+import io.circe._, io.circe.generic.semiauto._
 
-import tabstate.Tab
 import tabswitches.TabMeta
 
 case class TabGroup(

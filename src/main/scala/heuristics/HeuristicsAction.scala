@@ -1,9 +1,8 @@
 package heuristics
 
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
+import io.circe._, io.circe.generic.semiauto._,
 io.circe.syntax._
 
-import tabstate.Tab
 
 case class MessagePayload(message: String)
 object MessagePayload {

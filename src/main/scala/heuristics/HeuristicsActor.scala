@@ -7,18 +7,14 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.language.postfixOps
 import scala.concurrent.duration._
-import scala.util.Success
-import scala.util.Failure
 import akka.actor.Timers
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
-io.circe.syntax._
+import io.circe.syntax._
 import java.io.BufferedOutputStream
 
 import heuristics.TabGroup
 import tabswitches.TabSwitchActor.ComputeGroups
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import tabswitches.TabSwitchActor.TabSwitch
 import util.Utils
 import messaging.NativeMessaging
 

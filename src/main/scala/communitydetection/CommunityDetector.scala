@@ -1,14 +1,14 @@
 package communitydetection
 
-import org.jgrapht.Graph
-import org.jgrapht.graph.DefaultWeightedEdge
 import tabswitches.TabMeta
 
-trait CommunityDetector {
+trait Parameters
 
-  type TabSwitchGraph = Graph[TabMeta, DefaultWeightedEdge]
+trait CommunityDetector[T] {
 
-  def apply(graph: TabSwitchGraph): List[Set[TabMeta]] = {
+  import tabswitches.TabSwitchActor.TabSwitchGraph
+
+  def apply(graph: TabSwitchGraph, params: T): List[Set[TabMeta]] = {
 
     if (graph == null) return List()
 
@@ -21,7 +21,7 @@ trait CommunityDetector {
 
     if (isGraphTooSmall || isGraphUnconnected) return List()
 
-    val tabGroups = computeGroups(preparedGraph)
+    val tabGroups = computeGroups(preparedGraph, params)
 
     processGroups(tabGroups)
 
@@ -41,7 +41,10 @@ trait CommunityDetector {
     * @param graph The pre-processed tab switch graph
     * @return The generated list of tab groups
     */
-  def computeGroups(graph: TabSwitchGraph): List[Set[TabMeta]]
+  def computeGroups(
+      graph: TabSwitchGraph,
+      params: T
+  ): List[Set[TabMeta]]
 
   /**
     * Perform postprocessing on the generated tab groups

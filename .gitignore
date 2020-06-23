@@ -35,3 +35,5 @@ project/plugins/project/
 
 .bloop/
 *.csv
+clusters*.txt
+tab_switches.json

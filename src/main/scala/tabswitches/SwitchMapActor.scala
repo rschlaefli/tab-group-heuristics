@@ -27,12 +27,10 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
   var tabSwitches = mutable.Map[String, TabSwitchMeta]()
 
   override def preStart(): Unit = {
-    Persistence
-      .restoreJson("tab_switches.json")
-      .map(decode[mutable.Map[String, TabSwitchMeta]])
-      .foreach {
-        case Right(restoredMap) => tabSwitches = restoredMap
-      }
+    restoreTabSwitchMap foreach {
+      case Right(restoredMap) => tabSwitches = restoredMap
+      case _                  =>
+    }
 
     context.system.scheduler.scheduleAtFixedRate(30 seconds, 30 seconds) { () =>
       Persistence.persistJson("tab_switches.json", tabSwitches.asJson)
@@ -63,12 +61,19 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
       sender() ! CurrentSwitchMap(tabSwitches.toMap)
     }
 
-    case message => log.debug("Received message $message")
+    case message => log.debug(s"Received message $message")
   }
 }
 
 object SwitchMapActor {
+
   case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
 
   case object QueryTabSwitchMap
+
+  def restoreTabSwitchMap = {
+    Persistence
+      .restoreJson("tab_switches.json")
+      .map(decode[mutable.Map[String, TabSwitchMeta]])
+  }
 }

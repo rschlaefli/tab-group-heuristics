@@ -10,14 +10,14 @@ import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import communitydetection._
 import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
+import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
-import org.jgrapht.graph.SimpleWeightedGraph
 import org.slf4j.MarkerFactory
 import tabstate.Tab
 import util.Utils
 
-import communitydetection.Watset
 import SwitchMapActor.ProcessTabSwitch
 import SwitchGraphActor.ComputeGraph
 
@@ -66,7 +66,7 @@ class TabSwitchActor extends Actor with ActorLogging {
         .mapTo[CurrentSwitchGraph]
         .map {
           case CurrentSwitchGraph(graph) => {
-            val computedClusters = Watset(graph)
+            val computedClusters = Watset(graph, WatsetParams(2, 2))
 
             val (clusterIndex, clusters) =
               Utils.buildClusterIndex(computedClusters)
@@ -82,10 +82,11 @@ class TabSwitchActor extends Actor with ActorLogging {
 }
 
 object TabSwitchActor extends LazyLogging {
+
+  type TabSwitchGraph = Graph[TabMeta, DefaultWeightedEdge]
+
   case object ComputeGroups
 
   case class TabSwitch(tab1: Option[Tab], tab2: Tab)
-  case class CurrentSwitchGraph(
-      graph: SimpleWeightedGraph[TabMeta, DefaultWeightedEdge]
-  )
+  case class CurrentSwitchGraph(graph: TabSwitchGraph)
 }

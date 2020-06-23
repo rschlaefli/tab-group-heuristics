@@ -3,17 +3,28 @@ package communitydetection
 import scala.collection.JavaConverters._
 
 import com.typesafe.scalalogging.LazyLogging
-import org.nlpub.watset.graph.MarkovClustering
+import org.nlpub.watset.graph._
 import tabswitches.TabMeta
 
-object Watset extends App with LazyLogging with CommunityDetector {
+case class WatsetParams(expansion: Int, powerCoefficient: Double)
+    extends Parameters
+
+object Watset
+    extends App
+    with LazyLogging
+    with CommunityDetector[WatsetParams] {
+
+  import tabswitches.TabSwitchActor.TabSwitchGraph
 
   def prepareGraph(graph: TabSwitchGraph): TabSwitchGraph =
     graph
 
-  def computeGroups(graph: TabSwitchGraph): List[Set[TabMeta]] = {
-
-    val markovClusters = new MarkovClustering(graph, 2, 2)
+  def computeGroups(
+      graph: TabSwitchGraph,
+      params: WatsetParams
+  ): List[Set[TabMeta]] = {
+    val markovClusters =
+      new MarkovClustering(graph, params.expansion, params.powerCoefficient)
     markovClusters.fit()
 
     logger.debug(

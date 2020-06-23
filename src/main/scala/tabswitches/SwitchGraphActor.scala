@@ -17,12 +17,12 @@ import org.jgrapht.nio.Attribute
 import org.jgrapht.nio.DefaultAttribute
 import scala.util.Failure
 import akka.actor.Timers
+import com.typesafe.scalalogging.LazyLogging
+import scala.util.Try
 
 import persistence.Persistence
 import SwitchMapActor.QueryTabSwitchMap
 import TabSwitchActor.CurrentSwitchGraph
-import com.typesafe.scalalogging.LazyLogging
-import scala.util.Try
 
 class SwitchGraphActor extends Actor with ActorLogging {
 
@@ -63,27 +63,8 @@ class SwitchGraphActor extends Actor with ActorLogging {
     }
 
     case ExportGraph(graph) => {
-      log.debug(s"Exporting tab switch graph")
-
-      val exporter =
-        new DOTExporter[TabMeta, DefaultWeightedEdge](_.hashCode().toString())
-      exporter.setVertexAttributeProvider((tabMeta) => {
-        val map = mutable.Map[String, Attribute]()
-        map.put("label", DefaultAttribute.createAttribute(tabMeta.title))
-        map.asJava
-      })
-      exporter.setEdgeAttributeProvider((edge) => {
-        val map = mutable.Map[String, Attribute]()
-        val weight = DefaultAttribute.createAttribute(graph.getEdgeWeight(edge))
-        map.put("label", weight)
-        map.put("weight", weight)
-        map.asJava
-      })
-
-      val writer = new StringWriter()
-      exporter.exportGraph(graph, writer)
-
-      Persistence.persistString("tab_switches.dot", writer.toString())
+      val dotString = GraphUtils.exportToDot(graph)
+      Persistence.persistString("tab_switches.dot", dotString)
     }
 
     case message =>

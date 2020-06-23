@@ -12,6 +12,7 @@ import akka.util.Timeout
 import scala.language.postfixOps
 import scala.util.Success
 import scala.util.Failure
+import java.io.BufferedOutputStream
 
 import messaging._
 import tabstate.Tab
@@ -33,6 +34,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
   val logToCsv = MarkerFactory.getMarker("CSV")
 
+  implicit val out = new BufferedOutputStream(System.out)
   implicit val executionContext = context.dispatcher
 
   val currentTabs = context.actorOf(Props[CurrentTabsActor], "CurrentTabs")
@@ -43,15 +45,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     log.info("Starting to process tab events")
 
     // query the webextension for the list of current tabs
-    NativeMessaging.writeNativeMessage(IO.out, HeuristicsAction.QUERY_TABS)
+    NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
 
     // query the webextension for the list of current tab groups repeatedly
     context.system.scheduler.scheduleWithFixedDelay(10 seconds, 1 minute) {
-      () =>
-        NativeMessaging.writeNativeMessage(
-          IO.out,
-          HeuristicsAction.QUERY_GROUPS
-        )
+      () => NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
     }(context.system.dispatcher)
   }
 

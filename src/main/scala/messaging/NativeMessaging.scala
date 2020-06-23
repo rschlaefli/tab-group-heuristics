@@ -28,9 +28,8 @@ object NativeMessaging extends LazyLogging {
   }
 
   def writeNativeMessage(
-      out: OutputStream,
       heuristicsAction: HeuristicsAction
-  ): Future[Unit] = Future {
+  )(implicit out: OutputStream): Future[Unit] = Future {
     // encode the action in a json string
     val message = heuristicsAction.asJson.toString()
 

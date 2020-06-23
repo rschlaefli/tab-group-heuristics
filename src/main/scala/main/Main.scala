@@ -14,11 +14,15 @@ import akka.actor.CoordinatedShutdown
 
 import tabstate.TabStateActor
 import heuristics.HeuristicsActor
-import messaging.IO
 import messaging.NativeMessaging
 import heuristics.HeuristicsAction
 import tabstate.TabEvent
 import statistics.StatisticsActor
+import java.io.BufferedOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.io.BufferedInputStream
+import java.io.IOException
 
 object Main extends App with LazyLogging {
 
@@ -30,7 +34,27 @@ object Main extends App with LazyLogging {
   logger.info("Bootstrapping application")
   Thread.sleep(5000)
 
-  IO()
+  var stdin: InputStream = null
+  implicit var stdout: OutputStream = null
+
+  Try {
+    System.in.available()
+    stdin = new BufferedInputStream(System.in)
+    stdout = new BufferedOutputStream(System.out)
+
+    logger.info(s"Initialized IO to $stdin/$stdout")
+  } match {
+    case Failure(ex) => {
+      NativeMessaging
+        .writeNativeMessage(
+          HeuristicsAction.HEURISTICS_STATUS("MISSING_IO")
+        )
+
+      // if the IO channel is unavailable, log an error and exit the program
+      logger.error(ex.getMessage())
+      System.exit(1)
+    }
+  }
 
   // try to bind to a server socket (to ensure we can only have one instance at a time)
   var serverSocket: ServerSocket = null
@@ -42,11 +66,9 @@ object Main extends App with LazyLogging {
       logger.error(
         "> Unable to bind to the socket (there might be another instance running). Exiting..."
       )
-      NativeMessaging
-        .writeNativeMessage(
-          IO.out,
-          HeuristicsAction.HEURISTICS_STATUS("ALREADY_RUNNING")
-        )
+      NativeMessaging.writeNativeMessage(
+        HeuristicsAction.HEURISTICS_STATUS("ALREADY_RUNNING")
+      )
       System.exit(0)
     }
   }
@@ -58,7 +80,7 @@ object Main extends App with LazyLogging {
   // map every incoming message to the content part and decode the contained JSON string
   // the chunksize has to be high as we can get big json payloads from the extension (e.g., for tab groups)
   val source = StreamConverters
-    .fromInputStream(() => IO.in, 65536)
+    .fromInputStream(() => stdin, 65536)
     .map(_.drop(4).utf8String)
     .map(TabEvent.decodeEventFromMessage)
     .filter(_.isDefined)
@@ -83,11 +105,9 @@ object Main extends App with LazyLogging {
   val graph = source.to(sink).run()
 
   logger.info(s"> Daemons started (${Thread.activeCount()})")
-  NativeMessaging
-    .writeNativeMessage(
-      IO.out,
-      HeuristicsAction.HEURISTICS_STATUS("RUNNING")
-    )
+  NativeMessaging.writeNativeMessage(
+    HeuristicsAction.HEURISTICS_STATUS("RUNNING")
+  )
 
   CoordinatedShutdown(system).addJvmShutdownHook {
     logger.info("Shutting down...")
@@ -95,11 +115,9 @@ object Main extends App with LazyLogging {
     serverSocket.close()
     serverSocket = null
 
-    NativeMessaging
-      .writeNativeMessage(
-        IO.out,
-        HeuristicsAction.HEURISTICS_STATUS("STOPPED")
-      )
+    NativeMessaging.writeNativeMessage(
+      HeuristicsAction.HEURISTICS_STATUS("STOPPED")
+    )
 
     // TODO: trigger persistence
   }

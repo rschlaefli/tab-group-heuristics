@@ -150,7 +150,7 @@
   </logger>
 
   <logger name="tabswitches.SwitchGraphActor" level="info" />
-  <logger name="tabswitches.SwitchMapActor" level="debug">
+  <logger name="tabswitches.SwitchMapActor" level="info">
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
   <logger name="tabswitches.Watset" level="info" />

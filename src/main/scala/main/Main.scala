@@ -44,6 +44,7 @@ object Main extends App with LazyLogging {
 
     logger.info(s"Initialized IO to $stdin/$stdout")
   } match {
+    case Success(_) =>
     case Failure(ex) => {
       NativeMessaging
         .writeNativeMessage(

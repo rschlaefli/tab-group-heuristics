@@ -66,7 +66,8 @@ class TabSwitchActor extends Actor with ActorLogging {
         .mapTo[CurrentSwitchGraph]
         .map {
           case CurrentSwitchGraph(graph) => {
-            val computedClusters = Watset(graph, WatsetParams(2, 2))
+            // val computedClusters = Watset(graph, WatsetParams(2, 2))
+            val computedClusters = SiMap(graph, SiMapParams())
 
             val (clusterIndex, clusters) =
               Utils.buildClusterIndex(computedClusters)

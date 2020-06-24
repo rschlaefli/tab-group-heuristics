@@ -4,6 +4,7 @@ import tabswitches.GraphUtils
 import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchMeta
+import persistence.Persistence
 
 trait Parameters
 
@@ -21,6 +22,18 @@ trait CommunityDetector[S, T] {
 
     processGroups(tabGroups)
 
+  }
+
+  def apply(
+      graph: TabSwitchGraph,
+      params: T,
+      persistTo: String
+  ): List[Set[TabMeta]] = {
+    val tabGroups = apply(graph, params)
+
+    persist(persistTo, tabGroups)
+
+    tabGroups
   }
 
   def loadTestGraph: TabSwitchGraph = {
@@ -65,5 +78,19 @@ trait CommunityDetector[S, T] {
     * @return The post-processed list of tab groups
     */
   def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]]
+
+  /**
+    * Persist the list of tab groups to a text file
+    *
+    * @param fileName The name of the target file
+    * @param tabGroups The list of tab groups
+    * @return
+    */
+  def persist(fileName: String, tabGroups: List[Set[TabMeta]]) = {
+    Persistence.persistString(
+      fileName,
+      tabGroups.map(_.toString()).mkString("\n")
+    )
+  }
 
 }

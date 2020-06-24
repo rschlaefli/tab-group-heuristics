@@ -114,14 +114,6 @@ object SiMap
 
   override def processGroups(
       tabGroups: List[Set[TabMeta]]
-  ): List[Set[TabMeta]] = {
-
-    Persistence.persistString(
-      "clusters_simap.txt",
-      tabGroups.map(_.toString()).mkString("\n")
-    )
-
-    tabGroups
-  }
+  ): List[Set[TabMeta]] = tabGroups
 
 }

@@ -44,13 +44,7 @@ object Watset
       .toList
   }
 
-  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]] = {
-    Persistence.persistString(
-      "clusters_watset.txt",
-      tabGroups.map(_.toString()).mkString("\n")
-    )
-
+  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]] =
     tabGroups
-  }
 
 }

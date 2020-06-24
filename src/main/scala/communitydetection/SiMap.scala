@@ -20,17 +20,19 @@ case class SiMapParams() extends Parameters
 object SiMap
     extends App
     with LazyLogging
-    with CommunityDetector[(Map[String, Int], ListMatrix), SiMapParams] {
+    with CommunityDetector[(Map[TabMeta, Int], ListMatrix), SiMapParams] {
 
   val testGraph = loadTestGraph
 
   val tabGroups = apply(testGraph, SiMapParams())
 
+  logger.debug(s"Clusters (SiMap): ${tabGroups}")
+
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph
-  ): (Map[String, Int], ListMatrix) = {
+  ): (Map[TabMeta, Int], ListMatrix) = {
 
-    val index = mutable.Map[String, Int]()
+    val index = mutable.Map[TabMeta, Int]()
 
     val tuples = graph
       .edgeSet()
@@ -41,8 +43,8 @@ object SiMap
         val target = graph.getEdgeTarget(edge)
         val weight = graph.getEdgeWeight(edge).toFloat
         (
-          index.getOrElseUpdate(source.hash, index.size + 1),
-          index.getOrElseUpdate(target.hash, index.size + 1),
+          index.getOrElseUpdate(source, index.size + 1),
+          index.getOrElseUpdate(target, index.size + 1),
           weight
         )
       })
@@ -56,11 +58,14 @@ object SiMap
 
     val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 
-    (index.toMap, new ListMatrix().init(rows, cols, values, true))
+    (
+      index.toMap,
+      new ListMatrix().init(rows, cols, values, true)
+    )
   }
 
   override def computeGroups(
-      matrixAndIndex: (Map[String, Int], ListMatrix),
+      matrixAndIndex: (Map[TabMeta, Int], ListMatrix),
       params: SiMapParams
   ): List[Set[TabMeta]] = {
 
@@ -84,23 +89,35 @@ object SiMap
         0.002.floatValue()
       )
 
+    // compute the partitioning
+    // returns a 1-D array with index=nodeId and value=partitionId
     val detectedPartition = CPMap.detect(graph, cpMapParams)
-    println(detectedPartition.toList)
-
-    // arr.foreach(partition => {
-    //   println(partition.toList.map(index.get))
-    // })
-
-    // TODO: build tab groups from the detected partitioning
-
     GraphIO.writePartition(siGraph, detectedPartition, "partition_out.txt");
 
-    List()
+    // construct a mapping from tab hashes to the assigned partition
+    val groupAssignmentMapping = detectedPartition.zipWithIndex
+      .map(tuple => (index.get(tuple._2), tuple._1))
+      .flatMap {
+        case (Some(tab), partition) => Seq((tab, partition))
+        case (None, _)              => Seq()
+      }
+      .groupMap(_._2)(_._1)
+
+    // transform the arrays
+    groupAssignmentMapping.values.map(_.toSet).toList
 
   }
 
   override def processGroups(
       tabGroups: List[Set[TabMeta]]
-  ): List[Set[TabMeta]] = tabGroups
+  ): List[Set[TabMeta]] = {
+
+    Persistence.persistString(
+      "clusters_simap.txt",
+      tabGroups.map(_.toString()).mkString("\n")
+    )
+
+    tabGroups
+  }
 
 }

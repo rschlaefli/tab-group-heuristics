@@ -6,8 +6,9 @@ import com.typesafe.scalalogging.LazyLogging
 import org.nlpub.watset.graph._
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
+import persistence.Persistence
 
-case class WatsetParams(expansion: Int, powerCoefficient: Double)
+case class WatsetParams(expansion: Int = 2, powerCoefficient: Double = 2)
     extends Parameters
 
 object Watset
@@ -36,10 +37,6 @@ object Watset
       new MarkovClustering(graph, params.expansion, params.powerCoefficient)
     markovClusters.fit()
 
-    logger.debug(
-      s"Clusters (markov): ${markovClusters.getClusters().toString()}"
-    )
-
     markovClusters
       .getClusters()
       .asScala
@@ -47,7 +44,13 @@ object Watset
       .toList
   }
 
-  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]] =
+  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]] = {
+    Persistence.persistString(
+      "clusters_watset.txt",
+      tabGroups.map(_.toString()).mkString("\n")
+    )
+
     tabGroups
+  }
 
 }

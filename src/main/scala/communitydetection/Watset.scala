@@ -4,9 +4,9 @@ import scala.collection.JavaConverters._
 
 import com.typesafe.scalalogging.LazyLogging
 import org.nlpub.watset.graph._
+import persistence.Persistence
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import persistence.Persistence
 
 case class WatsetParams(expansion: Int = 2, powerCoefficient: Double = 2)
     extends Parameters

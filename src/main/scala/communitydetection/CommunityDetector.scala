@@ -1,9 +1,9 @@
 package communitydetection
 
+import tabswitches.GraphUtils
+import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchMeta
-import tabswitches.SwitchMapActor
-import tabswitches.GraphUtils
 
 trait Parameters
 

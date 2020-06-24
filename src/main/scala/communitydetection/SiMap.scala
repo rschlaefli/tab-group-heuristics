@@ -5,21 +5,41 @@ import scala.collection.mutable
 
 import com.typesafe.scalalogging.LazyLogging
 import network.core.Graph
-import network.core.GraphIO
 import network.core.ListMatrix
-import network.core.SiGraph
+import network.extendedmapequation.CPMap
+import network.optimization.CPMapParameters
+import persistence.Persistence
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import network.optimization.CPMapParameters
-import network.extendedmapequation.CPMap
-import persistence.Persistence
-import network.Shared
 
-case class SiMapParams() extends Parameters
+case class SiMapParams(
+    /**
+      * Probability of choosing to teleport instead of following the transition probability matrix
+      * to guarantee convergence of G * p = p
+      */
+    tau: Float = 0.15.toFloat,
+    /**
+      * Start resolution to search for the best resolution
+      */
+    resStart: Float = 0.001.toFloat,
+    /**
+      * End resolution
+      */
+    resEnd: Float = 0.05.toFloat,
+    /**
+      * Accuracy of the best solution, e.g. when accuracy is 0.1,
+      * the solution is refined util this close to the best resolution found so far
+      */
+    resAcc: Float = 0.002.toFloat
+) extends Parameters {
+
+  def asCPMapParameters =
+    new CPMapParameters(tau, false, false, 1, resStart, resEnd, resAcc)
+
+}
 
 object SiMap
-    extends App
-    with LazyLogging
+    extends LazyLogging
     with CommunityDetector[(Map[TabMeta, Int], ListMatrix), SiMapParams] {
 
   val testGraph = loadTestGraph
@@ -69,30 +89,16 @@ object SiMap
       params: SiMapParams
   ): List[Set[TabMeta]] = {
 
-    // Shared.setVerbose(true)
-
     // swap keys and values of the index
     // this allows us to lookup tab hashes by the node id
     val index = matrixAndIndex._1.map(_.swap)
 
-    val graph = new Graph(matrixAndIndex._2.symmetrize().sort().normalize());
-    // val siGraph = new SiGraph(graph)
-
-    val cpMapParams =
-      new CPMapParameters(
-        0.15.floatValue(),
-        false,
-        false,
-        1,
-        0.001.floatValue(),
-        0.05.floatValue(),
-        0.002.floatValue()
-      )
+    // preprocess the input matrix and use it to construct a graph
+    val graph = new Graph(matrixAndIndex._2.symmetrize().sort().normalize())
 
     // compute the partitioning
     // returns a 1-D array with index=nodeId and value=partitionId
-    val detectedPartition = CPMap.detect(graph, cpMapParams)
-    // GraphIO.writePartition(siGraph, detectedPartition, "partition_out.txt");
+    val detectedPartition = CPMap.detect(graph, params.asCPMapParameters)
 
     // construct a mapping from tab hashes to the assigned partition
     val groupAssignmentMapping = detectedPartition.zipWithIndex

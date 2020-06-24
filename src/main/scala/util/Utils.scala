@@ -30,8 +30,6 @@ object Utils extends LazyLogging {
           clusterIndex(tab.hashCode()) = index
         })
 
-        logger.debug(s"Cluster $index contains ${clusterMembers.toString()}")
-
         List(clusterMembers)
       }
       case _ => List()

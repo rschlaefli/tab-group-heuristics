@@ -46,8 +46,6 @@ object SiMap
 
   val tabGroups = apply(testGraph, SiMapParams())
 
-  logger.debug(s"Clusters (SiMap): ${tabGroups}")
-
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph
   ): (Map[TabMeta, Int], ListMatrix) = {
@@ -69,12 +67,12 @@ object SiMap
         )
       })
 
-    Persistence.persistString(
-      "raw_input.txt",
-      tuples
-        .map(tuple => s"${tuple._1}\t${tuple._2}\t${tuple._3}")
-        .mkString("\n")
-    )
+    // Persistence.persistString(
+    //   "raw_input.txt",
+    //   tuples
+    //     .map(tuple => s"${tuple._1}\t${tuple._2}\t${tuple._3}")
+    //     .mkString("\n")
+    // )
 
     val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 

@@ -38,7 +38,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     timers.startTimerAtFixedRate(
       "heuristics",
       ComputeHeuristics,
-      5 minutes
+      1 minutes
     )
   }
 

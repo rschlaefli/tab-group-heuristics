@@ -69,14 +69,14 @@ object SiMap
       params: SiMapParams
   ): List[Set[TabMeta]] = {
 
-    Shared.setVerbose(true)
+    // Shared.setVerbose(true)
 
     // swap keys and values of the index
     // this allows us to lookup tab hashes by the node id
     val index = matrixAndIndex._1.map(_.swap)
 
     val graph = new Graph(matrixAndIndex._2.symmetrize().sort().normalize());
-    val siGraph = new SiGraph(graph)
+    // val siGraph = new SiGraph(graph)
 
     val cpMapParams =
       new CPMapParameters(
@@ -92,7 +92,7 @@ object SiMap
     // compute the partitioning
     // returns a 1-D array with index=nodeId and value=partitionId
     val detectedPartition = CPMap.detect(graph, cpMapParams)
-    GraphIO.writePartition(siGraph, detectedPartition, "partition_out.txt");
+    // GraphIO.writePartition(siGraph, detectedPartition, "partition_out.txt");
 
     // construct a mapping from tab hashes to the assigned partition
     val groupAssignmentMapping = detectedPartition.zipWithIndex

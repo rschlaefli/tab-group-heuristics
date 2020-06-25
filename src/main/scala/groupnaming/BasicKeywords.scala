@@ -2,8 +2,8 @@ package groupnaming
 
 import com.typesafe.scalalogging.LazyLogging
 import smile.nlp._
-import tabswitches.TabMeta
 import smile.nlp.stemmer.Stemmer
+import tabswitches.TabMeta
 
 case class KeywordParams(
     tokenizer: String = "comprehensive",

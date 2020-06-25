@@ -40,7 +40,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     timers.startTimerAtFixedRate(
       "heuristics",
       ComputeHeuristics,
-      1 minutes
+      5 minutes
     )
   }
 
@@ -63,7 +63,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
         .foreach {
           case TabSwitchHeuristicsResults(groupIndex, newTabGroups) => {
 
-            if (tabGroups.size > 0) {
+            if (newTabGroups.size > 0) {
               log.debug(s"Updating tab clusters in the webextension")
 
               val clustersWithTitles = newTabGroups.map(BasicKeywords.apply)
@@ -71,9 +71,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
               tabGroupIndex = groupIndex
               tabGroups = clustersWithTitles
 
-              log.info(clustersWithTitles.toString())
-
-              val tabGroupEntities = tabGroups.map(TabGroup.apply)
+              val tabGroupEntities = tabGroups.map(TabGroup.apply).take(5)
 
               NativeMessaging.writeNativeMessage(
                 HeuristicsAction.UPDATE_GROUPS(tabGroupEntities.asJson)

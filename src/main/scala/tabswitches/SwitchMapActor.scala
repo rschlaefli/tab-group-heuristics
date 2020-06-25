@@ -6,6 +6,7 @@ import scala.language.postfixOps
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
+import akka.actor.Timers
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.parser._
 import io.circe.syntax._
@@ -15,7 +16,6 @@ import statistics.StatisticsActor.TabSwitch
 import tabstate.Tab
 
 import SwitchGraphActor.CurrentSwitchMap
-import akka.actor.Timers
 
 class SwitchMapActor
     extends Actor

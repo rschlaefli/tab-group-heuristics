@@ -1,10 +1,10 @@
 package communitydetection
 
+import persistence.Persistence
 import tabswitches.GraphUtils
 import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchMeta
-import persistence.Persistence
 
 trait Parameters
 

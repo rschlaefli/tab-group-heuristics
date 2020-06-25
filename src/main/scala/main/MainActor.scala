@@ -1,20 +1,21 @@
 package main
 
+import java.io.BufferedOutputStream
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
-import main.Main.StreamInit
+import akka.actor.PoisonPill
+import akka.actor.Props
+import heuristics.HeuristicsAction
+import heuristics.HeuristicsActor
 import main.Main.StreamAck
 import main.Main.StreamComplete
 import main.Main.StreamFail
-import tabstate.TabStateActor
-import heuristics.HeuristicsActor
-import statistics.StatisticsActor
-import akka.actor.Props
-import tabstate.TabEvent
-import akka.actor.PoisonPill
-import heuristics.HeuristicsAction
-import java.io.BufferedOutputStream
+import main.Main.StreamInit
 import messaging.NativeMessaging
+import statistics.StatisticsActor
+import tabstate.TabEvent
+import tabstate.TabStateActor
 
 class MainActor extends Actor with ActorLogging {
 

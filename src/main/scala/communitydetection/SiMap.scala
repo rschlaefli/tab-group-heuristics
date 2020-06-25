@@ -8,7 +8,6 @@ import network.core.Graph
 import network.core.ListMatrix
 import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
-import persistence.Persistence
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 

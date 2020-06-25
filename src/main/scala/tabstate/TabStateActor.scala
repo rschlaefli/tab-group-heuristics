@@ -12,6 +12,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
+import heuristics.HeuristicsActor.ComputeHeuristics
 import heuristics.HeuristicsActor.UpdateCuratedGroups
 import main.MainActor.StartProcessing
 import main.MainActor.StopProcessing
@@ -24,7 +25,6 @@ import CurrentTabsActor.InitializeTabs
 import CurrentTabsActor.UpdateTab
 import CurrentTabsActor.ActivateTab
 import CurrentTabsActor.RemoveTab
-import heuristics.HeuristicsActor.ComputeHeuristics
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 

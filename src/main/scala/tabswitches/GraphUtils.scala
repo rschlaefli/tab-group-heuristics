@@ -21,35 +21,6 @@ object GraphUtils extends LazyLogging {
 
   import TabSwitchActor.TabSwitchGraph
 
-  def processSwitchMap(
-      tabSwitchMap: Map[String, TabSwitchMeta]
-  ): TabSwitchGraph = {
-
-    val tabGraph =
-      new SimpleWeightedGraph[TabMeta, DefaultWeightedEdge](
-        classOf[DefaultWeightedEdge]
-      )
-
-    tabSwitchMap.values
-      .filter(switch => switch.tab1 != switch.tab2)
-      .map((switchData: TabSwitchMeta) =>
-        Try {
-          tabGraph.addVertex(switchData.tab1)
-          tabGraph.addVertex(switchData.tab2)
-          tabGraph.addEdge(switchData.tab1, switchData.tab2)
-          tabGraph
-            .setEdgeWeight(switchData.tab1, switchData.tab2, switchData.count)
-        }
-      )
-      .filter(_.isFailure)
-      .foreach {
-        case Failure(ex) => logger.error(ex.getMessage())
-        case _           =>
-      }
-
-    tabGraph
-  }
-
   def exportToCsv(graph: TabSwitchGraph): String = {
     val exporter =
       new CSVExporter[TabMeta, DefaultWeightedEdge](

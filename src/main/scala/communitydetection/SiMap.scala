@@ -4,14 +4,14 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 import com.typesafe.scalalogging.LazyLogging
+import network.core.ConnectedComponents
 import network.core.Graph
 import network.core.ListMatrix
+import network.core.Statistics
 import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import network.core.Statistics
-import network.core.ConnectedComponents
 
 case class SiMapParams(
     /**
@@ -52,7 +52,7 @@ case class SiMapParams(
       * The maximum number of groups to return
       */
     maxGroups: Int = 20
-) extends Parameters {
+) extends CommunityDetectorParameters {
 
   def asCPMapParameters =
     new CPMapParameters(tau, false, false, 1, resStart, resEnd, resAcc)
@@ -122,7 +122,7 @@ object SiMap
 
     if (params.largestCC) {
       val connectedComponents = new ConnectedComponents(graph).find()
-      val largestComponent = connectedComponents.getLargestComponent()
+      connectedComponents.getLargestComponent()
       // println(largestComponent.sum)
     }
 
@@ -137,18 +137,18 @@ object SiMap
     // println(quality)
 
     // decompose the graph into groups
-    val groups = graph.decompose(detectedPartition)
+    graph.decompose(detectedPartition)
     // groups.foreach(println)
 
     // fold the graph
-    val folded = graph.fold(detectedPartition)
+    graph.fold(detectedPartition)
     // println(folded)
 
     // compute partition statistics
-    val partitionStats = Statistics.partition(detectedPartition, preparedMatrix)
+    Statistics.partition(detectedPartition, preparedMatrix)
     // println(partitionStats)
 
-    val arrayStats = Statistics.array(detectedPartition)
+    Statistics.array(detectedPartition)
     // println(arrayStats)
 
     // construct a mapping from tab hashes to the assigned partition

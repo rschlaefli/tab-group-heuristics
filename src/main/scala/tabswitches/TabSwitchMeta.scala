@@ -1,12 +1,14 @@
 package tabswitches
 
+import java.net.URL
+
+import scala.util.Success
+import scala.util.Try
+
 import io.circe._
 import io.circe.generic.semiauto._
 import org.joda.time.DateTime
-import java.net.URL
 import org.simmetrics.metrics.StringMetrics
-import scala.util.Try
-import scala.util.Success
 
 case class TabSwitchMeta(
     tab1: TabMeta,
@@ -42,7 +44,8 @@ object TabSwitchMeta {
           Some(metric.compare(hostPath1, hostPath2))
         )
       }
-      case _ => (None, None)
+      case _ if tab1.url == tab2.url => (Some(true), None)
+      case _                         => (None, None)
     }
 
     TabSwitchMeta(

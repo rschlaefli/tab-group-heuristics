@@ -8,7 +8,7 @@ import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 
 case class WatsetParams(expansion: Int = 2, powerCoefficient: Double = 2)
-    extends Parameters
+    extends CommunityDetectorParameters
 
 object Watset
     extends App

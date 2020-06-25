@@ -1,14 +1,14 @@
 package communitydetection
 
 import persistence.Persistence
-import tabswitches.GraphUtils
+import tabswitches.SwitchGraphActor
 import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchMeta
 
-trait Parameters
+trait CommunityDetectorParameters
 
-trait CommunityDetector[S, T] {
+trait CommunityDetector[S, T <: CommunityDetectorParameters] {
 
   import tabswitches.TabSwitchActor.TabSwitchGraph
 
@@ -44,7 +44,7 @@ trait CommunityDetector[S, T] {
     SwitchMapActor.restoreTabSwitchMap map {
       case Right(restoredMap) => {
         tabSwitchMap = restoredMap.toMap
-        tabSwitchGraph = GraphUtils.processSwitchMap(tabSwitchMap)
+        tabSwitchGraph = SwitchGraphActor.processSwitchMap(tabSwitchMap)
       }
       case _ =>
     }

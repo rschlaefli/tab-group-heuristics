@@ -10,7 +10,7 @@ case class KeywordParams(
     bagging: String = "none",
     topK: Int = 4,
     stemmer: Option[Stemmer] = None
-) extends Parameters
+) extends NameGeneratorParameters
 
 object BasicKeywords extends LazyLogging with NameGenerator[KeywordParams] {
 

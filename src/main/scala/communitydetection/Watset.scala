@@ -17,7 +17,10 @@ object Watset
 
   import tabswitches.TabSwitchActor.TabSwitchGraph
 
-  def prepareGraph(graph: TabSwitchGraph): TabSwitchGraph =
+  def prepareGraph(
+      graph: TabSwitchGraph,
+      params: WatsetParams
+  ): TabSwitchGraph =
     graph
 
   def computeGroups(
@@ -43,7 +46,10 @@ object Watset
       .toList
   }
 
-  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]] =
+  def processGroups(
+      tabGroups: List[Set[TabMeta]],
+      params: WatsetParams
+  ): List[Set[TabMeta]] =
     tabGroups
 
 }

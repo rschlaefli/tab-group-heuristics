@@ -16,11 +16,11 @@ trait CommunityDetector[S, T] {
 
     if (graph == null) return List()
 
-    val preparedGraph = prepareGraph(graph)
+    val preparedGraph = prepareGraph(graph, params)
 
     val tabGroups = computeGroups(preparedGraph, params)
 
-    processGroups(tabGroups)
+    processGroups(tabGroups, params)
 
   }
 
@@ -58,7 +58,7 @@ trait CommunityDetector[S, T] {
     * @param graph The raw tab switch graph
     * @return The pre-processed tab switch graph
     */
-  def prepareGraph(graph: TabSwitchGraph): S
+  def prepareGraph(graph: TabSwitchGraph, params: T): S
 
   /**
     * Apply the community detection algorithm to the tab switch graph
@@ -77,7 +77,10 @@ trait CommunityDetector[S, T] {
     * @param tabGroups The generated list of tab groups
     * @return The post-processed list of tab groups
     */
-  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]]
+  def processGroups(
+      tabGroups: List[Set[TabMeta]],
+      params: T
+  ): List[Set[TabMeta]]
 
   /**
     * Persist the list of tab groups to a text file

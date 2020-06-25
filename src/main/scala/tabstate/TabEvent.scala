@@ -10,6 +10,13 @@ import util._
 
 sealed class TabEvent
 
+case object PauseEvent extends TabEvent
+case object ResumeEvent extends TabEvent
+
+case object RefreshGroupsEvent extends TabEvent
+case class DiscardGroupEvent() extends TabEvent
+case class AcceptGroupEvent() extends TabEvent
+
 case class TabInitializationEvent(
     currentTabs: List[Tab]
 ) extends TabEvent
@@ -65,9 +72,6 @@ case class TabUpdateEvent(
     sessionId: Option[Int],
     successorTabId: Option[Int]
 ) extends TabEvent
-
-case object PauseEvent extends TabEvent
-case object ResumeEvent extends TabEvent
 
 object TabUpdateEvent {
   implicit val tabUpdateEventDecoder: Decoder[TabUpdateEvent] =
@@ -127,6 +131,8 @@ object TabEvent extends LazyLogging {
       case "PAUSE" => Some(PauseEvent)
 
       case "RESUME" => Some(ResumeEvent)
+
+      case "REFRESH_GROUPS" => Some(RefreshGroupsEvent)
 
       case _ => {
         logger.warn(s"> Unknown tab event received: $action ($message)")

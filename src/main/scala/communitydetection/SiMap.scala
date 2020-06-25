@@ -10,6 +10,8 @@ import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
+import network.core.Statistics
+import network.core.ConnectedComponents
 
 case class SiMapParams(
     /**
@@ -29,7 +31,27 @@ case class SiMapParams(
       * Accuracy of the best solution, e.g. when accuracy is 0.1,
       * the solution is refined util this close to the best resolution found so far
       */
-    resAcc: Float = 0.002.toFloat
+    resAcc: Float = 0.002.toFloat,
+    /**
+      * Process only the largest connected component
+      */
+    largestCC: Boolean = true,
+    /**
+      * Ignore edges with a lower weight
+      */
+    minWeight: Int = 2,
+    /**
+      * Remove groups with less nodes
+      */
+    minGroupSize: Int = 3,
+    /**
+      * Remove groups with more nodes
+      */
+    maxGroupSize: Int = 10,
+    /**
+      * The maximum number of groups to return
+      */
+    maxGroups: Int = 20
 ) extends Parameters {
 
   def asCPMapParameters =
@@ -38,6 +60,7 @@ case class SiMapParams(
 }
 
 object SiMap
+// extends App
     extends LazyLogging
     with CommunityDetector[(Map[TabMeta, Int], ListMatrix), SiMapParams] {
 
@@ -46,7 +69,8 @@ object SiMap
   val tabGroups = apply(testGraph, SiMapParams())
 
   override def prepareGraph(
-      graph: TabSwitchActor.TabSwitchGraph
+      graph: TabSwitchActor.TabSwitchGraph,
+      params: SiMapParams
   ): (Map[TabMeta, Int], ListMatrix) = {
 
     val index = mutable.Map[TabMeta, Int]()
@@ -55,23 +79,23 @@ object SiMap
       .edgeSet()
       .asScala
       .toArray
-      .map((edge) => {
+      .flatMap((edge) => {
         val source = graph.getEdgeSource(edge)
         val target = graph.getEdgeTarget(edge)
         val weight = graph.getEdgeWeight(edge).toFloat
-        (
-          index.getOrElseUpdate(source, index.size + 1),
-          index.getOrElseUpdate(target, index.size + 1),
-          weight
-        )
+        if (weight >= params.minWeight) {
+          // println(source, target, weight)
+          List(
+            (
+              index.getOrElseUpdate(source, index.size),
+              index.getOrElseUpdate(target, index.size),
+              weight
+            )
+          )
+        } else {
+          List()
+        }
       })
-
-    // Persistence.persistString(
-    //   "raw_input.txt",
-    //   tuples
-    //     .map(tuple => s"${tuple._1}\t${tuple._2}\t${tuple._3}")
-    //     .mkString("\n")
-    // )
 
     val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 
@@ -91,11 +115,41 @@ object SiMap
     val index = matrixAndIndex._1.map(_.swap)
 
     // preprocess the input matrix and use it to construct a graph
-    val graph = new Graph(matrixAndIndex._2.symmetrize().sort().normalize())
+    val preparedMatrix = matrixAndIndex._2.symmetrize().sort()
+    // println(preparedMatrix)
+
+    val graph = new Graph(preparedMatrix)
+
+    if (params.largestCC) {
+      val connectedComponents = new ConnectedComponents(graph).find()
+      val largestComponent = connectedComponents.getLargestComponent()
+      // println(largestComponent.sum)
+    }
 
     // compute the partitioning
     // returns a 1-D array with index=nodeId and value=partitionId
     val detectedPartition = CPMap.detect(graph, params.asCPMapParameters)
+
+    // compute the quality of the generated partitioning
+    val quality =
+      CPMap.evaluate(graph, detectedPartition, params.asCPMapParameters)
+    logger.info(s"overall quality $quality")
+    // println(quality)
+
+    // decompose the graph into groups
+    val groups = graph.decompose(detectedPartition)
+    // groups.foreach(println)
+
+    // fold the graph
+    val folded = graph.fold(detectedPartition)
+    // println(folded)
+
+    // compute partition statistics
+    val partitionStats = Statistics.partition(detectedPartition, preparedMatrix)
+    // println(partitionStats)
+
+    val arrayStats = Statistics.array(detectedPartition)
+    // println(arrayStats)
 
     // construct a mapping from tab hashes to the assigned partition
     val groupAssignmentMapping = detectedPartition.zipWithIndex
@@ -112,7 +166,15 @@ object SiMap
   }
 
   override def processGroups(
-      tabGroups: List[Set[TabMeta]]
-  ): List[Set[TabMeta]] = tabGroups
+      tabGroups: List[Set[TabMeta]],
+      params: SiMapParams
+  ): List[Set[TabMeta]] = {
+    val filteredGroups = tabGroups.filter(group =>
+      params.maxGroupSize >= group.size
+        && group.size >= params.minGroupSize
+    )
+    // println(filteredGroups)
+    filteredGroups.take(params.maxGroups)
+  }
 
 }

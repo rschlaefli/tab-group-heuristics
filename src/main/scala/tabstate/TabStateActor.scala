@@ -24,6 +24,7 @@ import CurrentTabsActor.InitializeTabs
 import CurrentTabsActor.UpdateTab
 import CurrentTabsActor.ActivateTab
 import CurrentTabsActor.RemoveTab
+import heuristics.HeuristicsActor.ComputeHeuristics
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
@@ -52,13 +53,18 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
   override def receive: Actor.Receive = {
 
+    case RefreshGroupsEvent => {
+      log.info("Refreshing groups")
+      heuristics ! ComputeHeuristics
+    }
+
     case PauseEvent => {
-      log.info("Pausing...")
+      log.info("Pausing processing")
       context.parent ! StopProcessing
     }
 
     case ResumeEvent => {
-      log.info("Resuming...")
+      log.info("Resuming processing")
       context.parent ! StartProcessing
     }
 

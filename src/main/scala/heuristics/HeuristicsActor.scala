@@ -71,7 +71,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
               tabGroupIndex = groupIndex
               tabGroups = clustersWithTitles
 
-              val tabGroupEntities = tabGroups.map(TabGroup.apply).take(5)
+              val tabGroupEntities = tabGroups.map(TabGroup.apply)
 
               NativeMessaging.writeNativeMessage(
                 HeuristicsAction.UPDATE_GROUPS(tabGroupEntities.asJson)

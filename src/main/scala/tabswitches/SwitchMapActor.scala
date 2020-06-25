@@ -35,7 +35,8 @@ class SwitchMapActor
     restoreTabSwitchMap foreach {
       case Right(restoredMap) =>
         tabSwitches = restoredMap
-        tabSwitches.mapValuesInPlace((_, meta) => TabSwitchMeta(meta))
+        tabSwitches =
+          tabSwitches.mapValuesInPlace((_, meta) => TabSwitchMeta.clone(meta))
       case _ =>
     }
 

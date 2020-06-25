@@ -40,6 +40,8 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-slf4j"
   ).map(_ % akkaVersion)
 
+  val simmetrics = "com.github.mpkorstanje" % "simmetrics-core" % "4.1.1"
+
   val runtimeDependencies =
     Seq(
       scalaz,
@@ -49,7 +51,8 @@ object Dependencies {
       janino,
       smileCore,
       smileScala,
-      nscalaTime
+      nscalaTime,
+      simmetrics
     ) ++ circe ++ jgraph ++ akka
   val testingDependencies = Seq(scalatest % "test")
 }

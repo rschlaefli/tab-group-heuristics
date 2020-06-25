@@ -3,27 +3,41 @@ package groupnaming
 import com.typesafe.scalalogging.LazyLogging
 import smile.nlp._
 import tabswitches.TabMeta
+import smile.nlp.stemmer.Stemmer
 
-object BasicKeywords extends LazyLogging with NameGenerator {
+case class KeywordParams(
+    tokenizer: String = "comprehensive",
+    bagging: String = "none",
+    topK: Int = 4,
+    stemmer: Option[Stemmer] = None
+) extends Parameters
 
-  def apply(tabSet: Set[TabMeta]): (String, Set[TabMeta]) = {
+object BasicKeywords extends LazyLogging with NameGenerator[KeywordParams] {
+
+  def apply(tabSet: Set[TabMeta]): (String, Set[TabMeta]) =
+    apply(tabSet, KeywordParams())
+
+  def apply(
+      tabSet: Set[TabMeta],
+      params: KeywordParams
+  ): (String, Set[TabMeta]) = {
 
     val allTitles = tabSet
       .map(deriveTabKeywordString)
       .mkString(" ")
 
-    val keywords = extractKeywordsFromString(allTitles)
+    val keywords = extractKeywordsFromString(allTitles, params)
 
     (keywords.mkString(" "), tabSet)
   }
 
-  def extractKeywordsFromString(input: String): List[String] = {
-    val normalizedInput = input.normalize
-    val tokenizedInput = normalizedInput.words("google")
-    val frequencyMap = tokenizedInput.mkString(" ").bag("none")
+  def extractKeywordsFromString(
+      input: String,
+      params: KeywordParams
+  ): List[String] = {
+    val frequencyMap = input.bag(params.bagging, params.stemmer)
     val sortedFrequencyMap = frequencyMap.toSeq.sortBy(_._2).reverse
-
-    sortedFrequencyMap.take(4).map(_._1).toList
+    sortedFrequencyMap.take(params.topK).map(_._1).toList
   }
 
   def deriveTabKeywordString(tab: TabMeta) = {

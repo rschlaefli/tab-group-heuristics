@@ -2,6 +2,8 @@ package groupnaming
 
 import tabswitches.TabMeta
 
-trait NameGenerator {
-  def apply(tabs: Set[TabMeta]): (String, Set[TabMeta])
+trait Parameters
+
+trait NameGenerator[T] {
+  def apply(tabs: Set[TabMeta], params: T): (String, Set[TabMeta])
 }

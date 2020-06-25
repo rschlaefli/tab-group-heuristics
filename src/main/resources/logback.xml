@@ -134,7 +134,7 @@
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="heuristics.HeuristicsActor" level="info" />
+  <logger name="heuristics.HeuristicsActor" level="debug" />
 
   <logger name="messaging.NativeMessaging" level="info" />
 
@@ -154,5 +154,7 @@
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
   <logger name="tabswitches.Watset" level="info" />
+
+  <logger name="util.Utils" level="info" />
 
 </configuration>

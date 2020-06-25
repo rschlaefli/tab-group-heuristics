@@ -18,11 +18,8 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
-import heuristics.HeuristicsActor
 import messaging.NativeMessaging
-import statistics.StatisticsActor
 import tabstate.TabEvent
-import tabstate.TabStateActor
 
 object Main extends App with LazyLogging {
 
@@ -87,15 +84,13 @@ object Main extends App with LazyLogging {
     .filter(_.isDefined)
     .map(_.get)
 
-  // setup actors
-  val tabState = system.actorOf(Props[TabStateActor], "TabState")
-  val heuristics = system.actorOf(Props[HeuristicsActor], "Heuristics")
-  val statistics = system.actorOf(Props[StatisticsActor], "Statistics")
+  // initialize the main actor for the heuristics engine
+  val main = system.actorOf(Props[MainActor], "Main")
 
   // create a stream sink for the message processing actor
   val sink = Sink
     .actorRefWithAck[TabEvent](
-      tabState,
+      main,
       onInitMessage = StreamInit,
       onCompleteMessage = StreamComplete,
       ackMessage = StreamAck,
@@ -119,7 +114,5 @@ object Main extends App with LazyLogging {
     NativeMessaging.writeNativeMessage(
       HeuristicsAction.HEURISTICS_STATUS("STOPPED")
     )
-
-    // TODO: trigger persistence
   }
 }

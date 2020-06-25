@@ -11,6 +11,7 @@ import akka.actor.Props
 import akka.actor.Timers
 import akka.pattern.ask
 import akka.util.Timeout
+import groupnaming.BasicKeywords
 import heuristics.TabGroup
 import io.circe.syntax._
 import messaging.NativeMessaging
@@ -34,10 +35,12 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
   var curatedGroupIndex = Map[Int, Int]()
 
   override def preStart(): Unit = {
+    log.info("Starting to compute heuristics")
+
     timers.startTimerAtFixedRate(
       "heuristics",
       ComputeHeuristics,
-      5 minutes
+      1 minutes
     )
   }
 
@@ -45,8 +48,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
     case UpdateCuratedGroups(tabGroups) => {
       curatedGroups = tabGroups.map(_.asTuple)
-      val (curatedIndex, _) =
-        Utils.processClusters(curatedGroups.map(_._2))
+      val (curatedIndex, _) = Utils.buildClusterIndex(curatedGroups.map(_._2))
       log.info(s"Received tab groups $tabGroups with index $curatedIndex")
       curatedGroupIndex = curatedIndex
     }
@@ -60,12 +62,19 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
         .mapTo[TabSwitchHeuristicsResults]
         .foreach {
           case TabSwitchHeuristicsResults(groupIndex, newTabGroups) => {
-            tabGroupIndex = groupIndex
-            tabGroups = newTabGroups
 
             if (tabGroups.size > 0) {
               log.debug(s"Updating tab clusters in the webextension")
+
+              val clustersWithTitles = newTabGroups.map(BasicKeywords.apply)
+
+              tabGroupIndex = groupIndex
+              tabGroups = clustersWithTitles
+
+              log.info(clustersWithTitles.toString())
+
               val tabGroupEntities = tabGroups.map(TabGroup.apply)
+
               NativeMessaging.writeNativeMessage(
                 HeuristicsAction.UPDATE_GROUPS(tabGroupEntities.asJson)
               )
@@ -94,6 +103,6 @@ object HeuristicsActor {
   case class UpdateCuratedGroups(tabGroups: List[TabGroup])
   case class TabSwitchHeuristicsResults(
       groupIndex: Map[Int, Int],
-      tabGroups: List[(String, Set[TabMeta])]
+      tabGroups: List[Set[TabMeta]]
   )
 }

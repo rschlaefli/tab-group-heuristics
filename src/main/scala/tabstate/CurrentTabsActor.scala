@@ -42,7 +42,7 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
         activeWindow = windowId
 
         // let the sender know that we have completed tab activation
-        context.actorSelection("/user/TabState") ! TabActivated(
+        context.actorSelection("/user/Main/TabState") ! TabActivated(
           previousTab,
           currentTabs(tabId)
         )

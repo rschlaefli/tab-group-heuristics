@@ -13,10 +13,8 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
 import heuristics.HeuristicsActor.UpdateCuratedGroups
-import main.Main.StreamAck
-import main.Main.StreamComplete
-import main.Main.StreamFail
-import main.Main.StreamInit
+import main.MainActor.StartProcessing
+import main.MainActor.StopProcessing
 import messaging._
 import org.slf4j.MarkerFactory
 import tabstate.Tab
@@ -37,8 +35,8 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
   implicit val executionContext = context.dispatcher
 
   val currentTabs = context.actorOf(Props[CurrentTabsActor], "CurrentTabs")
-  val heuristics = context.actorSelection("/user/Heuristics")
-  val tabSwitches = context.actorSelection("/user/Heuristics/TabSwitches")
+  val heuristics = context.actorSelection("/user/Main/Heuristics")
+  val tabSwitches = context.actorSelection("/user/Main/Heuristics/TabSwitches")
 
   override def preStart(): Unit = {
     log.info("Starting to process tab events")
@@ -53,16 +51,16 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
   }
 
   override def receive: Actor.Receive = {
-    case StreamInit =>
-      log.info("Stream initialized")
-      sender() ! StreamAck
 
-    case StreamComplete =>
-      log.info("Stream complete")
-      context.stop(self)
+    case PauseEvent => {
+      log.info("Pausing...")
+      context.parent ! StopProcessing
+    }
 
-    case StreamFail(ex) =>
-      log.warning(s"Stream failed with $ex")
+    case ResumeEvent => {
+      log.info("Resuming...")
+      context.parent ! StartProcessing
+    }
 
     case TabInitializationEvent(initialTabs) => {
       currentTabs ! InitializeTabs(initialTabs)
@@ -72,8 +70,6 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
           s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
         logger.info(logToCsv, message)
       })
-
-      sender() ! StreamAck
     }
 
     case updateEvent: TabUpdateEvent => {
@@ -96,32 +92,24 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       val message =
         s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
       logger.info(logToCsv, message)
-
-      sender() ! StreamAck
     }
 
     case activateEvent: TabActivateEvent => {
       val TabActivateEvent(id, windowId, previousTabId) = activateEvent
 
       currentTabs ! ActivateTab(previousTabId, id, windowId)
-
-      sender() ! StreamAck
     }
 
     case TabRemoveEvent(id, windowId) => {
       logger.info(logToCsv, s"REMOVE;${id};;;")
 
       currentTabs ! RemoveTab(id)
-
-      sender() ! StreamAck
     }
 
     case TabGroupUpdateEvent(tabGroups) => {
       logger.info(logToCsv, s"UPDATE_GROUPS;;;;")
 
       heuristics ! UpdateCuratedGroups(tabGroups)
-
-      sender() ! StreamAck
     }
 
     case TabActivated(prevTab, tab) => {
@@ -134,8 +122,6 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
     case message =>
       log.info(s"Received unknown TabEvent $message")
-
-      sender() ! StreamAck
   }
 
 }

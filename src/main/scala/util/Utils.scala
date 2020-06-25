@@ -17,7 +17,7 @@ object Utils extends LazyLogging {
     case Right(value) => Some(value)
   }
 
-  def processClusters(
+  def buildClusterIndex(
       clusters: List[Set[TabMeta]]
   ): (Map[Int, Int], List[Set[TabMeta]]) = {
     // preapre an index for which tab is stored in which cluster
@@ -29,8 +29,6 @@ object Utils extends LazyLogging {
         clusterMembers.foreach(tab => {
           clusterIndex(tab.hashCode()) = index
         })
-
-        logger.debug(s"Cluster $index contains ${clusterMembers.toString()}")
 
         List(clusterMembers)
       }

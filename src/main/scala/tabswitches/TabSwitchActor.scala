@@ -10,10 +10,10 @@ import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import communitydetection._
 import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
-import heuristics.KeywordExtraction
+import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
-import org.jgrapht.graph.SimpleWeightedGraph
 import org.slf4j.MarkerFactory
 import tabstate.Tab
 import util.Utils
@@ -66,23 +66,25 @@ class TabSwitchActor extends Actor with ActorLogging {
         .mapTo[CurrentSwitchGraph]
         .map {
           case CurrentSwitchGraph(graph) => {
-            log.debug(s"Computing tab clusters")
+            Watset(graph, WatsetParams(), "clusters_watset.txt")
 
-            val computedClusters = Watset(graph)
-            val automatedClusters = Utils.processClusters(computedClusters)
+            val simapClusters =
+              SiMap(graph, SiMapParams(), "clusters_simap.txt")
 
-            // generating cluster titles
-            log.debug(s"> Generating tab cluster titles")
+            SiMap(
+              graph,
+              SiMapParams(
+                tau = 0.5.toFloat,
+                resStart = 0.2.toFloat,
+                resEnd = 0.7.toFloat
+              ),
+              "clusters_simap_tuned.txt"
+            )
 
-            val clustersWithTitles = automatedClusters._2.map(tabCluster => {
-              val keywords = KeywordExtraction(tabCluster)
-              (keywords.mkString(" "), tabCluster)
-            })
-            clustersWithTitles.map(_._1)
+            val (clusterIndex, clusters) =
+              Utils.buildClusterIndex(simapClusters)
 
-            log.info(clustersWithTitles.toString())
-
-            TabSwitchHeuristicsResults(automatedClusters._1, clustersWithTitles)
+            TabSwitchHeuristicsResults(clusterIndex, clusters)
           }
         }
         .pipeTo(sender())
@@ -93,10 +95,11 @@ class TabSwitchActor extends Actor with ActorLogging {
 }
 
 object TabSwitchActor extends LazyLogging {
+
+  type TabSwitchGraph = Graph[TabMeta, DefaultWeightedEdge]
+
   case object ComputeGroups
 
   case class TabSwitch(tab1: Option[Tab], tab2: Tab)
-  case class CurrentSwitchGraph(
-      graph: SimpleWeightedGraph[TabMeta, DefaultWeightedEdge]
-  )
+  case class CurrentSwitchGraph(graph: TabSwitchGraph)
 }

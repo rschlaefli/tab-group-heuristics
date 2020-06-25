@@ -6,6 +6,7 @@ import scala.language.postfixOps
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
+import akka.actor.Timers
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.parser._
 import io.circe.syntax._
@@ -16,27 +17,32 @@ import tabstate.Tab
 
 import SwitchGraphActor.CurrentSwitchMap
 
-class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
+class SwitchMapActor
+    extends Actor
+    with ActorLogging
+    with LazyLogging
+    with Timers {
 
   import SwitchMapActor._
 
-  val statistics = context.actorSelection("/user/Statistics")
+  val statistics = context.actorSelection("/user/Main/Statistics")
 
   val logToCsv = MarkerFactory.getMarker("CSV")
 
   var tabSwitches = mutable.Map[String, TabSwitchMeta]()
 
   override def preStart(): Unit = {
-    Persistence
-      .restoreJson("tab_switches.json")
-      .map(decode[mutable.Map[String, TabSwitchMeta]])
-      .foreach {
-        case Right(restoredMap) => tabSwitches = restoredMap
-      }
+    restoreTabSwitchMap foreach {
+      case Right(restoredMap) => tabSwitches = restoredMap
+      case _                  =>
+    }
 
-    context.system.scheduler.scheduleAtFixedRate(30 seconds, 30 seconds) { () =>
-      Persistence.persistJson("tab_switches.json", tabSwitches.asJson)
-    }(context.dispatcher)
+    timers.startTimerWithFixedDelay("persist", PersistSwitchMap, 60 seconds)
+  }
+
+  override def postStop(): Unit = {
+    log.info("Persisting tab switch map due to processing stop")
+    self ! PersistSwitchMap
   }
 
   override def receive: Actor.Receive = {
@@ -59,16 +65,26 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
       statistics ! TabSwitch(prevTab, newTab)
     }
 
-    case QueryTabSwitchMap => {
+    case QueryTabSwitchMap =>
       sender() ! CurrentSwitchMap(tabSwitches.toMap)
-    }
 
-    case message => log.debug("Received message $message")
+    case PersistSwitchMap =>
+      Persistence.persistJson("tab_switches.json", tabSwitches.asJson)
+
+    case message => log.debug(s"Received message $message")
   }
 }
 
 object SwitchMapActor {
-  case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
 
   case object QueryTabSwitchMap
+  case object PersistSwitchMap
+
+  case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
+
+  def restoreTabSwitchMap = {
+    Persistence
+      .restoreJson("tab_switches.json")
+      .map(decode[mutable.Map[String, TabSwitchMeta]])
+  }
 }

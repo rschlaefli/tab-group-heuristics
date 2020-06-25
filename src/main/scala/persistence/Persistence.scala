@@ -9,13 +9,13 @@ import io.circe.Json
 
 object Persistence extends LazyLogging {
   def persistJson(fileName: String, jsonData: => Json): Try[Unit] = Try {
-    logger.info(s"> Persisted $fileName")
+    logger.debug(s"> Persisted $fileName")
     persistString(fileName, jsonData.toString())
   }
 
   def restoreJson(fileName: String): Try[String] = Try {
     val jsonString = scala.io.Source.fromFile(fileName).getLines.mkString
-    logger.info(s"> Restored $fileName")
+    logger.debug(s"> Restored $fileName")
     jsonString
   }
 

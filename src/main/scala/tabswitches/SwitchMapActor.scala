@@ -15,12 +15,17 @@ import statistics.StatisticsActor.TabSwitch
 import tabstate.Tab
 
 import SwitchGraphActor.CurrentSwitchMap
+import akka.actor.Timers
 
-class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
+class SwitchMapActor
+    extends Actor
+    with ActorLogging
+    with LazyLogging
+    with Timers {
 
   import SwitchMapActor._
 
-  val statistics = context.actorSelection("/user/Statistics")
+  val statistics = context.actorSelection("/user/Main/Statistics")
 
   val logToCsv = MarkerFactory.getMarker("CSV")
 
@@ -32,9 +37,12 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
       case _                  =>
     }
 
-    context.system.scheduler.scheduleAtFixedRate(30 seconds, 30 seconds) { () =>
-      Persistence.persistJson("tab_switches.json", tabSwitches.asJson)
-    }(context.dispatcher)
+    timers.startTimerWithFixedDelay("persist", PersistSwitchMap, 60 seconds)
+  }
+
+  override def postStop(): Unit = {
+    log.info("Persisting tab switch map due to processing stop")
+    self ! PersistSwitchMap
   }
 
   override def receive: Actor.Receive = {
@@ -57,9 +65,11 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
       statistics ! TabSwitch(prevTab, newTab)
     }
 
-    case QueryTabSwitchMap => {
+    case QueryTabSwitchMap =>
       sender() ! CurrentSwitchMap(tabSwitches.toMap)
-    }
+
+    case PersistSwitchMap =>
+      Persistence.persistJson("tab_switches.json", tabSwitches.asJson)
 
     case message => log.debug(s"Received message $message")
   }
@@ -67,9 +77,10 @@ class SwitchMapActor extends Actor with ActorLogging with LazyLogging {
 
 object SwitchMapActor {
 
-  case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
-
   case object QueryTabSwitchMap
+  case object PersistSwitchMap
+
+  case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
 
   def restoreTabSwitchMap = {
     Persistence

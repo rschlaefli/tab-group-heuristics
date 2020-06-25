@@ -33,8 +33,9 @@ class StatisticsActor
 
   implicit val executionContext = context.dispatcher
 
-  val heuristicsActor = context.actorSelection("/user/Heuristics")
-  val currentTabsActor = context.actorSelection("/user/TabState/CurrentTabs")
+  val heuristicsActor = context.actorSelection("/user/Main/Heuristics")
+  val currentTabsActor =
+    context.actorSelection("/user/Main/TabState/CurrentTabs")
 
   val logToCsv = MarkerFactory.getMarker("CSV")
 

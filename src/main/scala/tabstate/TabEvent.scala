@@ -66,6 +66,9 @@ case class TabUpdateEvent(
     successorTabId: Option[Int]
 ) extends TabEvent
 
+case object PauseEvent extends TabEvent
+case object ResumeEvent extends TabEvent
+
 object TabUpdateEvent {
   implicit val tabUpdateEventDecoder: Decoder[TabUpdateEvent] =
     deriveDecoder
@@ -96,7 +99,7 @@ object TabEvent extends LazyLogging {
     val action: String = cursor.get[String]("action").getOrElse("NULL")
 
     // depending on the action type, decode into the appropriate TabEvent
-    val tabEvent = action match {
+    action match {
       case "CREATE" | "UPDATE" => {
         Utils.extractDecoderResult(cursor.get[TabUpdateEvent]("payload"))
       }
@@ -121,15 +124,9 @@ object TabEvent extends LazyLogging {
         )
       }
 
-      case "PAUSE" => {
-        logger.warn("> PAUSING")
-        None
-      }
+      case "PAUSE" => Some(PauseEvent)
 
-      case "RESUME" => {
-        logger.warn("> RESUMING")
-        None
-      }
+      case "RESUME" => Some(ResumeEvent)
 
       case _ => {
         logger.warn(s"> Unknown tab event received: $action ($message)")
@@ -142,6 +139,5 @@ object TabEvent extends LazyLogging {
       // TODO: case GROUP_REMOVE
     }
 
-    tabEvent
   }
 }

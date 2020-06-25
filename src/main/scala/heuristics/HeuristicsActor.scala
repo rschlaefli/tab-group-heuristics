@@ -35,6 +35,8 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
   var curatedGroupIndex = Map[Int, Int]()
 
   override def preStart(): Unit = {
+    log.info("Starting to compute heuristics")
+
     timers.startTimerAtFixedRate(
       "heuristics",
       ComputeHeuristics,

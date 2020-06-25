@@ -25,7 +25,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
     case ComputeGraph => {
       implicit val timeout = Timeout(2 seconds)
       val switchMap = context.actorSelection(
-        "/user/Heuristics/TabSwitches/TabSwitchMap"
+        "/user/Main/Heuristics/TabSwitches/TabSwitchMap"
       )
       (switchMap ? QueryTabSwitchMap)
         .mapTo[CurrentSwitchMap]
@@ -43,7 +43,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
             )
 
             context.actorSelection(
-              "/user/Heuristics/TabSwitches/TabSwitchGraph"
+              "/user/Main/Heuristics/TabSwitches/TabSwitchGraph"
             ) ! ExportGraph(tabSwitchGraph)
 
             CurrentSwitchGraph(tabSwitchGraph)

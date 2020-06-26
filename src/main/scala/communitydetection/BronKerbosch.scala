@@ -24,7 +24,9 @@ object BronKerbosch
       graph: TabSwitchActor.TabSwitchGraph,
       params: BronKerboschParams
   ): List[(Set[TabMeta], CliqueStatistics)] = {
+
     val cliques = new BronKerboschCliqueFinder(graph)
+
     cliques.asScala
       .map(_.asScala.toSet)
       .toList

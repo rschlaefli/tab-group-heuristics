@@ -81,7 +81,8 @@ class TabSwitchActor extends Actor with ActorLogging {
               "clusters_simap_tuned.txt"
             )
 
-            val (clusterIndex, clusters) = buildClusterIndex(simapClusters)
+            val (clusterIndex, clusters) =
+              buildClusterIndexWithStats(simapClusters)
 
             TabSwitchHeuristicsResults(clusterIndex, clusters)
           }
@@ -102,23 +103,30 @@ object TabSwitchActor extends LazyLogging {
   case class TabSwitch(tab1: Option[Tab], tab2: Tab)
   case class CurrentSwitchGraph(graph: TabSwitchGraph)
 
+  def buildClusterIndexWithStats(
+      clusters: List[(Set[TabMeta], CliqueStatistics)]
+  ): (Map[Int, Int], List[Set[TabMeta]]) = {
+    buildClusterIndex(clusters.map(_._1))
+  }
+
   def buildClusterIndex(
       clusters: List[Set[TabMeta]]
   ): (Map[Int, Int], List[Set[TabMeta]]) = {
-    // preapre an index for which tab is stored in which cluster
+    // prepare an index for which tab is stored in which cluster
     val clusterIndex = mutable.Map[Int, Int]()
 
     // prepare a return container for the clusters
-    val clusterList = clusters.zipWithIndex.flatMap {
-      case (clusterMembers, index) if clusterMembers.size > 1 => {
-        clusterMembers.foreach(tab => {
-          clusterIndex(tab.hashCode()) = index
-        })
+    val clusterList = clusters.zipWithIndex
+      .flatMap {
+        case (clusterMembers, index) if clusterMembers.size > 1 => {
+          clusterMembers.foreach(tab => {
+            clusterIndex(tab.hashCode()) = index
+          })
 
-        List(clusterMembers)
+          List(clusterMembers)
+        }
+        case _ => List()
       }
-      case _ => List()
-    }
 
     logger.debug(
       s"Computed overall index $clusterIndex for ${clusterList.length} clusters"

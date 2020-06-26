@@ -20,8 +20,7 @@ object Watset
   def prepareGraph(
       graph: TabSwitchGraph,
       params: WatsetParams
-  ): TabSwitchGraph =
-    graph
+  ): TabSwitchGraph = graph
 
   def computeGroups(
       graph: TabSwitchGraph,

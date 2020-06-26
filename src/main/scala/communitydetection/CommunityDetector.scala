@@ -34,7 +34,10 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters] {
 
   import tabswitches.TabSwitchActor.TabSwitchGraph
 
-  def apply(graph: TabSwitchGraph, params: T): List[Set[TabMeta]] = {
+  def apply(
+      graph: TabSwitchGraph,
+      params: T
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     if (graph == null) return List()
 
@@ -50,7 +53,7 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters] {
       graph: TabSwitchGraph,
       params: T,
       persistTo: String
-  ): List[Set[TabMeta]] = {
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
     val tabGroups = apply(graph, params)
 
     persist(persistTo, tabGroups)
@@ -102,13 +105,12 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters] {
   def processGroups(
       tabGroups: List[(Set[TabMeta], CliqueStatistics)],
       params: T
-  ): List[Set[TabMeta]] = {
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     val filteredGroups = tabGroups
-      .map(_._1)
       .filter(group =>
-        params.maxGroupSize >= group.size
-          && group.size >= params.minGroupSize
+        params.maxGroupSize >= group._1.size
+          && group._1.size >= params.minGroupSize
       )
 
     val topK = filteredGroups.take(params.maxGroups)
@@ -126,7 +128,10 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters] {
     * @param tabGroups The list of tab groups
     * @return
     */
-  def persist(fileName: String, tabGroups: List[Set[TabMeta]]) = {
+  def persist(
+      fileName: String,
+      tabGroups: List[(Set[TabMeta], CliqueStatistics)]
+  ) = {
     Persistence.persistString(
       fileName,
       tabGroups.map(_.toString()).mkString("\n")

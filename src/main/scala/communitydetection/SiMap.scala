@@ -7,11 +7,13 @@ import com.typesafe.scalalogging.LazyLogging
 import network.core.ConnectedComponents
 import network.core.Graph
 import network.core.ListMatrix
-import network.core.Statistics
 import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
+import network.core.Statistics
+import network.extendedmapequation.CPMapStatistics
+import network.extendedmapequation.Stationary
 
 case class SiMapParams(
     /**
@@ -35,7 +37,7 @@ case class SiMapParams(
     /**
       * Process only the largest connected component
       */
-    largestCC: Boolean = true
+    largestCC: Boolean = false
 ) extends CommunityDetectorParameters {
 
   def asCPMapParameters =
@@ -68,7 +70,6 @@ object SiMap
         val target = graph.getEdgeTarget(edge)
         val weight = graph.getEdgeWeight(edge).toFloat
         if (weight >= params.minWeight) {
-          // println(source, target, weight)
           List(
             (
               index.getOrElseUpdate(source, index.size),
@@ -83,9 +84,27 @@ object SiMap
 
     val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 
+    var listMatrix = new ListMatrix()
+      .init(rows, cols, values, true)
+      .symmetrize()
+      .sort()
+
+    if (params.largestCC) {
+      // FIXME: normalization issues
+      val largestConnectedComponent =
+        new ConnectedComponents(new Graph(listMatrix))
+          .find()
+          .getLargestComponent()
+
+      val Array(_, largestComponent) = listMatrix
+        .decompose(largestConnectedComponent)
+
+      listMatrix = largestComponent.normalize()
+    }
+
     (
       index.toMap,
-      new ListMatrix().init(rows, cols, values, true)
+      listMatrix
     )
   }
 
@@ -98,45 +117,30 @@ object SiMap
     // this allows us to lookup tab hashes by the node id
     val index = matrixAndIndex._1.map(_.swap)
 
-    // preprocess the input matrix and use it to construct a graph
-    val preparedMatrix = matrixAndIndex._2.symmetrize().sort()
-    // println(preparedMatrix)
-
-    val graph = new Graph(preparedMatrix)
-
-    if (params.largestCC) {
-      val connectedComponents = new ConnectedComponents(graph).find()
-      connectedComponents.getLargestComponent()
-      // println(largestComponent.sum)
-    }
+    // construct a graph
+    val graph = new Graph(matrixAndIndex._2)
 
     // compute the partitioning
     // returns a 1-D array with index=nodeId and value=partitionId
     val detectedPartition = CPMap.detect(graph, params.asCPMapParameters)
 
     // compute the quality of the generated partitioning
-    val quality =
-      CPMap.evaluate(graph, detectedPartition, params.asCPMapParameters)
+    val quality = CPMap
+      .evaluate(graph, detectedPartition, params.asCPMapParameters)
     logger.info(s"overall quality $quality")
-    // println(quality)
 
     // decompose the graph into groups
-    val groups = graph.decompose(detectedPartition)
-    groups.foreach(println)
-    println(groups.length)
-
-    // fold the graph
-    // graph.fold(detectedPartition)
-    // println(folded)
+    // val groups = graph.decompose(detectedPartition)
 
     // compute partition statistics
-    // Statistics.partition(detectedPartition, preparedMatrix)
-    // println(partitionStats)
-
-    // Statistics.array(detectedPartition)
-    // println(arrayStats)
+    // val partitionStats = Statistics.partition(detectedPartition, graph)
 
     val eval = CPMap.reWeight(graph, detectedPartition)
+    println(eval.transition)
+    // val evalWithProbabilities = new Stationary(1)
+    //   .visitProbabilities(eval, detectedPartition, params.tau)
+    // println(evalWithProbabilities.inWeight.toList)
+
     val nodeStats = List(
       eval.inWeight,
       eval.outWeight
@@ -144,25 +148,25 @@ object SiMap
       case List(inWeight, outWeight) => NodeStatistics(inWeight, outWeight)
     }
 
-    println(nodeStats)
-    println(nodeStats.length)
-
     // construct a mapping from tab hashes to the assigned partition
     val groupAssignmentMapping = detectedPartition.zipWithIndex
-      .map(tuple => (index.get(tuple._2), tuple._1))
-      .flatMap {
-        case (Some(tab), partition) => Seq((tab, partition))
-        case (None, _)              => Seq()
+      .zip(nodeStats)
+      .map {
+        case (tuple: (Int, Int), stats: NodeStatistics) =>
+          (index.get(tuple._2), tuple._1, stats)
       }
-      .groupMap(_._2)(_._1)
+      .flatMap {
+        case (Some(tab), partition, stats) => Seq((tab, partition, stats))
+        case (None, _, _)                  => Seq()
+      }
+      .groupMap(_._2)(tuple => (tuple._1, tuple._3))
 
-    println(groupAssignmentMapping)
-
-    // transform the arrays
     groupAssignmentMapping.values
       .map(_.toSet)
       .toList
-      .map((_, CliqueStatistics()))
+      .flatMap(group => {
+        List((group.map(_._1), CliqueStatistics(group.map(_._2))))
+      })
 
   }
 

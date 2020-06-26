@@ -19,6 +19,7 @@ object Watset
 
   def prepareGraph(
       graph: TabSwitchGraph,
+      pageRank: Map[TabMeta, Double],
       params: WatsetParams
   ): TabSwitchGraph = graph
 

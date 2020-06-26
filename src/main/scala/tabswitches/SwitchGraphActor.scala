@@ -13,14 +13,23 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
+import org.joda.time.DateTime
 import persistence.Persistence
 
 import SwitchMapActor.QueryTabSwitchMap
 import TabSwitchActor.CurrentSwitchGraph
 
 case class GraphGenerationParams(
+    /**
+      * Ignore edges with a lower weight
+      */
+    minWeight: Double = 2,
+    /**
+      * Forgetting factor
+      */
+    expireAfter: Duration = 7 days,
     sameOriginFactor: Double = 0,
-    urlSimilarityFactor: Double = 0.5
+    urlSimilarityFactor: Double = 0.4
 )
 
 class SwitchGraphActor extends Actor with ActorLogging {
@@ -92,8 +101,13 @@ object SwitchGraphActor extends LazyLogging {
         classOf[DefaultWeightedEdge]
       )
 
+    val expirationFrontier =
+      DateTime.now().getMillis() - params.expireAfter.toMillis
+
     tabSwitchMap.values
-      .filter(switch => switch.tab1 != switch.tab2)
+      .filter(_.lastUsed >= expirationFrontier)
+      .filter(_.count >= params.minWeight)
+      .filter(switch => switch.tab1.url != switch.tab2.url)
       .map((switchData: TabSwitchMeta) =>
         Try {
           tabGraph.addVertex(switchData.tab1)

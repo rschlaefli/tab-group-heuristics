@@ -20,6 +20,7 @@ object BronKerbosch
 
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph,
+      pageRank: Map[TabMeta, Double],
       params: BronKerboschParams
   ): TabSwitchActor.TabSwitchGraph = graph
 

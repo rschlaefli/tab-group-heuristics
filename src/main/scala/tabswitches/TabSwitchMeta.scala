@@ -44,7 +44,7 @@ object TabSwitchMeta {
           Some(metric.compare(hostPath1, hostPath2))
         )
       }
-      case _ if tab1.url == tab2.url => (Some(true), None)
+      case _ if tab1.url == tab2.url => (Some(true), Some(1f))
       case _                         => (None, None)
     }
 

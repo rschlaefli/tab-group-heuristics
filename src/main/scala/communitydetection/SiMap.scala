@@ -9,7 +9,6 @@ import network.core.Graph
 import network.core.ListMatrix
 import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
-import org.jgrapht.alg.scoring.PageRank
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
 import smile.math.MathEx._
@@ -21,20 +20,20 @@ case class SiMapParams(
       * Probability of choosing to teleport instead of following the transition probability matrix
       * to guarantee convergence of G * p = p
       */
-    tau: Float = 0.15.toFloat,
+    tau: Float = 0.2.toFloat,
     /**
       * Start resolution to search for the best resolution
       */
-    resStart: Float = 0.05.toFloat,
+    resStart: Float = 0.001.toFloat,
     /**
       * End resolution
       */
-    resEnd: Float = 0.2.toFloat,
+    resEnd: Float = 0.05.toFloat,
     /**
       * Accuracy of the best solution, e.g. when accuracy is 0.1,
       * the solution is refined util this close to the best resolution found so far
       */
-    resAcc: Float = 0.002.toFloat,
+    resAcc: Float = 0.0001.toFloat,
     /**
       * Process only the largest connected component
       */
@@ -57,37 +56,30 @@ object SiMap
 
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph,
+      pageRank: Map[TabMeta, Double],
       params: SiMapParams
   ): (Map[TabMeta, Int], ListMatrix) = {
 
     val index = mutable.Map[TabMeta, Int]()
 
-    val pageRank = new PageRank(graph)
-
     val tuples = graph
       .edgeSet()
       .asScala
-      .toArray
-      .flatMap((edge) => {
+      .map((edge) => {
         val source = graph.getEdgeSource(edge)
         val target = graph.getEdgeTarget(edge)
         val weight = graph.getEdgeWeight(edge).toFloat
-        if (weight >= params.minWeight) {
-          val enhancedSource = source
-            .withPageRank(pageRank.getVertexScore(source).toDouble)
-          val enhancedTarget = target
-            .withPageRank(pageRank.getVertexScore(target).toDouble)
-          List(
-            (
-              index.getOrElseUpdate(enhancedSource, index.size),
-              index.getOrElseUpdate(enhancedTarget, index.size),
-              weight
-            )
-          )
-        } else {
-          List()
-        }
+
+        val enhancedSource = source.withPageRank(pageRank(source))
+        val enhancedTarget = target.withPageRank(pageRank(target))
+
+        (
+          index.getOrElseUpdate(enhancedSource, index.size),
+          index.getOrElseUpdate(enhancedTarget, index.size),
+          weight
+        )
       })
+      .toArray
 
     val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 
@@ -168,7 +160,8 @@ object SiMap
           .map(nodeId => index(nodeId))
           .toSet
 
-        val stats = CliqueStatistics(mean(tabGroup.flatMap(_.pageRank).toArray))
+        val stats =
+          CliqueStatistics(median(tabGroup.flatMap(_.pageRank).toArray))
 
         (tabGroup, stats)
       })

@@ -1,6 +1,9 @@
 package communitydetection
 
+import scala.collection.JavaConverters._
+
 import com.typesafe.scalalogging.LazyLogging
+import org.jgrapht.alg.scoring.PageRank
 import persistence.Persistence
 import tabswitches.SwitchGraphActor
 import tabswitches.SwitchMapActor
@@ -10,11 +13,6 @@ import tabswitches.TabSwitchMeta
 trait CommunityDetectorParameters {
 
   /**
-    * Ignore edges with a lower weight
-    */
-  def minWeight: Double = 2
-
-  /**
     * The maximum number of groups to return
     */
   def maxGroups: Int = 10
@@ -22,7 +20,7 @@ trait CommunityDetectorParameters {
   /**
     * Remove groups with less nodes
     */
-  def minGroupSize: Int = 2
+  def minGroupSize: Int = 3
 
   /**
     * Remove groups with more nodes
@@ -43,7 +41,13 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
 
     if (graph == null) return List()
 
-    val preparedGraph = prepareGraph(graph, params)
+    val pageRank = new PageRank(graph)
+      .getScores()
+      .asScala
+      .map(entry => (entry._1, entry._2.toDouble))
+      .toMap
+
+    val preparedGraph = prepareGraph(graph, pageRank, params)
 
     val tabGroups = computeGroups(preparedGraph, params)
 
@@ -85,7 +89,11 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
     * @param graph The raw tab switch graph
     * @return The pre-processed tab switch graph
     */
-  def prepareGraph(graph: TabSwitchGraph, params: T): S
+  def prepareGraph(
+      graph: TabSwitchGraph,
+      pageRank: Map[TabMeta, Double],
+      params: T
+  ): S
 
   /**
     * Apply the community detection algorithm to the tab switch graph
@@ -116,9 +124,9 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
       )
       .sortBy(_._2.quality)
 
-    logger.info(s"Ordered tab groups $filteredGroups")
-
     val topK = filteredGroups.reverse.take(params.maxGroups)
+
+    logger.info(s"TopK $topK")
 
     topK
 

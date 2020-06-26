@@ -18,7 +18,6 @@ import messaging.NativeMessaging
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 import tabswitches.TabSwitchActor.ComputeGroups
-import util.Utils
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 
@@ -48,7 +47,8 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
     case UpdateCuratedGroups(tabGroups) => {
       curatedGroups = tabGroups.map(_.asTuple)
-      val (curatedIndex, _) = Utils.buildClusterIndex(curatedGroups.map(_._2))
+      val (curatedIndex, _) =
+        TabSwitchActor.buildClusterIndex(curatedGroups.map(_._2))
       log.info(s"Received tab groups $tabGroups with index $curatedIndex")
       curatedGroupIndex = curatedIndex
     }
@@ -71,7 +71,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
               tabGroupIndex = groupIndex
               tabGroups = clustersWithTitles
 
-              val tabGroupEntities = tabGroups.map(TabGroup.apply).take(5)
+              val tabGroupEntities = tabGroups.map(TabGroup.apply)
 
               NativeMessaging.writeNativeMessage(
                 HeuristicsAction.UPDATE_GROUPS(tabGroupEntities.asJson)

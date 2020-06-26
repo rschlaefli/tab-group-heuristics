@@ -2,12 +2,8 @@ package tabswitches
 
 import java.io.StringWriter
 
-import scala.util.Failure
-import scala.util.Try
-
 import com.typesafe.scalalogging.LazyLogging
 import org.jgrapht.graph.DefaultWeightedEdge
-import org.jgrapht.graph.SimpleWeightedGraph
 import org.jgrapht.nio.Attribute
 import org.jgrapht.nio.DefaultAttribute
 import org.jgrapht.nio.csv.CSVExporter
@@ -17,40 +13,11 @@ import org.jgrapht.nio.dot.DOTExporter
 import collection.mutable
 import collection.JavaConverters._
 
-object GraphUtils extends LazyLogging {
+object GraphExport extends LazyLogging {
 
   import TabSwitchActor.TabSwitchGraph
 
-  def processSwitchMap(
-      tabSwitchMap: Map[String, TabSwitchMeta]
-  ): TabSwitchGraph = {
-
-    val tabGraph =
-      new SimpleWeightedGraph[TabMeta, DefaultWeightedEdge](
-        classOf[DefaultWeightedEdge]
-      )
-
-    tabSwitchMap.values
-      .filter(switch => switch.tab1 != switch.tab2)
-      .map((switchData: TabSwitchMeta) =>
-        Try {
-          tabGraph.addVertex(switchData.tab1)
-          tabGraph.addVertex(switchData.tab2)
-          tabGraph.addEdge(switchData.tab1, switchData.tab2)
-          tabGraph
-            .setEdgeWeight(switchData.tab1, switchData.tab2, switchData.count)
-        }
-      )
-      .filter(_.isFailure)
-      .foreach {
-        case Failure(ex) => logger.error(ex.getMessage())
-        case _           =>
-      }
-
-    tabGraph
-  }
-
-  def exportToCsv(graph: TabSwitchGraph): String = {
+  def toCsv(graph: TabSwitchGraph): String = {
     val exporter =
       new CSVExporter[TabMeta, DefaultWeightedEdge](
         CSVFormat.EDGE_LIST
@@ -76,7 +43,7 @@ object GraphUtils extends LazyLogging {
     writer.toString()
   }
 
-  def exportToDot(graph: TabSwitchGraph): String = {
+  def toDot(graph: TabSwitchGraph): String = {
     logger.debug(s"Exporting tab switch graph")
 
     val exporter =

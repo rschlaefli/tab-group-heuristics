@@ -33,8 +33,11 @@ class SwitchMapActor
 
   override def preStart(): Unit = {
     restoreTabSwitchMap foreach {
-      case Right(restoredMap) => tabSwitches = restoredMap
-      case _                  =>
+      case Right(restoredMap) =>
+        tabSwitches = restoredMap
+        tabSwitches =
+          tabSwitches.mapValuesInPlace((_, meta) => TabSwitchMeta.clone(meta))
+      case _ =>
     }
 
     timers.startTimerWithFixedDelay("persist", PersistSwitchMap, 60 seconds)

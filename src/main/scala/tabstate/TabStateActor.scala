@@ -12,6 +12,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
+import heuristics.HeuristicsActor.ComputeHeuristics
 import heuristics.HeuristicsActor.UpdateCuratedGroups
 import main.MainActor.StartProcessing
 import main.MainActor.StopProcessing
@@ -52,13 +53,18 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
   override def receive: Actor.Receive = {
 
+    case RefreshGroupsEvent => {
+      log.info("Refreshing groups")
+      heuristics ! ComputeHeuristics
+    }
+
     case PauseEvent => {
-      log.info("Pausing...")
+      log.info("Pausing processing")
       context.parent ! StopProcessing
     }
 
     case ResumeEvent => {
-      log.info("Resuming...")
+      log.info("Resuming processing")
       context.parent ! StartProcessing
     }
 

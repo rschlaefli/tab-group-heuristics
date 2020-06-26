@@ -4,10 +4,14 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 import com.typesafe.scalalogging.LazyLogging
+import network.core.ConnectedComponents
 import network.core.Graph
 import network.core.ListMatrix
 import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.graph.SimpleWeightedGraph
+import smile.math.MathEx._
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 
@@ -20,7 +24,7 @@ case class SiMapParams(
     /**
       * Start resolution to search for the best resolution
       */
-    resStart: Float = 0.001.toFloat,
+    resStart: Float = 0.0001.toFloat,
     /**
       * End resolution
       */
@@ -29,8 +33,12 @@ case class SiMapParams(
       * Accuracy of the best solution, e.g. when accuracy is 0.1,
       * the solution is refined util this close to the best resolution found so far
       */
-    resAcc: Float = 0.002.toFloat
-) extends Parameters {
+    resAcc: Float = 0.001.toFloat,
+    /**
+      * Process only the largest connected component
+      */
+    largestCC: Boolean = false
+) extends CommunityDetectorParameters {
 
   def asCPMapParameters =
     new CPMapParameters(tau, false, false, 1, resStart, resEnd, resAcc)
@@ -38,15 +46,18 @@ case class SiMapParams(
 }
 
 object SiMap
+// extends App
     extends LazyLogging
     with CommunityDetector[(Map[TabMeta, Int], ListMatrix), SiMapParams] {
 
-  val testGraph = loadTestGraph
+  // val testGraph = loadTestGraph
 
-  val tabGroups = apply(testGraph, SiMapParams())
+  // val tabGroups = apply(testGraph, SiMapParams())
 
   override def prepareGraph(
-      graph: TabSwitchActor.TabSwitchGraph
+      graph: TabSwitchActor.TabSwitchGraph,
+      pageRank: Map[TabMeta, Double],
+      params: SiMapParams
   ): (Map[TabMeta, Int], ListMatrix) = {
 
     val index = mutable.Map[TabMeta, Int]()
@@ -54,65 +65,110 @@ object SiMap
     val tuples = graph
       .edgeSet()
       .asScala
-      .toArray
       .map((edge) => {
         val source = graph.getEdgeSource(edge)
         val target = graph.getEdgeTarget(edge)
         val weight = graph.getEdgeWeight(edge).toFloat
+
+        val enhancedSource = source.withPageRank(pageRank(source))
+        val enhancedTarget = target.withPageRank(pageRank(target))
+
         (
-          index.getOrElseUpdate(source, index.size + 1),
-          index.getOrElseUpdate(target, index.size + 1),
+          index.getOrElseUpdate(enhancedSource, index.size),
+          index.getOrElseUpdate(enhancedTarget, index.size),
           weight
         )
       })
-
-    // Persistence.persistString(
-    //   "raw_input.txt",
-    //   tuples
-    //     .map(tuple => s"${tuple._1}\t${tuple._2}\t${tuple._3}")
-    //     .mkString("\n")
-    // )
+      .toArray
 
     val (rows, cols, values) = tuples.unzip3[Int, Int, Float]
 
+    var listMatrix = new ListMatrix()
+      .init(rows, cols, values, true)
+      .symmetrize()
+      .sort()
+
+    if (params.largestCC) {
+      // FIXME: normalization issues
+      val largestConnectedComponent =
+        new ConnectedComponents(new Graph(listMatrix))
+          .find()
+          .getLargestComponent()
+
+      val Array(_, largestComponent) = listMatrix
+        .decompose(largestConnectedComponent)
+
+      listMatrix = largestComponent.normalize()
+    }
+
     (
       index.toMap,
-      new ListMatrix().init(rows, cols, values, true)
+      listMatrix
     )
   }
 
   override def computeGroups(
       matrixAndIndex: (Map[TabMeta, Int], ListMatrix),
       params: SiMapParams
-  ): List[Set[TabMeta]] = {
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     // swap keys and values of the index
     // this allows us to lookup tab hashes by the node id
     val index = matrixAndIndex._1.map(_.swap)
 
-    // preprocess the input matrix and use it to construct a graph
-    val graph = new Graph(matrixAndIndex._2.symmetrize().sort().normalize())
+    // construct a graph
+    val graph = new Graph(matrixAndIndex._2)
 
     // compute the partitioning
     // returns a 1-D array with index=nodeId and value=partitionId
     val detectedPartition = CPMap.detect(graph, params.asCPMapParameters)
 
-    // construct a mapping from tab hashes to the assigned partition
-    val groupAssignmentMapping = detectedPartition.zipWithIndex
-      .map(tuple => (index.get(tuple._2), tuple._1))
-      .flatMap {
-        case (Some(tab), partition) => Seq((tab, partition))
-        case (None, _)              => Seq()
-      }
-      .groupMap(_._2)(_._1)
+    // compute the quality of the generated partitioning
+    val quality = CPMap
+      .evaluate(graph, detectedPartition, params.asCPMapParameters)
+    logger.info(s"overall quality $quality")
 
-    // transform the arrays
-    groupAssignmentMapping.values.map(_.toSet).toList
+    // decompose the graph into groups
+    val groups = graph
+      .decompose(detectedPartition)
+      .map(group => {
+        val groupGraph = new SimpleWeightedGraph[Int, DefaultWeightedEdge](
+          classOf[DefaultWeightedEdge]
+        )
+
+        val rows = group.getRows().toList
+        val columns = group.getColumns().toList
+        val values = group.getValues().toList
+        List(rows, columns, values).transpose.foreach {
+          case List(nodeId1: Int, nodeId2: Int, weight: Float) => {
+            groupGraph.addVertex(nodeId1)
+            groupGraph.addVertex(nodeId2)
+            groupGraph.addEdge(nodeId1, nodeId2)
+            groupGraph.setEdgeWeight(nodeId1, nodeId2, weight)
+          }
+        }
+
+        groupGraph
+      })
+
+    val tabGroups = groups
+      .map(group => {
+
+        val tabGroup = group
+          .vertexSet()
+          .asScala
+          .map(nodeId => index(nodeId))
+          .toSet
+
+        val stats =
+          CliqueStatistics(median(tabGroup.flatMap(_.pageRank).toArray))
+
+        (tabGroup, stats)
+      })
+      .toList
+
+    tabGroups
 
   }
-
-  override def processGroups(
-      tabGroups: List[Set[TabMeta]]
-  ): List[Set[TabMeta]] = tabGroups
 
 }

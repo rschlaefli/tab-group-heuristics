@@ -2,6 +2,8 @@ package tabswitches
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Failure
+import scala.util.Try
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
@@ -9,10 +11,32 @@ import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.graph.SimpleWeightedGraph
+import org.joda.time.DateTime
 import persistence.Persistence
 
 import SwitchMapActor.QueryTabSwitchMap
 import TabSwitchActor.CurrentSwitchGraph
+
+case class GraphGenerationParams(
+    /**
+      * Ignore edges with a lower weight
+      */
+    minWeight: Double = 2,
+    /**
+      * Forgetting factor
+      */
+    expireAfter: Duration = 14 days,
+    /**
+      * Factor to punish switches on the same origin
+      */
+    sameOriginFactor: Double = 0.3,
+    /**
+      * Factor to punish similar URLs
+      */
+    urlSimilarityFactor: Double = 0.5
+)
 
 class SwitchGraphActor extends Actor with ActorLogging {
 
@@ -35,7 +59,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
               s"Constructing tab switch graph from switch map with ${tabSwitchMap.size} entries"
             )
 
-            val tabSwitchGraph = GraphUtils.processSwitchMap(tabSwitchMap)
+            val tabSwitchGraph = processSwitchMap(tabSwitchMap)
 
             log.debug(
               s"Contructed tab switch graph with ${tabSwitchGraph.vertexSet().size()}" +
@@ -53,8 +77,8 @@ class SwitchGraphActor extends Actor with ActorLogging {
     }
 
     case ExportGraph(graph) => {
-      val dotString = GraphUtils.exportToDot(graph)
-      val csvString = GraphUtils.exportToCsv(graph)
+      val dotString = GraphExport.toDot(graph)
+      val csvString = GraphExport.toCsv(graph)
       Persistence.persistString("tab_switches.dot", dotString)
       Persistence.persistString("tab_switches.txt", csvString)
     }
@@ -72,4 +96,57 @@ object SwitchGraphActor extends LazyLogging {
 
   case class CurrentSwitchMap(switchMap: Map[String, TabSwitchMeta])
   case class ExportGraph(graph: TabSwitchGraph)
+
+  def processSwitchMap(
+      tabSwitchMap: Map[String, TabSwitchMeta],
+      params: GraphGenerationParams = GraphGenerationParams()
+  ): TabSwitchGraph = {
+
+    val tabGraph =
+      new SimpleWeightedGraph[TabMeta, DefaultWeightedEdge](
+        classOf[DefaultWeightedEdge]
+      )
+
+    val expirationFrontier =
+      DateTime.now().getMillis() - params.expireAfter.toMillis
+
+    tabSwitchMap.values
+      .filter(_.lastUsed >= expirationFrontier)
+      .filter(_.count >= params.minWeight)
+      .filter(switch => switch.tab1.url != switch.tab2.url)
+      .map((switchData: TabSwitchMeta) =>
+        Try {
+          tabGraph.addVertex(switchData.tab1)
+          tabGraph.addVertex(switchData.tab2)
+          tabGraph.addEdge(switchData.tab1, switchData.tab2)
+
+          val weightingFactor =
+            (switchData.sameOrigin, switchData.urlSimilarity) match {
+              case (Some(true), Some(urlSimilarity)) =>
+                (1 - params.sameOriginFactor) * (1 - params.urlSimilarityFactor * urlSimilarity)
+              case (Some(true), _) =>
+                1 - params.sameOriginFactor
+              case (_, Some(urlSimilarity)) =>
+                1 - params.urlSimilarityFactor * urlSimilarity
+              case _ =>
+                1
+            }
+
+          tabGraph
+            .setEdgeWeight(
+              switchData.tab1,
+              switchData.tab2,
+              switchData.count * weightingFactor
+            )
+
+        }
+      )
+      .filter(_.isFailure)
+      .foreach {
+        case Failure(ex) => logger.error(ex.getMessage())
+        case _           =>
+      }
+
+    tabGraph
+  }
 }

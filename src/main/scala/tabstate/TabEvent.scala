@@ -6,9 +6,15 @@ import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.parser._
 import tabstate.Tab
-import util._
 
 sealed class TabEvent
+
+case object PauseEvent extends TabEvent
+case object ResumeEvent extends TabEvent
+
+case object RefreshGroupsEvent extends TabEvent
+case class DiscardGroupEvent() extends TabEvent
+case class AcceptGroupEvent() extends TabEvent
 
 case class TabInitializationEvent(
     currentTabs: List[Tab]
@@ -66,15 +72,22 @@ case class TabUpdateEvent(
     successorTabId: Option[Int]
 ) extends TabEvent
 
-case object PauseEvent extends TabEvent
-case object ResumeEvent extends TabEvent
-
 object TabUpdateEvent {
   implicit val tabUpdateEventDecoder: Decoder[TabUpdateEvent] =
     deriveDecoder
 }
 
 object TabEvent extends LazyLogging {
+
+  def extractDecoderResult[T](
+      decoderResult: Decoder.Result[T]
+  ): Option[T] = decoderResult match {
+    case Left(decodeError) => {
+      logger.error(decodeError.message + decoderResult.toString())
+      None
+    }
+    case Right(value) => Some(value)
+  }
 
   def parseJsonString(message: String): Json = {
     var json: Json = parse(message).getOrElse(Json.Null)
@@ -100,33 +113,30 @@ object TabEvent extends LazyLogging {
 
     // depending on the action type, decode into the appropriate TabEvent
     action match {
-      case "CREATE" | "UPDATE" => {
-        Utils.extractDecoderResult(cursor.get[TabUpdateEvent]("payload"))
-      }
+      case "CREATE" | "UPDATE" =>
+        extractDecoderResult(cursor.get[TabUpdateEvent]("payload"))
 
-      case "ACTIVATE" => {
-        Utils.extractDecoderResult(cursor.get[TabActivateEvent]("payload"))
-      }
+      case "ACTIVATE" =>
+        extractDecoderResult(cursor.get[TabActivateEvent]("payload"))
 
-      case "REMOVE" => {
-        Utils.extractDecoderResult(cursor.get[TabRemoveEvent]("payload"))
-      }
+      case "REMOVE" =>
+        extractDecoderResult(cursor.get[TabRemoveEvent]("payload"))
 
-      case "INIT_TABS" => {
-        Utils.extractDecoderResult(
+      case "INIT_TABS" =>
+        extractDecoderResult(
           cursor.get[TabInitializationEvent]("payload")
         )
-      }
 
-      case "INIT_GROUPS" => {
-        Utils.extractDecoderResult(
+      case "INIT_GROUPS" =>
+        extractDecoderResult(
           cursor.get[TabGroupUpdateEvent]("payload")
         )
-      }
 
       case "PAUSE" => Some(PauseEvent)
 
       case "RESUME" => Some(ResumeEvent)
+
+      case "REFRESH_GROUPS" => Some(RefreshGroupsEvent)
 
       case _ => {
         logger.warn(s"> Unknown tab event received: $action ($message)")

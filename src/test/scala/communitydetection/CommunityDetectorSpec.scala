@@ -3,12 +3,10 @@ package communitydetection
 import org.scalatest._
 import flatspec._
 import matchers._
-import org.scalactic.source.Position
 import tabswitches.TabSwitchMeta
 import tabswitches.SwitchMapActor
-import tabswitches.GraphUtils
 import com.typesafe.scalalogging.LazyLogging
-import persistence.Persistence
+import tabswitches.SwitchGraphActor
 
 class CommunityDetectorSpec
     extends AnyFlatSpec
@@ -25,7 +23,7 @@ class CommunityDetectorSpec
     SwitchMapActor.restoreTabSwitchMap foreach {
       case Right(restoredMap) => {
         tabSwitchMap = restoredMap.toMap
-        tabSwitchGraph = GraphUtils.processSwitchMap(tabSwitchMap)
+        tabSwitchGraph = SwitchGraphActor.processSwitchMap(tabSwitchMap)
       }
       case _ =>
     }

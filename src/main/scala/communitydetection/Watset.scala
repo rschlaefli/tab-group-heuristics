@@ -8,22 +8,25 @@ import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 
 case class WatsetParams(expansion: Int = 2, powerCoefficient: Double = 2)
-    extends Parameters
+    extends CommunityDetectorParameters
 
 object Watset
-    extends App
-    with LazyLogging
+// extends App
+    extends LazyLogging
     with CommunityDetector[TabSwitchActor.TabSwitchGraph, WatsetParams] {
 
   import tabswitches.TabSwitchActor.TabSwitchGraph
 
-  def prepareGraph(graph: TabSwitchGraph): TabSwitchGraph =
-    graph
+  def prepareGraph(
+      graph: TabSwitchGraph,
+      pageRank: Map[TabMeta, Double],
+      params: WatsetParams
+  ): TabSwitchGraph = graph
 
   def computeGroups(
       graph: TabSwitchGraph,
       params: WatsetParams
-  ): List[Set[TabMeta]] = {
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     val isGraphTooSmall = graph
       .vertexSet()
@@ -41,9 +44,7 @@ object Watset
       .asScala
       .map(_.asScala.toSet)
       .toList
+      .map((_, CliqueStatistics()))
   }
-
-  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]] =
-    tabGroups
 
 }

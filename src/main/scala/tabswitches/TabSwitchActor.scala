@@ -1,5 +1,6 @@
 package tabswitches
 
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -16,7 +17,6 @@ import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.slf4j.MarkerFactory
 import tabstate.Tab
-import util.Utils
 
 import SwitchMapActor.ProcessTabSwitch
 import SwitchGraphActor.ComputeGraph
@@ -71,18 +71,8 @@ class TabSwitchActor extends Actor with ActorLogging {
             val simapClusters =
               SiMap(graph, SiMapParams(), "clusters_simap.txt")
 
-            SiMap(
-              graph,
-              SiMapParams(
-                tau = 0.5.toFloat,
-                resStart = 0.2.toFloat,
-                resEnd = 0.7.toFloat
-              ),
-              "clusters_simap_tuned.txt"
-            )
-
             val (clusterIndex, clusters) =
-              Utils.buildClusterIndex(simapClusters)
+              buildClusterIndexWithStats(simapClusters)
 
             TabSwitchHeuristicsResults(clusterIndex, clusters)
           }
@@ -102,4 +92,36 @@ object TabSwitchActor extends LazyLogging {
 
   case class TabSwitch(tab1: Option[Tab], tab2: Tab)
   case class CurrentSwitchGraph(graph: TabSwitchGraph)
+
+  def buildClusterIndexWithStats(
+      clusters: List[(Set[TabMeta], CliqueStatistics)]
+  ): (Map[Int, Int], List[Set[TabMeta]]) = {
+    buildClusterIndex(clusters.map(_._1))
+  }
+
+  def buildClusterIndex(
+      clusters: List[Set[TabMeta]]
+  ): (Map[Int, Int], List[Set[TabMeta]]) = {
+    // prepare an index for which tab is stored in which cluster
+    val clusterIndex = mutable.Map[Int, Int]()
+
+    // prepare a return container for the clusters
+    val clusterList = clusters.zipWithIndex
+      .flatMap {
+        case (clusterMembers, index) if clusterMembers.size > 1 => {
+          clusterMembers.foreach(tab => {
+            clusterIndex(tab.hashCode()) = index
+          })
+
+          List(clusterMembers)
+        }
+        case _ => List()
+      }
+
+    logger.debug(
+      s"Computed overall index $clusterIndex for ${clusterList.length} clusters"
+    )
+
+    (Map.from(clusterIndex), clusterList)
+  }
 }

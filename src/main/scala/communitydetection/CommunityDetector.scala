@@ -1,26 +1,57 @@
 package communitydetection
 
+import scala.collection.JavaConverters._
+
+import com.typesafe.scalalogging.LazyLogging
+import org.jgrapht.alg.scoring.PageRank
 import persistence.Persistence
-import tabswitches.GraphUtils
+import tabswitches.SwitchGraphActor
 import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchMeta
 
-trait Parameters
+trait CommunityDetectorParameters {
 
-trait CommunityDetector[S, T] {
+  /**
+    * The maximum number of groups to return
+    */
+  def maxGroups: Int = 10
+
+  /**
+    * Remove groups with less nodes
+    */
+  def minGroupSize: Int = 3
+
+  /**
+    * Remove groups with more nodes
+    */
+  def maxGroupSize: Int = 10
+
+}
+
+trait CommunityDetector[S, T <: CommunityDetectorParameters]
+    extends LazyLogging {
 
   import tabswitches.TabSwitchActor.TabSwitchGraph
 
-  def apply(graph: TabSwitchGraph, params: T): List[Set[TabMeta]] = {
+  def apply(
+      graph: TabSwitchGraph,
+      params: T
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     if (graph == null) return List()
 
-    val preparedGraph = prepareGraph(graph)
+    val pageRank = new PageRank(graph)
+      .getScores()
+      .asScala
+      .map(entry => (entry._1, entry._2.toDouble))
+      .toMap
+
+    val preparedGraph = prepareGraph(graph, pageRank, params)
 
     val tabGroups = computeGroups(preparedGraph, params)
 
-    processGroups(tabGroups)
+    processGroups(tabGroups, params)
 
   }
 
@@ -28,7 +59,7 @@ trait CommunityDetector[S, T] {
       graph: TabSwitchGraph,
       params: T,
       persistTo: String
-  ): List[Set[TabMeta]] = {
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
     val tabGroups = apply(graph, params)
 
     persist(persistTo, tabGroups)
@@ -44,7 +75,7 @@ trait CommunityDetector[S, T] {
     SwitchMapActor.restoreTabSwitchMap map {
       case Right(restoredMap) => {
         tabSwitchMap = restoredMap.toMap
-        tabSwitchGraph = GraphUtils.processSwitchMap(tabSwitchMap)
+        tabSwitchGraph = SwitchGraphActor.processSwitchMap(tabSwitchMap)
       }
       case _ =>
     }
@@ -58,7 +89,11 @@ trait CommunityDetector[S, T] {
     * @param graph The raw tab switch graph
     * @return The pre-processed tab switch graph
     */
-  def prepareGraph(graph: TabSwitchGraph): S
+  def prepareGraph(
+      graph: TabSwitchGraph,
+      pageRank: Map[TabMeta, Double],
+      params: T
+  ): S
 
   /**
     * Apply the community detection algorithm to the tab switch graph
@@ -69,7 +104,7 @@ trait CommunityDetector[S, T] {
   def computeGroups(
       graph: S,
       params: T
-  ): List[Set[TabMeta]]
+  ): List[(Set[TabMeta], CliqueStatistics)]
 
   /**
     * Perform postprocessing on the generated tab groups
@@ -77,7 +112,25 @@ trait CommunityDetector[S, T] {
     * @param tabGroups The generated list of tab groups
     * @return The post-processed list of tab groups
     */
-  def processGroups(tabGroups: List[Set[TabMeta]]): List[Set[TabMeta]]
+  def processGroups(
+      tabGroups: List[(Set[TabMeta], CliqueStatistics)],
+      params: T
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
+
+    val filteredGroups = tabGroups
+      .filter(group =>
+        params.maxGroupSize >= group._1.size
+          && group._1.size >= params.minGroupSize
+      )
+      .sortBy(_._2.quality)
+
+    val topK = filteredGroups.reverse.take(params.maxGroups)
+
+    logger.info(s"TopK $topK")
+
+    topK
+
+  }
 
   /**
     * Persist the list of tab groups to a text file
@@ -86,7 +139,10 @@ trait CommunityDetector[S, T] {
     * @param tabGroups The list of tab groups
     * @return
     */
-  def persist(fileName: String, tabGroups: List[Set[TabMeta]]) = {
+  def persist(
+      fileName: String,
+      tabGroups: List[(Set[TabMeta], CliqueStatistics)]
+  ) = {
     Persistence.persistString(
       fileName,
       tabGroups.map(_.toString()).mkString("\n")

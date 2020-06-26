@@ -46,13 +46,13 @@ case class SiMapParams(
 }
 
 object SiMap
-    extends App
-    with LazyLogging
+// extends App
+    extends LazyLogging
     with CommunityDetector[(Map[TabMeta, Int], ListMatrix), SiMapParams] {
 
-  val testGraph = loadTestGraph
+  // val testGraph = loadTestGraph
 
-  val tabGroups = apply(testGraph, SiMapParams())
+  // val tabGroups = apply(testGraph, SiMapParams())
 
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph,

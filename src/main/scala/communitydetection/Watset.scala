@@ -11,8 +11,8 @@ case class WatsetParams(expansion: Int = 2, powerCoefficient: Double = 2)
     extends CommunityDetectorParameters
 
 object Watset
-    extends App
-    with LazyLogging
+// extends App
+    extends LazyLogging
     with CommunityDetector[TabSwitchActor.TabSwitchGraph, WatsetParams] {
 
   import tabswitches.TabSwitchActor.TabSwitchGraph

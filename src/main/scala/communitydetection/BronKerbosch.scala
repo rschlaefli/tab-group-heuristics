@@ -2,6 +2,7 @@ package communitydetection
 
 import scala.collection.JavaConverters._
 
+import com.typesafe.scalalogging.LazyLogging
 import org.jgrapht.alg.clique.BronKerboschCliqueFinder
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
@@ -9,7 +10,8 @@ import tabswitches.TabSwitchActor
 case class BronKerboschParams() extends CommunityDetectorParameters
 
 object BronKerbosch
-    extends App
+// extends App
+    extends LazyLogging
     with CommunityDetector[TabSwitchActor.TabSwitchGraph, BronKerboschParams] {
 
   val testGraph = loadTestGraph

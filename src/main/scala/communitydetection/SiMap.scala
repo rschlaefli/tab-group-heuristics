@@ -12,6 +12,7 @@ import network.optimization.CPMapParameters
 import org.jgrapht.alg.scoring.PageRank
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
+import smile.math.MathEx._
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 
@@ -24,11 +25,11 @@ case class SiMapParams(
     /**
       * Start resolution to search for the best resolution
       */
-    resStart: Float = 0.001.toFloat,
+    resStart: Float = 0.05.toFloat,
     /**
       * End resolution
       */
-    resEnd: Float = 0.05.toFloat,
+    resEnd: Float = 0.2.toFloat,
     /**
       * Accuracy of the best solution, e.g. when accuracy is 0.1,
       * the solution is refined util this close to the best resolution found so far
@@ -167,7 +168,7 @@ object SiMap
           .map(nodeId => index(nodeId))
           .toSet
 
-        val stats = CliqueStatistics(tabGroup.flatMap(_.pageRank).sum)
+        val stats = CliqueStatistics(mean(tabGroup.flatMap(_.pageRank).toArray))
 
         (tabGroup, stats)
       })

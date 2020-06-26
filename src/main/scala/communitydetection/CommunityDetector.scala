@@ -1,5 +1,6 @@
 package communitydetection
 
+import com.typesafe.scalalogging.LazyLogging
 import persistence.Persistence
 import tabswitches.SwitchGraphActor
 import tabswitches.SwitchMapActor
@@ -11,7 +12,7 @@ trait CommunityDetectorParameters {
   /**
     * Ignore edges with a lower weight
     */
-  def minWeight: Int = 2
+  def minWeight: Double = 2
 
   /**
     * The maximum number of groups to return
@@ -30,7 +31,8 @@ trait CommunityDetectorParameters {
 
 }
 
-trait CommunityDetector[S, T <: CommunityDetectorParameters] {
+trait CommunityDetector[S, T <: CommunityDetectorParameters]
+    extends LazyLogging {
 
   import tabswitches.TabSwitchActor.TabSwitchGraph
 
@@ -114,7 +116,9 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters] {
       )
       .sortBy(_._2.quality)
 
-    val topK = filteredGroups.take(params.maxGroups)
+    logger.info(s"Ordered tab groups $filteredGroups")
+
+    val topK = filteredGroups.reverse.take(params.maxGroups)
 
     topK
 

@@ -19,8 +19,8 @@ import SwitchMapActor.QueryTabSwitchMap
 import TabSwitchActor.CurrentSwitchGraph
 
 case class GraphGenerationParams(
-    sameOriginFactor: Double = 0.9,
-    urlSimilarityFactor: Double = 0.1
+    sameOriginFactor: Double = 0,
+    urlSimilarityFactor: Double = 0.5
 )
 
 class SwitchGraphActor extends Actor with ActorLogging {
@@ -100,20 +100,24 @@ object SwitchGraphActor extends LazyLogging {
           tabGraph.addVertex(switchData.tab2)
           tabGraph.addEdge(switchData.tab1, switchData.tab2)
 
-          val weightedCount =
+          val weightingFactor =
             (switchData.sameOrigin, switchData.urlSimilarity) match {
               case (Some(true), Some(urlSimilarity)) =>
-                switchData.count * params.sameOriginFactor * (1 - params.urlSimilarityFactor * urlSimilarity)
+                (1 - params.sameOriginFactor) * (1 - params.urlSimilarityFactor * urlSimilarity)
               case (Some(true), _) =>
-                switchData.count * params.sameOriginFactor
+                1 - params.sameOriginFactor
               case (_, Some(urlSimilarity)) =>
-                switchData.count * (1 - urlSimilarity)
+                1 - params.urlSimilarityFactor * urlSimilarity
               case _ =>
-                switchData.count
+                1
             }
 
           tabGraph
-            .setEdgeWeight(switchData.tab1, switchData.tab2, weightedCount)
+            .setEdgeWeight(
+              switchData.tab1,
+              switchData.tab2,
+              switchData.count * weightingFactor
+            )
 
         }
       )

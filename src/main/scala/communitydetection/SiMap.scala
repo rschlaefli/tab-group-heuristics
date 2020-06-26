@@ -20,11 +20,11 @@ case class SiMapParams(
       * Probability of choosing to teleport instead of following the transition probability matrix
       * to guarantee convergence of G * p = p
       */
-    tau: Float = 0.2.toFloat,
+    tau: Float = 0.15.toFloat,
     /**
       * Start resolution to search for the best resolution
       */
-    resStart: Float = 0.001.toFloat,
+    resStart: Float = 0.0001.toFloat,
     /**
       * End resolution
       */
@@ -33,7 +33,7 @@ case class SiMapParams(
       * Accuracy of the best solution, e.g. when accuracy is 0.1,
       * the solution is refined util this close to the best resolution found so far
       */
-    resAcc: Float = 0.0001.toFloat,
+    resAcc: Float = 0.001.toFloat,
     /**
       * Process only the largest connected component
       */

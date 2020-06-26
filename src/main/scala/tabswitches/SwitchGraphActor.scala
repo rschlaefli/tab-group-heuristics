@@ -27,9 +27,9 @@ case class GraphGenerationParams(
     /**
       * Forgetting factor
       */
-    expireAfter: Duration = 7 days,
+    expireAfter: Duration = 14 days,
     sameOriginFactor: Double = 0,
-    urlSimilarityFactor: Double = 0.4
+    urlSimilarityFactor: Double = 0.5
 )
 
 class SwitchGraphActor extends Actor with ActorLogging {

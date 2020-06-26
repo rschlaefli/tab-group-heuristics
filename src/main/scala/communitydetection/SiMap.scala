@@ -11,9 +11,9 @@ import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import network.core.Statistics
-import network.extendedmapequation.CPMapStatistics
-import network.extendedmapequation.Stationary
+import org.jgrapht.graph.SimpleWeightedGraph
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.alg.scoring.PageRank
 
 case class SiMapParams(
     /**
@@ -61,6 +61,8 @@ object SiMap
 
     val index = mutable.Map[TabMeta, Int]()
 
+    val pageRank = new PageRank(graph)
+
     val tuples = graph
       .edgeSet()
       .asScala
@@ -70,10 +72,14 @@ object SiMap
         val target = graph.getEdgeTarget(edge)
         val weight = graph.getEdgeWeight(edge).toFloat
         if (weight >= params.minWeight) {
+          val enhancedSource = source
+            .withPageRank(pageRank.getVertexScore(source).toDouble)
+          val enhancedTarget = target
+            .withPageRank(pageRank.getVertexScore(target).toDouble)
           List(
             (
-              index.getOrElseUpdate(source, index.size),
-              index.getOrElseUpdate(target, index.size),
+              index.getOrElseUpdate(enhancedSource, index.size),
+              index.getOrElseUpdate(enhancedTarget, index.size),
               weight
             )
           )
@@ -130,43 +136,44 @@ object SiMap
     logger.info(s"overall quality $quality")
 
     // decompose the graph into groups
-    // val groups = graph.decompose(detectedPartition)
+    val groups = graph
+      .decompose(detectedPartition)
+      .map(group => {
+        val groupGraph = new SimpleWeightedGraph[Int, DefaultWeightedEdge](
+          classOf[DefaultWeightedEdge]
+        )
 
-    // compute partition statistics
-    // val partitionStats = Statistics.partition(detectedPartition, graph)
+        val rows = group.getRows().toList
+        val columns = group.getColumns().toList
+        val values = group.getValues().toList
+        List(rows, columns, values).transpose.foreach {
+          case List(nodeId1: Int, nodeId2: Int, weight: Float) => {
+            groupGraph.addVertex(nodeId1)
+            groupGraph.addVertex(nodeId2)
+            groupGraph.addEdge(nodeId1, nodeId2)
+            groupGraph.setEdgeWeight(nodeId1, nodeId2, weight)
+          }
+        }
 
-    val eval = CPMap.reWeight(graph, detectedPartition)
-    println(eval.transition)
-    // val evalWithProbabilities = new Stationary(1)
-    //   .visitProbabilities(eval, detectedPartition, params.tau)
-    // println(evalWithProbabilities.inWeight.toList)
-
-    val nodeStats = List(
-      eval.inWeight,
-      eval.outWeight
-    ).transpose.map {
-      case List(inWeight, outWeight) => NodeStatistics(inWeight, outWeight)
-    }
-
-    // construct a mapping from tab hashes to the assigned partition
-    val groupAssignmentMapping = detectedPartition.zipWithIndex
-      .zip(nodeStats)
-      .map {
-        case (tuple: (Int, Int), stats: NodeStatistics) =>
-          (index.get(tuple._2), tuple._1, stats)
-      }
-      .flatMap {
-        case (Some(tab), partition, stats) => Seq((tab, partition, stats))
-        case (None, _, _)                  => Seq()
-      }
-      .groupMap(_._2)(tuple => (tuple._1, tuple._3))
-
-    groupAssignmentMapping.values
-      .map(_.toSet)
-      .toList
-      .flatMap(group => {
-        List((group.map(_._1), CliqueStatistics(group.map(_._2))))
+        groupGraph
       })
+
+    val tabGroups = groups
+      .map(group => {
+
+        val tabGroup = group
+          .vertexSet()
+          .asScala
+          .map(nodeId => index(nodeId))
+          .toSet
+
+        val stats = CliqueStatistics(tabGroup.flatMap(_.pageRank).sum)
+
+        (tabGroup, stats)
+      })
+      .toList
+
+    tabGroups
 
   }
 

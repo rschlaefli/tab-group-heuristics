@@ -9,11 +9,11 @@ import network.core.Graph
 import network.core.ListMatrix
 import network.extendedmapequation.CPMap
 import network.optimization.CPMapParameters
+import org.jgrapht.alg.scoring.PageRank
+import org.jgrapht.graph.DefaultWeightedEdge
+import org.jgrapht.graph.SimpleWeightedGraph
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import org.jgrapht.graph.SimpleWeightedGraph
-import org.jgrapht.graph.DefaultWeightedEdge
-import org.jgrapht.alg.scoring.PageRank
 
 case class SiMapParams(
     /**

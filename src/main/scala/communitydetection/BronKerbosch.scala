@@ -1,9 +1,10 @@
 package communitydetection
 
-import tabswitches.TabSwitchActor
-import tabswitches.TabMeta
-import org.jgrapht.alg.clique.BronKerboschCliqueFinder
 import scala.collection.JavaConverters._
+
+import org.jgrapht.alg.clique.BronKerboschCliqueFinder
+import tabswitches.TabMeta
+import tabswitches.TabSwitchActor
 
 case class BronKerboschParams() extends CommunityDetectorParameters
 

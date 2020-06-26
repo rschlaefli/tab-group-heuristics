@@ -35,23 +35,7 @@ case class SiMapParams(
     /**
       * Process only the largest connected component
       */
-    largestCC: Boolean = true,
-    /**
-      * Ignore edges with a lower weight
-      */
-    minWeight: Int = 2,
-    /**
-      * Remove groups with less nodes
-      */
-    minGroupSize: Int = 3,
-    /**
-      * Remove groups with more nodes
-      */
-    maxGroupSize: Int = 10,
-    /**
-      * The maximum number of groups to return
-      */
-    maxGroups: Int = 20
+    largestCC: Boolean = true
 ) extends CommunityDetectorParameters {
 
   def asCPMapParameters =
@@ -60,8 +44,8 @@ case class SiMapParams(
 }
 
 object SiMap
-// extends App
-    extends LazyLogging
+    extends App
+    with LazyLogging
     with CommunityDetector[(Map[TabMeta, Int], ListMatrix), SiMapParams] {
 
   val testGraph = loadTestGraph
@@ -108,7 +92,7 @@ object SiMap
   override def computeGroups(
       matrixAndIndex: (Map[TabMeta, Int], ListMatrix),
       params: SiMapParams
-  ): List[Set[TabMeta]] = {
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     // swap keys and values of the index
     // this allows us to lookup tab hashes by the node id
@@ -137,19 +121,31 @@ object SiMap
     // println(quality)
 
     // decompose the graph into groups
-    graph.decompose(detectedPartition)
-    // groups.foreach(println)
+    val groups = graph.decompose(detectedPartition)
+    groups.foreach(println)
+    println(groups.length)
 
     // fold the graph
-    graph.fold(detectedPartition)
+    // graph.fold(detectedPartition)
     // println(folded)
 
     // compute partition statistics
-    Statistics.partition(detectedPartition, preparedMatrix)
+    // Statistics.partition(detectedPartition, preparedMatrix)
     // println(partitionStats)
 
-    Statistics.array(detectedPartition)
+    // Statistics.array(detectedPartition)
     // println(arrayStats)
+
+    val eval = CPMap.reWeight(graph, detectedPartition)
+    val nodeStats = List(
+      eval.inWeight,
+      eval.outWeight
+    ).transpose.map {
+      case List(inWeight, outWeight) => NodeStatistics(inWeight, outWeight)
+    }
+
+    println(nodeStats)
+    println(nodeStats.length)
 
     // construct a mapping from tab hashes to the assigned partition
     val groupAssignmentMapping = detectedPartition.zipWithIndex
@@ -160,21 +156,14 @@ object SiMap
       }
       .groupMap(_._2)(_._1)
 
+    println(groupAssignmentMapping)
+
     // transform the arrays
-    groupAssignmentMapping.values.map(_.toSet).toList
+    groupAssignmentMapping.values
+      .map(_.toSet)
+      .toList
+      .map((_, CliqueStatistics()))
 
-  }
-
-  override def processGroups(
-      tabGroups: List[Set[TabMeta]],
-      params: SiMapParams
-  ): List[Set[TabMeta]] = {
-    val filteredGroups = tabGroups.filter(group =>
-      params.maxGroupSize >= group.size
-        && group.size >= params.minGroupSize
-    )
-    // println(filteredGroups)
-    filteredGroups.take(params.maxGroups)
   }
 
 }

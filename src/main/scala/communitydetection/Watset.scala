@@ -26,7 +26,7 @@ object Watset
   def computeGroups(
       graph: TabSwitchGraph,
       params: WatsetParams
-  ): List[Set[TabMeta]] = {
+  ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     val isGraphTooSmall = graph
       .vertexSet()
@@ -44,12 +44,7 @@ object Watset
       .asScala
       .map(_.asScala.toSet)
       .toList
+      .map((_, CliqueStatistics()))
   }
-
-  def processGroups(
-      tabGroups: List[Set[TabMeta]],
-      params: WatsetParams
-  ): List[Set[TabMeta]] =
-    tabGroups
 
 }

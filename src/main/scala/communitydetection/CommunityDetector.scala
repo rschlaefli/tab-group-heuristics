@@ -6,7 +6,29 @@ import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchMeta
 
-trait CommunityDetectorParameters
+trait CommunityDetectorParameters {
+
+  /**
+    * Ignore edges with a lower weight
+    */
+  def minWeight: Int = 2
+
+  /**
+    * The maximum number of groups to return
+    */
+  def maxGroups: Int = 10
+
+  /**
+    * Remove groups with less nodes
+    */
+  def minGroupSize: Int = 2
+
+  /**
+    * Remove groups with more nodes
+    */
+  def maxGroupSize: Int = 10
+
+}
 
 trait CommunityDetector[S, T <: CommunityDetectorParameters] {
 
@@ -69,7 +91,7 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters] {
   def computeGroups(
       graph: S,
       params: T
-  ): List[Set[TabMeta]]
+  ): List[(Set[TabMeta], CliqueStatistics)]
 
   /**
     * Perform postprocessing on the generated tab groups
@@ -78,9 +100,24 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters] {
     * @return The post-processed list of tab groups
     */
   def processGroups(
-      tabGroups: List[Set[TabMeta]],
+      tabGroups: List[(Set[TabMeta], CliqueStatistics)],
       params: T
-  ): List[Set[TabMeta]]
+  ): List[Set[TabMeta]] = {
+
+    val filteredGroups = tabGroups
+      .map(_._1)
+      .filter(group =>
+        params.maxGroupSize >= group.size
+          && group.size >= params.minGroupSize
+      )
+
+    val topK = filteredGroups.take(params.maxGroups)
+
+    println(topK)
+
+    topK
+
+  }
 
   /**
     * Persist the list of tab groups to a text file

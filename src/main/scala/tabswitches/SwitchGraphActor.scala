@@ -28,7 +28,7 @@ case class GraphGenerationParams(
       * Forgetting factor
       */
     expireAfter: Duration = 14 days,
-    sameOriginFactor: Double = 0,
+    sameOriginFactor: Double = 0.3,
     urlSimilarityFactor: Double = 0.5
 )
 

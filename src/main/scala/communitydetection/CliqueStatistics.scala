@@ -11,8 +11,6 @@ object CliqueStatistics {
           (acc._1 + tuple._1, acc._2 + tuple._2)
       }
 
-    println(aggInWeight, aggOutWeight)
-
     CliqueStatistics(aggInWeight / aggOutWeight)
   }
 }

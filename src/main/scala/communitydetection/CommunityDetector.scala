@@ -126,8 +126,6 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
 
     val topK = filteredGroups.reverse.take(params.maxGroups)
 
-    println(topK)
-
     topK
 
   }

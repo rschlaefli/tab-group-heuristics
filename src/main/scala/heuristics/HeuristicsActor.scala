@@ -18,6 +18,8 @@ import messaging.NativeMessaging
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 import tabswitches.TabSwitchActor.ComputeGroups
+import tabswitches.SwitchMapActor
+import tabswitches.SwitchMapActor.DiscardTabSwitch
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 
@@ -27,11 +29,14 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
   implicit val stdout = new BufferedOutputStream(System.out)
 
   val tabSwitches = context.actorOf(Props[TabSwitchActor], "TabSwitches")
+  val switchMap = context
+    .actorSelection("/user/Main/Heuristics/TabSwitches/TabSwitchMap")
 
   var tabGroupIndex = Map[Int, Int]()
-  var tabGroups = List[(String, Set[TabMeta])]()
-  var curatedGroups = List[(String, Set[TabMeta])]()
+  var tabGroups = List[TabGroup]()
+
   var curatedGroupIndex = Map[Int, Int]()
+  var curatedGroups = List[TabGroup]()
 
   override def preStart(): Unit = {
     log.info("Starting to compute heuristics")
@@ -46,9 +51,9 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
   override def receive: Actor.Receive = {
 
     case UpdateCuratedGroups(tabGroups) => {
-      curatedGroups = tabGroups.map(_.asTuple)
-      val (curatedIndex, _) =
-        TabSwitchActor.buildClusterIndex(curatedGroups.map(_._2))
+      curatedGroups = tabGroups
+      val (curatedIndex, _) = TabSwitchActor
+        .buildClusterIndex(curatedGroups.map(_.tabs))
       log.info(s"Received tab groups $tabGroups with index $curatedIndex")
       curatedGroupIndex = curatedIndex
     }
@@ -69,12 +74,10 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
               val clustersWithTitles = newTabGroups.map(BasicKeywords.apply)
 
               tabGroupIndex = groupIndex
-              tabGroups = clustersWithTitles
-
-              val tabGroupEntities = tabGroups.map(TabGroup.apply)
+              tabGroups = clustersWithTitles.map(TabGroup.apply)
 
               NativeMessaging.writeNativeMessage(
-                HeuristicsAction.UPDATE_GROUPS(tabGroupEntities.asJson)
+                HeuristicsAction.UPDATE_GROUPS(tabGroups.asJson)
               )
             }
           }
@@ -84,6 +87,31 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     }
 
     case QueryTabGroups => sender() ! CurrentTabGroups(tabGroupIndex, tabGroups)
+
+    case AcceptSuggestion(groupHash) => {
+      log.debug(s"Accepting suggested group hash $groupHash")
+    }
+
+    case DiscardSuggestion(groupHash) => {
+      val targetGroup = tabGroups
+        .find(_.id == groupHash)
+        .get
+
+      computeHashCombinations(targetGroup)
+        .foreach(switchIdentifier =>
+          switchMap ! DiscardTabSwitch(switchIdentifier)
+        )
+    }
+
+    case DiscardSuggestedTab(groupHash, tabHash) => {
+      val targetGroup = tabGroups.find(_.id == groupHash).get
+
+      computeHashCombinations(targetGroup)
+        .filter(_.contains(tabHash))
+        .foreach(switchIdentifier =>
+          switchMap ! DiscardTabSwitch(switchIdentifier)
+        )
+    }
 
     case message => log.info(s"Received message $message")
 
@@ -96,11 +124,25 @@ object HeuristicsActor {
 
   case class CurrentTabGroups(
       groupIndex: Map[Int, Int],
-      tabGroups: List[(String, Set[TabMeta])]
+      tabGroups: List[TabGroup]
   )
   case class UpdateCuratedGroups(tabGroups: List[TabGroup])
   case class TabSwitchHeuristicsResults(
       groupIndex: Map[Int, Int],
       tabGroups: List[Set[TabMeta]]
   )
+  case class AcceptSuggestion(groupHash: String)
+  case class DiscardSuggestion(groupHash: String)
+  case class DiscardSuggestedTab(groupHash: String, tabHash: String)
+
+  def computeHashCombinations(tabGroup: TabGroup): List[String] = {
+    val tabHashes = tabGroup.tabs.map(_.hash).toList
+
+    tabHashes
+      .combinations(2)
+      .map(_.sorted)
+      .map { case List(hash1, hash2) => s"${hash1}_${hash2}" }
+      .toList
+
+  }
 }

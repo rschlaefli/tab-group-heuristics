@@ -80,7 +80,8 @@ class StatisticsActor
           log.debug(s"Queried current tabs and tab groups from other actors")
 
           val openTabHashes = currentTabs.map(_.hashCode()).toSet
-          val clusterTabHashes = tabGroups.flatMap(_._2.map(_.hashCode())).toSet
+          val clusterTabHashes =
+            tabGroups.flatMap(_.tabs.map(_.hashCode())).toSet
 
           // compute the number of tabs that is currently open and not in any group
           // as well as the number of tabs that are not grouped

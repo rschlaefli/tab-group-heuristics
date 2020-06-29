@@ -12,8 +12,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
-import heuristics.HeuristicsActor.ComputeHeuristics
-import heuristics.HeuristicsActor.UpdateCuratedGroups
+import heuristics.HeuristicsActor._
 import main.MainActor.StartProcessing
 import main.MainActor.StopProcessing
 import messaging._
@@ -125,6 +124,15 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
       tabSwitches ! TabSwitch(prevTab, tab)
     }
+
+    case SuggestedGroupDiscardEvent(groupHash) =>
+      heuristics ! DiscardSuggestion(groupHash)
+
+    case SuggestedGroupAcceptEvent(groupHash) =>
+      heuristics ! AcceptSuggestion(groupHash)
+
+    case SuggestedTabDiscardEvent(groupHash, tabHash) =>
+      heuristics ! DiscardSuggestedTab(groupHash, tabHash)
 
     case message =>
       log.info(s"Received unknown TabEvent $message")

@@ -9,10 +9,10 @@ import java.math.BigInteger
 case class TabGroup(
     id: String,
     name: String,
-    tabs: List[TabMeta]
+    tabs: Set[TabMeta]
 ) {
-  def asTuple: (String, Set[TabMeta]) = {
-    (name, tabs.toSet)
+  def asTuple: (String, String, Set[TabMeta]) = {
+    (id, name, tabs.toSet)
   }
 }
 
@@ -21,8 +21,8 @@ object TabGroup {
   implicit val tabGroupEncoder: Encoder[TabGroup] = deriveEncoder
 
   def apply(tuple: (String, Set[TabMeta])): TabGroup = {
-    val tabHashes = tuple._2.map(_.hash).toArray.sorted.mkString
-    TabGroup(md5(tabHashes), tuple._1, tuple._2.toList)
+    val groupHash = md5(tuple._2.map(_.hash).toArray.sorted.mkString)
+    TabGroup(groupHash, tuple._1, tuple._2.toSet)
   }
 
   def md5(s: String): String = {

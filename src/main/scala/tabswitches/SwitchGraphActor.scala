@@ -111,9 +111,13 @@ object SwitchGraphActor extends LazyLogging {
       DateTime.now().getMillis() - params.expireAfter.toMillis
 
     tabSwitchMap.values
-      .filter(_.lastUsed >= expirationFrontier)
-      .filter(_.count >= params.minWeight)
-      .filter(switch => switch.tab1.url != switch.tab2.url)
+      .filter(switchData =>
+        switchData.lastUsed >= expirationFrontier
+          && switchData.count >= params.minWeight
+          && switchData.tab1.url != switchData.tab2.url
+        // simply ignore tab switches that were discarded
+          && !switchData.wasDiscarded.getOrElse(false)
+      )
       .map((switchData: TabSwitchMeta) =>
         Try {
           tabGraph.addVertex(switchData.tab1)

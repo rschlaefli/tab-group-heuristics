@@ -1,16 +1,67 @@
 package communitydetection
 
-case class CliqueStatistics(quality: Double = 0)
+import smile.math.MathEx._
+import tabswitches.TabMeta
+
+case class SummaryStatistics(min: Double, max: Double, mean: Double, sd: Double)
+
+case class CliqueStatistics(
+    averageWeight: Double = 0,
+    connectedness: Double = 0,
+    pageRank: Double = 0
+) {
+
+  def score =
+    0.25 * averageWeight
+  +0.5 * connectedness
+  +0.25 * pageRank
+
+  def asSeq = Array(averageWeight, connectedness, pageRank)
+
+  def normalized(
+      weightSummary: SummaryStatistics,
+      connSummary: SummaryStatistics,
+      prSummary: SummaryStatistics
+  ): CliqueStatistics = {
+    CliqueStatistics(
+      CliqueStatistics
+        .normalize(weightSummary.min, weightSummary.max, averageWeight),
+      CliqueStatistics
+        .normalize(connSummary.min, connSummary.max, connectedness),
+      CliqueStatistics
+        .normalize(prSummary.min, prSummary.max, pageRank)
+    )
+  }
+}
 
 object CliqueStatistics {
-  def apply(stats: Set[NodeStatistics]): CliqueStatistics = {
-    val (aggInWeight, aggOutWeight) = stats
-      .map(stat => (stat.inWeight, stat.outWeight))
-      .foldLeft((0d, 0d)) {
-        case (acc, tuple) =>
-          (acc._1 + tuple._1, acc._2 + tuple._2)
-      }
 
-    CliqueStatistics(aggInWeight / aggOutWeight)
+  def normalize(min: Double, max: Double, value: Double): Double = {
+    if (min == max) return value
+    (value - min) / (max - min)
   }
+
+  def standardize(mean: Double, sd: Double, value: Double): Double = {
+    if (sd == 0) return value
+    (value - mean) / sd
+  }
+
+  def computeSummaryStatistics(
+      groups: Array[(Set[TabMeta], CliqueStatistics)]
+  ): Array[SummaryStatistics] = {
+    groups
+      .map(_._2.asSeq)
+      .transpose
+      .map(arr => (SummaryStatistics(min(arr), max(arr), mean(arr), sd(arr))))
+  }
+
+  def normalize(groups: Array[(Set[TabMeta], CliqueStatistics)]) = {
+    val Array(weightSummary, connSummary, prSummary) =
+      CliqueStatistics.computeSummaryStatistics(groups)
+
+    groups.map(group =>
+      (group._1, group._2.normalized(weightSummary, connSummary, prSummary))
+    )
+  }
+
 }

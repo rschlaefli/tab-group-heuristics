@@ -13,8 +13,28 @@ case object PauseEvent extends TabEvent
 case object ResumeEvent extends TabEvent
 
 case object RefreshGroupsEvent extends TabEvent
-case class DiscardGroupEvent() extends TabEvent
-case class AcceptGroupEvent() extends TabEvent
+
+case class SuggestedGroupAcceptEvent(groupHash: String) extends TabEvent
+object SuggestedGroupAcceptEvent {
+  implicit val suggestedGroupAcceptEventDecoder
+      : Decoder[SuggestedGroupAcceptEvent] =
+    deriveDecoder
+}
+
+case class SuggestedGroupDiscardEvent(groupHash: String) extends TabEvent
+object SuggestedGroupDiscardEvent {
+  implicit val suggestedGroupDiscardEventDecoder
+      : Decoder[SuggestedGroupDiscardEvent] =
+    deriveDecoder
+}
+
+case class SuggestedTabDiscardEvent(groupHash: String, tabHash: String)
+    extends TabEvent
+object SuggestedTabDiscardEvent {
+  implicit val suggestedTabDiscardEventDecoder
+      : Decoder[SuggestedTabDiscardEvent] =
+    deriveDecoder
+}
 
 case class TabInitializationEvent(
     currentTabs: List[Tab]
@@ -137,6 +157,21 @@ object TabEvent extends LazyLogging {
       case "RESUME" => Some(ResumeEvent)
 
       case "REFRESH_GROUPS" => Some(RefreshGroupsEvent)
+
+      case "DISCARD_GROUP" =>
+        extractDecoderResult(
+          cursor.get[SuggestedGroupDiscardEvent]("payload")
+        )
+
+      case "DISCARD_TAB" =>
+        extractDecoderResult(
+          cursor.get[SuggestedTabDiscardEvent]("payload")
+        )
+
+      case "ACCEPT_GROUP" =>
+        extractDecoderResult(
+          cursor.get[SuggestedGroupAcceptEvent]("payload")
+        )
 
       case _ => {
         logger.warn(s"> Unknown tab event received: $action ($message)")

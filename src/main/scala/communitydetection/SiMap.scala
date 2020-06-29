@@ -48,7 +48,7 @@ case class SiMapParams(
 object SiMap
 // extends App
     extends LazyLogging
-    with CommunityDetector[(Map[TabMeta, Int], ListMatrix), SiMapParams] {
+    with CommunityDetector[(Map[TabMeta, Int], Graph), SiMapParams] {
 
   // val testGraph = loadTestGraph
 
@@ -58,7 +58,7 @@ object SiMap
       graph: TabSwitchActor.TabSwitchGraph,
       pageRank: Map[TabMeta, Double],
       params: SiMapParams
-  ): (Map[TabMeta, Int], ListMatrix) = {
+  ): (Map[TabMeta, Int], Graph) = {
 
     val index = mutable.Map[TabMeta, Int]()
 
@@ -103,34 +103,47 @@ object SiMap
 
     (
       index.toMap,
-      listMatrix
+      new Graph(listMatrix)
     )
   }
 
   override def computeGroups(
-      matrixAndIndex: (Map[TabMeta, Int], ListMatrix),
+      graphAndIndex: (Map[TabMeta, Int], Graph),
       params: SiMapParams
   ): List[(Set[TabMeta], CliqueStatistics)] = {
 
     // swap keys and values of the index
     // this allows us to lookup tab hashes by the node id
-    val index = matrixAndIndex._1.map(_.swap)
-
-    // construct a graph
-    val graph = new Graph(matrixAndIndex._2)
+    val index = graphAndIndex._1.map(_.swap)
 
     // compute the partitioning
     // returns a 1-D array with index=nodeId and value=partitionId
-    val detectedPartition = CPMap.detect(graph, params.asCPMapParameters)
+    val detectedPartition = CPMap
+      .detect(graphAndIndex._2, params.asCPMapParameters)
 
-    // compute the quality of the generated partitioning
-    val quality = CPMap
-      .evaluate(graph, detectedPartition, params.asCPMapParameters)
-    logger.info(s"overall quality $quality")
+    val groups = decomposeGraph(graphAndIndex._2, detectedPartition)
 
-    // decompose the graph into groups
-    val groups = graph
-      .decompose(detectedPartition)
+    val tabGroups = mapGraphsToTabGroups(groups, index)
+
+    val tabGroupsNormalized = CliqueStatistics.normalize(tabGroups)
+
+    tabGroupsNormalized.toList
+
+  }
+
+  /**
+    * Decompose the graph into partitions (i.e., subgraphs)
+    *
+    * @param graph
+    * @param partition
+    * @return
+    */
+  def decomposeGraph(
+      graph: Graph,
+      partition: Array[Int]
+  ): Array[(SimpleWeightedGraph[Int, DefaultWeightedEdge], Double)] = {
+    graph
+      .decompose(partition)
       .map(group => {
         val groupGraph = new SimpleWeightedGraph[Int, DefaultWeightedEdge](
           classOf[DefaultWeightedEdge]
@@ -139,6 +152,7 @@ object SiMap
         val rows = group.getRows().toList
         val columns = group.getColumns().toList
         val values = group.getValues().toList
+
         List(rows, columns, values).transpose.foreach {
           case List(nodeId1: Int, nodeId2: Int, weight: Float) => {
             groupGraph.addVertex(nodeId1)
@@ -148,27 +162,58 @@ object SiMap
           }
         }
 
-        groupGraph
+        (groupGraph, mean(group.getValues()))
       })
+  }
 
-    val tabGroups = groups
-      .map(group => {
+  /**
+    * Map partition graphs to tab groups with auxiliary statistics
+    *
+    * @param groups
+    * @param index
+    * @return
+    */
+  def mapGraphsToTabGroups(
+      groups: Array[(SimpleWeightedGraph[Int, DefaultWeightedEdge], Double)],
+      index: Map[Int, TabMeta]
+  ): Array[(Set[TabMeta], CliqueStatistics)] = {
 
-        val tabGroup = group
+    groups.flatMap {
+      case (groupGraph, meanWeight) if groupGraph.vertexSet.size > 1 =>
+        val tabGroup = groupGraph
           .vertexSet()
           .asScala
           .map(nodeId => index(nodeId))
           .toSet
 
         val stats =
-          CliqueStatistics(median(tabGroup.flatMap(_.pageRank).toArray))
+          CliqueStatistics(
+            averageWeight = meanWeight,
+            connectedness = computeConnectedness(groupGraph),
+            pageRank = median(tabGroup.flatMap(_.pageRank).toArray)
+          )
 
-        (tabGroup, stats)
-      })
-      .toList
+        Seq((tabGroup, stats))
 
-    tabGroups
+      case _ => Seq()
+    }
 
   }
 
+  /**
+    * Compute the Krackhardt connectedness of a graph
+    *
+    * @param graph
+    * @return
+    */
+  def computeConnectedness(
+      graph: SimpleWeightedGraph[_ <: Any, DefaultWeightedEdge]
+  ): Double = {
+    val numNodes = graph.vertexSet().size()
+
+    val numEdges = graph.edgeSet().size()
+    val maxPossibleEdges = (numNodes * (numNodes - 1)) / 2
+
+    numEdges.doubleValue / maxPossibleEdges.doubleValue()
+  }
 }

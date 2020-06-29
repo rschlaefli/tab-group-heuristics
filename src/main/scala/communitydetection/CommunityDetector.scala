@@ -122,11 +122,9 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
         params.maxGroupSize >= group._1.size
           && group._1.size >= params.minGroupSize
       )
-      .sortBy(_._2.quality)
+      .sortBy(_._2.score)
 
     val topK = filteredGroups.reverse.take(params.maxGroups)
-
-    logger.info(s"TopK $topK")
 
     topK
 

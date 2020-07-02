@@ -178,6 +178,14 @@ object StatisticsActor extends LazyLogging {
 
   case class TabSwitch(fromTab: Tab, toTab: Tab)
 
+  sealed class SuggestionInteraction
+  case class DiscardSuggestedGroup(groupHash: String)
+      extends SuggestionInteraction
+  case class DiscardSuggestedTab(groupHash: String)
+      extends SuggestionInteraction
+  case class AcceptSuggestedGroup(groupHash: String)
+      extends SuggestionInteraction
+
   def computeAggregateStatistics(
       dataPoints: List[DataPoint]
   ): StatisticsOutput = {

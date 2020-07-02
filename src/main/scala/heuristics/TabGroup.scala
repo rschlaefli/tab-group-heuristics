@@ -14,6 +14,14 @@ case class TabGroup(
   def asTuple: (String, String, Set[TabMeta]) = {
     (id, name, tabs.toSet)
   }
+
+  def withId(newId: String) = {
+    TabGroup(newId, name, tabs)
+  }
+
+  def withoutTabs(tabHashes: Set[String]) = {
+    TabGroup(id, name, tabs.filter(tab => !tabHashes.contains(tab.hash)))
+  }
 }
 
 object TabGroup {

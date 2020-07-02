@@ -20,6 +20,7 @@ import tabswitches.TabSwitchActor
 import tabswitches.TabSwitchActor.ComputeGroups
 import tabswitches.SwitchMapActor
 import tabswitches.SwitchMapActor.DiscardTabSwitch
+import com.typesafe.scalalogging.LazyLogging
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 
@@ -52,8 +53,8 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
     case UpdateCuratedGroups(tabGroups) => {
       curatedGroups = tabGroups
-      val (curatedIndex, _) = TabSwitchActor
-        .buildClusterIndex(curatedGroups.map(_.tabs))
+      val (curatedIndex, _) =
+        TabSwitchActor.buildClusterIndex(curatedGroups.map(_.tabs))
       log.info(s"Received tab groups $tabGroups with index $curatedIndex")
       curatedGroupIndex = curatedIndex
     }
@@ -63,18 +64,44 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
       log.debug("Starting heuristics computation")
 
+      val tabGroupHashIndex = computeHashIndex(curatedGroups)
+
       (tabSwitches ? ComputeGroups)
         .mapTo[TabSwitchHeuristicsResults]
         .foreach {
-          case TabSwitchHeuristicsResults(groupIndex, newTabGroups) => {
+          case TabSwitchHeuristicsResults(_, newTabGroups) => {
 
             if (newTabGroups.size > 0) {
               log.debug(s"Updating tab clusters in the webextension")
 
               val clustersWithTitles = newTabGroups.map(BasicKeywords.apply)
 
-              tabGroupIndex = groupIndex
-              tabGroups = clustersWithTitles.map(TabGroup.apply)
+              tabGroups = clustersWithTitles
+                .map(TabGroup.apply)
+                .flatMap(group => {
+                  val overlap =
+                    computeSuggestionOverlap(group, tabGroupHashIndex)
+
+                  val similarGroups = overlap
+                    .filter(_._2 >= 0.2d)
+                    .toList
+                    .sortBy(_._2)
+
+                  if (similarGroups.size > 0) {
+                    val head = similarGroups.head
+                    // if there is a superset for the suggested group, don't return it
+                    if (head._2 == 1d) None
+                    // otherwise, return the suggested group with the id of the existing match
+                    else Some(group.withId(head._1).withoutTabs(head._3))
+                  } else {
+                    // if there are no similar groups, return a new suggestion
+                    Some(group.withId(s"suggest-${group.id}"))
+                  }
+                })
+
+              tabGroupIndex = TabSwitchActor
+                .buildClusterIndex(tabGroups.map(_.tabs))
+                ._1
 
               NativeMessaging.writeNativeMessage(
                 HeuristicsAction.UPDATE_GROUPS(tabGroups.asJson)
@@ -93,9 +120,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     }
 
     case DiscardSuggestion(groupHash) => {
-      val targetGroup = tabGroups
-        .find(_.id == groupHash)
-        .get
+      val targetGroup = tabGroups.find(_.id == groupHash).get
 
       computeHashCombinations(targetGroup)
         .foreach(switchIdentifier =>
@@ -118,7 +143,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
   }
 }
 
-object HeuristicsActor {
+object HeuristicsActor extends LazyLogging {
   case object ComputeHeuristics
   case object QueryTabGroups
 
@@ -144,5 +169,36 @@ object HeuristicsActor {
       .map { case List(hash1, hash2) => s"${hash1}_${hash2}" }
       .toList
 
+  }
+
+  def computeHashIndex(tabGroups: List[TabGroup]): Map[String, Set[String]] = {
+    tabGroups
+      .map(tabGroup => (tabGroup.id, tabGroup.tabs.map(_.hash).toSet))
+      .toMap
+  }
+
+  def computeSuggestionOverlap(
+      suggestedGroup: TabGroup,
+      groupHashIndex: Map[String, Set[String]]
+  ): List[(String, Double, Set[String])] = {
+    val suggestedGroupHashes = suggestedGroup.tabs.map(_.hash)
+    groupHashIndex
+      .flatMap(entry => {
+        val intersection = entry._2.intersect(suggestedGroupHashes)
+        if (intersection.size > 0) {
+          Some(
+            (
+              entry._1,
+              // how many of the suggested groups are already present?
+              intersection.size.doubleValue / suggestedGroupHashes.size
+                .doubleValue(),
+              intersection
+            )
+          )
+        } else {
+          None
+        }
+      })
+      .toList
   }
 }

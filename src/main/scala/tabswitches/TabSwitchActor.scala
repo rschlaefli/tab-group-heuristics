@@ -12,12 +12,11 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import communitydetection._
-import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
+import heuristics.HeuristicsActor
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
 import tabstate.Tab
-
-import SwitchGraphActor.ComputeGraph
+import tabswitches.SwitchGraphActor
 
 class TabSwitchActor extends Actor with ActorLogging {
 
@@ -59,10 +58,10 @@ class TabSwitchActor extends Actor with ActorLogging {
 
     case ComputeGroups => {
       implicit val timeout = Timeout(10 seconds)
-      (switchGraph ? ComputeGraph)
-        .mapTo[CurrentSwitchGraph]
+      (switchGraph ? SwitchGraphActor.ComputeGraph)
+        .mapTo[TabSwitchActor.CurrentSwitchGraph]
         .map {
-          case CurrentSwitchGraph(graph) => {
+          case TabSwitchActor.CurrentSwitchGraph(graph) => {
             Watset(
               graph,
               WatsetParams(),
@@ -79,7 +78,7 @@ class TabSwitchActor extends Actor with ActorLogging {
             val (clusterIndex, clusters) =
               buildClusterIndexWithStats(simapClusters)
 
-            TabSwitchHeuristicsResults(clusterIndex, clusters)
+            HeuristicsActor.TabSwitchHeuristicsResults(clusterIndex, clusters)
           }
         }
         .pipeTo(sender())

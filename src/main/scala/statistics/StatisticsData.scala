@@ -11,6 +11,10 @@ class StatisticsData() {
   var tabSwitchFromGroup: List[Int] = List()
   var tabSwitchToGroup: List[Int] = List()
   var tabSwitchUngrouped: List[Int] = List()
+  var acceptedGroups: List[Int] = List()
+  var acceptedTabs: List[Int] = List()
+  var discardedGroups: List[Int] = List()
+  var discardedTabs: List[Int] = List()
 
   def withDataPoint(dataPoint: DataPoint): StatisticsData = {
     numCurrentTabs = numCurrentTabs.appended(dataPoint.currentlyOpenTabs)
@@ -25,6 +29,10 @@ class StatisticsData() {
     tabSwitchToGroup = tabSwitchToGroup.appended(dataPoint.switchesToGroups)
     tabSwitchUngrouped =
       tabSwitchUngrouped.appended(dataPoint.switchesOutsideGroups)
+    acceptedGroups = acceptedGroups.appended(dataPoint.acceptedGroups)
+    acceptedTabs = acceptedTabs.appended(dataPoint.acceptedTabs)
+    discardedGroups = discardedGroups.appended(dataPoint.discardedGroups)
+    discardedTabs = discardedTabs.appended(dataPoint.discardedTabs)
     return this
   }
 
@@ -37,11 +45,16 @@ class StatisticsData() {
       tabSwitchBetweenGroups.sum,
       tabSwitchFromGroup.sum,
       tabSwitchToGroup.sum,
-      tabSwitchUngrouped.sum
+      tabSwitchUngrouped.sum,
+      acceptedGroups.sum,
+      acceptedTabs.sum,
+      discardedGroups.sum,
+      discardedTabs.sum
     )
 
   override def toString(): String = {
-    s"StatisticsData($numCurrentTabs, $openTabsGrouped, $openTabsUngrouped, $tabSwitchWithinGroups " +
-      s"$tabSwitchBetweenGroups, $tabSwitchFromGroup, $tabSwitchToGroup, $tabSwitchUngrouped)"
+    s"StatisticsData($numCurrentTabs, $openTabsGrouped, $openTabsUngrouped, " +
+      s"$tabSwitchWithinGroups, $tabSwitchBetweenGroups, $tabSwitchFromGroup, $tabSwitchToGroup, $tabSwitchUngrouped, " +
+      s"$acceptedGroups, $acceptedTabs, $discardedGroups, $discardedTabs)"
   }
 }

@@ -51,10 +51,10 @@ class SwitchGraphActor extends Actor with ActorLogging {
       val switchMap = context.actorSelection(
         "/user/Main/Heuristics/TabSwitches/TabSwitchMap"
       )
-      (switchMap ? QueryTabSwitchMap)
-        .mapTo[CurrentSwitchMap]
+      (switchMap ? SwitchMapActor.QueryTabSwitchMap)
+        .mapTo[SwitchGraphActor.CurrentSwitchMap]
         .map {
-          case CurrentSwitchMap(tabSwitchMap) => {
+          case SwitchGraphActor.CurrentSwitchMap(tabSwitchMap) => {
             log.debug(
               s"Constructing tab switch graph from switch map with ${tabSwitchMap.size} entries"
             )
@@ -70,7 +70,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
               "/user/Main/Heuristics/TabSwitches/TabSwitchGraph"
             ) ! SwitchGraphActor.ExportGraph(tabSwitchGraph)
 
-            CurrentSwitchGraph(tabSwitchGraph)
+            TabSwitchActor.CurrentSwitchGraph(tabSwitchGraph)
           }
         }
         .pipeTo(sender())

@@ -8,9 +8,25 @@ case class StatisticsOutput(
     tabSwitchBetweenGroups: Int,
     tabSwitchFromGroup: Int,
     tabSwitchToGroup: Int,
-    tabSwitchUngrouped: Int
+    tabSwitchUngrouped: Int,
+    acceptedGroups: Int,
+    acceptedTabs: Int,
+    discardedGroups: Int,
+    discardedTabs: Int
 ) {
-  def asCsv: String = {
-    s"$numCurrentTabs;$openTabsGrouped;$openTabsUngrouped;$tabSwitchWithinGroups;$tabSwitchBetweenGroups;$tabSwitchFromGroup;$tabSwitchToGroup;$tabSwitchUngrouped"
-  }
+  def asCsv: String =
+    Seq(
+      numCurrentTabs,
+      openTabsGrouped,
+      openTabsUngrouped,
+      tabSwitchWithinGroups,
+      tabSwitchBetweenGroups,
+      tabSwitchFromGroup,
+      tabSwitchToGroup,
+      tabSwitchUngrouped,
+      acceptedGroups,
+      acceptedTabs,
+      discardedGroups,
+      discardedTabs
+    ).mkString(";")
 }

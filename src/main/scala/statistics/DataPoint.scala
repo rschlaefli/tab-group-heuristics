@@ -12,12 +12,26 @@ class DataPoint(
   var switchesToGroups: Int = 0
   var switchesOutsideGroups: Int = 0
 
+  var acceptedGroups: Int = 0
+  var acceptedTabs: Int = 0
+  var discardedGroups: Int = 0
+  var discardedTabs: Int = 0
+
   def updateSwitchStatistics(switchStatistics: SwitchStatistics): Unit = {
     switchesWithinGroups = switchStatistics.switchesWithinGroups
     switchesBetweenGroups = switchStatistics.switchesBetweenGroups
     switchesFromGroups = switchStatistics.switchesFromGroups
     switchesToGroups = switchStatistics.switchesToGroups
     switchesOutsideGroups = switchStatistics.switchesOutsideGroups
+  }
+
+  def updateSuggestionInteractionStatistics(
+      interactionStatistics: InteractionStatistics
+  ): Unit = {
+    acceptedGroups = interactionStatistics.acceptedGroups
+    acceptedTabs = interactionStatistics.acceptedTabs
+    discardedGroups = interactionStatistics.discardedGroups
+    discardedTabs = interactionStatistics.discardedTabs
   }
 
   override def toString(): String = {

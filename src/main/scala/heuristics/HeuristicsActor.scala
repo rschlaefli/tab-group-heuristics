@@ -74,9 +74,9 @@ class HeuristicsActor
       val tabGroupHashIndex = computeHashIndex(curatedGroups)
 
       (tabSwitches ? TabSwitchActor.ComputeGroups)
-        .mapTo[TabSwitchHeuristicsResults]
+        .mapTo[HeuristicsActor.TabSwitchHeuristicsResults]
         .foreach {
-          case TabSwitchHeuristicsResults(_, newTabGroups) => {
+          case HeuristicsActor.TabSwitchHeuristicsResults(_, newTabGroups) => {
 
             if (newTabGroups.size > 0) {
               log.debug(s"Updating tab clusters in the webextension")

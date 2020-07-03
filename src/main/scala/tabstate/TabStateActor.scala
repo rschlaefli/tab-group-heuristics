@@ -16,9 +16,9 @@ import heuristics.HeuristicsActor
 import main.MainActor
 import messaging._
 import org.slf4j.MarkerFactory
+import tabstate.CurrentTabsActor
 import tabstate.Tab
 import tabswitches.TabSwitchActor
-import tabstate.CurrentTabsActor
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
@@ -40,7 +40,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
 
     // query the webextension for the list of current tab groups repeatedly
-    context.system.scheduler.scheduleWithFixedDelay(10 seconds, 30 seconds) {
+    context.system.scheduler.scheduleWithFixedDelay(30 seconds, 30 seconds) {
       () => NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
     }(context.system.dispatcher)
   }
@@ -66,9 +66,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       currentTabs ! CurrentTabsActor.InitializeTabs(initialTabs)
 
       initialTabs.foreach(tab => {
-        val message =
-          s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-        logger.info(logToCsv, message)
+        logger.info(
+          logToCsv,
+          Seq("UPDATE", tab.id, tab.hash, tab.baseUrl, tab.normalizedTitle)
+            .mkString(";")
+        )
       })
     }
 
@@ -90,9 +92,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
         tabSwitchesRef <- tabSwitches.resolveOne
       } yield (tabSwitchesRef ! tabSwitch)
 
-      val message =
-        s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-      logger.info(logToCsv, message)
+      logger.info(
+        logToCsv,
+        Seq("UPDATE", tab.id, tab.hash, tab.baseUrl, tab.normalizedTitle)
+          .mkString(";")
+      )
     }
 
     case activateEvent: TabActivateEvent => {
@@ -102,7 +106,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     }
 
     case TabRemoveEvent(id, windowId) => {
-      logger.info(logToCsv, s"REMOVE;${id};${windowId};;")
+      logger.info(logToCsv, Seq("REMOVE", id, windowId).mkString(";"))
 
       currentTabs ! CurrentTabsActor.RemoveTab(id)
     }
@@ -112,9 +116,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     }
 
     case TabActivated(prevTab, tab) => {
-      val message =
-        s"ACTIVATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-      logger.info(logToCsv, message)
+      logger.info(
+        logToCsv,
+        Seq("ACTIVATE", tab.id, tab.hash, tab.baseUrl, tab.normalizedTitle)
+          .mkString(";")
+      )
 
       tabSwitches ! TabSwitchActor.TabSwitch(prevTab, tab)
     }
@@ -124,6 +130,13 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
     case SuggestedGroupAcceptEvent(groupHash) =>
       heuristics ! HeuristicsActor.AcceptSuggestion(groupHash)
+
+    case SuggestedTabAcceptEvent(groupHash, tabHash, targetGroup) =>
+      heuristics ! HeuristicsActor.AcceptSuggestedTab(
+        groupHash,
+        tabHash,
+        targetGroup
+      )
 
     case SuggestedTabDiscardEvent(groupHash, tabHash) =>
       heuristics ! HeuristicsActor.DiscardSuggestedTab(groupHash, tabHash)

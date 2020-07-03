@@ -61,6 +61,8 @@ class MainActor extends Actor with ActorLogging {
       NativeMessaging.writeNativeMessage(
         HeuristicsAction.HEURISTICS_STATUS("RUNNING")
       )
+
+      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
     }
 
     case StopProcessing => {

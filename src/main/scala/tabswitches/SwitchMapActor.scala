@@ -49,10 +49,19 @@ class SwitchMapActor
 
   override def receive: Actor.Receive = {
     case ProcessTabSwitch(prevTab, newTab) => {
-      val message =
-        s"${prevTab.id};${prevTab.hash};${prevTab.baseUrl};${prevTab.normalizedTitle};" +
-          s"${newTab.id};${newTab.hash};${newTab.baseUrl};${newTab.normalizedTitle}"
-      logger.info(logToCsv, message)
+      logger.info(
+        logToCsv,
+        Seq(
+          prevTab.id,
+          prevTab.hash,
+          prevTab.baseUrl,
+          prevTab.normalizedTitle,
+          newTab.id,
+          newTab.hash,
+          newTab.baseUrl,
+          newTab.normalizedTitle
+        ).mkString(";")
+      )
 
       // update the tab switch meta information
       val (meta1, meta2, switchIdentifier) =

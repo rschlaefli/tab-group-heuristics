@@ -158,7 +158,7 @@ class StatisticsActor
             if (isWindowExpired) {
               val statistics = computeAggregateStatistics(dataPoints)
               log.debug(s"Aggregated window $window: ${statistics}")
-              logger.info(logToCsv, s"$window;${statistics.asCsv}")
+              logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
             }
 
             !isWindowExpired
@@ -185,6 +185,7 @@ object StatisticsActor extends LazyLogging {
       extends SuggestionInteraction
   case class AcceptSuggestedGroup(groupHash: String)
       extends SuggestionInteraction
+  case class AcceptSuggestedTab(groupHash: String) extends SuggestionInteraction
 
   def computeAggregateStatistics(
       dataPoints: List[DataPoint]

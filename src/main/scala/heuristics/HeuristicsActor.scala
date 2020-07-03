@@ -16,11 +16,11 @@ import groupnaming.BasicKeywords
 import heuristics.TabGroup
 import io.circe.syntax._
 import messaging.NativeMessaging
+import org.slf4j.MarkerFactory
+import statistics.StatisticsActor
 import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import org.slf4j.MarkerFactory
-import statistics.StatisticsActor
 
 class HeuristicsActor
     extends Actor
@@ -124,7 +124,36 @@ class HeuristicsActor
       sender() ! HeuristicsActor.CurrentTabGroups(tabGroupIndex, tabGroups)
 
     case AcceptSuggestion(groupHash) => {
+      val targetGroup = tabGroups.find(_.id == groupHash).get
+
       statistics ! StatisticsActor.AcceptSuggestedGroup(groupHash)
+
+      logger.info(
+        logToCsv,
+        Seq("ACCEPT_GROUP", groupHash, targetGroup.name, targetGroup.tabs.size)
+          .mkString(";")
+      )
+
+    }
+
+    case AcceptSuggestedTab(sourceGroupHash, tabHash, targetGroupHash) => {
+      val sourceGroup = tabGroups.find(_.id == sourceGroupHash).get
+      val targetGroup = curatedGroups.find(_.id == targetGroupHash)
+      val tab = sourceGroup.tabs.find(_.hash == tabHash)
+
+      statistics ! StatisticsActor.AcceptSuggestedTab(sourceGroupHash)
+
+      logger.info(
+        logToCsv,
+        Seq(
+          "ACCEPT_TAB",
+          sourceGroupHash,
+          sourceGroup.name,
+          tabHash,
+          tab.map(_.title).getOrElse("NONE"),
+          targetGroup.map(_.name).getOrElse("NONE")
+        ).mkString(";")
+      )
     }
 
     case DiscardSuggestion(groupHash) => {
@@ -136,10 +165,17 @@ class HeuristicsActor
         .foreach(switchIdentifier =>
           switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
         )
+
+      logger.info(
+        logToCsv,
+        Seq("DISCARD_GROUP", groupHash, targetGroup.name, targetGroup.tabs.size)
+          .mkString(";")
+      )
     }
 
     case DiscardSuggestedTab(groupHash, tabHash) => {
       val targetGroup = tabGroups.find(_.id == groupHash).get
+      val targetTab = targetGroup.tabs.find(_.hash == tabHash)
 
       statistics ! StatisticsActor.DiscardSuggestedTab(groupHash)
 
@@ -148,6 +184,17 @@ class HeuristicsActor
         .foreach(switchIdentifier =>
           switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
         )
+
+      logger.info(
+        logToCsv,
+        Seq(
+          "DISCARD_TAB",
+          groupHash,
+          targetGroup.name,
+          tabHash,
+          targetTab.map(_.title).getOrElse("NONE")
+        ).mkString(";")
+      )
     }
 
     case message => log.info(s"Received message $message")
@@ -169,6 +216,11 @@ object HeuristicsActor extends LazyLogging {
       tabGroups: List[Set[TabMeta]]
   )
   case class AcceptSuggestion(groupHash: String)
+  case class AcceptSuggestedTab(
+      groupHash: String,
+      tabHash: String,
+      targetGroup: String
+  )
   case class DiscardSuggestion(groupHash: String)
   case class DiscardSuggestedTab(groupHash: String, tabHash: String)
 

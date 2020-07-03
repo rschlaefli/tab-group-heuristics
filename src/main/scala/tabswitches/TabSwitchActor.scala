@@ -15,10 +15,8 @@ import communitydetection._
 import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
-import org.slf4j.MarkerFactory
 import tabstate.Tab
 
-import SwitchMapActor.ProcessTabSwitch
 import SwitchGraphActor.ComputeGraph
 
 class TabSwitchActor extends Actor with ActorLogging {
@@ -29,8 +27,6 @@ class TabSwitchActor extends Actor with ActorLogging {
 
   val switchMap = context.actorOf(Props[SwitchMapActor], "TabSwitchMap")
   val switchGraph = context.actorOf(Props[SwitchGraphActor], "TabSwitchGraph")
-
-  val logToCsv = MarkerFactory.getMarker("CSV")
 
   var temp: Option[Tab] = None
 
@@ -67,10 +63,18 @@ class TabSwitchActor extends Actor with ActorLogging {
         .mapTo[CurrentSwitchGraph]
         .map {
           case CurrentSwitchGraph(graph) => {
-            Watset(graph, WatsetParams(), "clusters_watset.txt")
+            Watset(
+              graph,
+              WatsetParams(),
+              s"clusters_watset_${java.time.LocalDate.now}.txt"
+            )
 
             val simapClusters =
-              SiMap(graph, SiMapParams(), "clusters_simap.txt")
+              SiMap(
+                graph,
+                SiMapParams(),
+                s"clusters_simap_${java.time.LocalDate.now}.txt"
+              )
 
             val (clusterIndex, clusters) =
               buildClusterIndexWithStats(simapClusters)

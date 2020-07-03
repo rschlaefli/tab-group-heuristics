@@ -9,8 +9,6 @@ import akka.actor.ActorLogging
 import akka.actor.Timers
 import tabstate.Tab
 
-import TabStateActor._
-
 class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
   import CurrentTabsActor._

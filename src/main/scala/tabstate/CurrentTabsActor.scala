@@ -27,7 +27,7 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
     case UpdateTab(tab) => {
       val prevTabState = currentTabs.get(tab.id)
       currentTabs(tab.id) = tab
-      sender() ! TabUpdated(prevTabState, tab)
+      sender() ! TabStateActor.TabUpdated(prevTabState, tab)
     }
 
     case activateEvent: ActivateTab => {
@@ -42,10 +42,11 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
         activeWindow = windowId
 
         // let the sender know that we have completed tab activation
-        context.actorSelection("/user/Main/TabState") ! TabActivated(
-          previousTab,
-          currentTabs(tabId)
-        )
+        context.actorSelection("/user/Main/TabState") ! TabStateActor
+          .TabActivated(
+            previousTab,
+            currentTabs(tabId)
+          )
       } else {
         timers.startSingleTimer(
           s"activate-$tabId",
@@ -64,10 +65,14 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
     }
 
     case QueryTabs =>
-      sender() ! CurrentTabs(currentTabs.values.toList)
+      sender() ! CurrentTabsActor.CurrentTabs(currentTabs.values.toList)
 
     case QueryActiveTab =>
-      sender() ! ActiveTab(currentTabs.get(activeTab), activeTab, activeWindow)
+      sender() ! CurrentTabsActor.ActiveTab(
+        currentTabs.get(activeTab),
+        activeTab,
+        activeWindow
+      )
   }
 
 }

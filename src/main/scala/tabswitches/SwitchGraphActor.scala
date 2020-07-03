@@ -68,7 +68,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
 
             context.actorSelection(
               "/user/Main/Heuristics/TabSwitches/TabSwitchGraph"
-            ) ! ExportGraph(tabSwitchGraph)
+            ) ! SwitchGraphActor.ExportGraph(tabSwitchGraph)
 
             CurrentSwitchGraph(tabSwitchGraph)
           }

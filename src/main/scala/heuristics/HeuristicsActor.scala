@@ -16,14 +16,21 @@ import groupnaming.BasicKeywords
 import heuristics.TabGroup
 import io.circe.syntax._
 import messaging.NativeMessaging
-import tabswitches.SwitchMapActor.DiscardTabSwitch
+import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
-import tabswitches.TabSwitchActor.ComputeGroups
+import org.slf4j.MarkerFactory
+import statistics.StatisticsActor
 
-class HeuristicsActor extends Actor with ActorLogging with Timers {
+class HeuristicsActor
+    extends Actor
+    with ActorLogging
+    with Timers
+    with LazyLogging {
 
   import HeuristicsActor._
+
+  val logToCsv = MarkerFactory.getMarker("CSV")
 
   implicit val executionContext = context.dispatcher
   implicit val stdout = new BufferedOutputStream(System.out)
@@ -31,6 +38,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
   val tabSwitches = context.actorOf(Props[TabSwitchActor], "TabSwitches")
   val switchMap = context
     .actorSelection("/user/Main/Heuristics/TabSwitches/TabSwitchMap")
+  val statistics = context.actorSelection("/user/Main/Statistics")
 
   var tabGroupIndex = Map[Int, Int]()
   var tabGroups = List[TabGroup]()
@@ -44,7 +52,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
     timers.startTimerAtFixedRate(
       "heuristics",
       ComputeHeuristics,
-      5 minutes
+      3 minutes
     )
   }
 
@@ -65,7 +73,7 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
 
       val tabGroupHashIndex = computeHashIndex(curatedGroups)
 
-      (tabSwitches ? ComputeGroups)
+      (tabSwitches ? TabSwitchActor.ComputeGroups)
         .mapTo[TabSwitchHeuristicsResults]
         .foreach {
           case TabSwitchHeuristicsResults(_, newTabGroups) => {
@@ -112,28 +120,33 @@ class HeuristicsActor extends Actor with ActorLogging with Timers {
         }
     }
 
-    case QueryTabGroups => sender() ! CurrentTabGroups(tabGroupIndex, tabGroups)
+    case QueryTabGroups =>
+      sender() ! HeuristicsActor.CurrentTabGroups(tabGroupIndex, tabGroups)
 
     case AcceptSuggestion(groupHash) => {
-      log.debug(s"Accepting suggested group hash $groupHash")
+      statistics ! StatisticsActor.AcceptSuggestedGroup(groupHash)
     }
 
     case DiscardSuggestion(groupHash) => {
       val targetGroup = tabGroups.find(_.id == groupHash).get
 
+      statistics ! StatisticsActor.DiscardSuggestedGroup(groupHash)
+
       computeHashCombinations(targetGroup)
         .foreach(switchIdentifier =>
-          switchMap ! DiscardTabSwitch(switchIdentifier)
+          switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
         )
     }
 
     case DiscardSuggestedTab(groupHash, tabHash) => {
       val targetGroup = tabGroups.find(_.id == groupHash).get
 
+      statistics ! StatisticsActor.DiscardSuggestedTab(groupHash)
+
       computeHashCombinations(targetGroup)
         .filter(_.contains(tabHash))
         .foreach(switchIdentifier =>
-          switchMap ! DiscardTabSwitch(switchIdentifier)
+          switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
         )
     }
 

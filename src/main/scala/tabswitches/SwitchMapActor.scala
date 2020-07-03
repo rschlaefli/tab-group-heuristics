@@ -12,10 +12,9 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.slf4j.MarkerFactory
 import persistence.Persistence
-import statistics.StatisticsActor.TabSwitch
+import statistics.StatisticsActor
 import tabstate.Tab
-
-import SwitchGraphActor.CurrentSwitchMap
+import tabswitches.SwitchGraphActor
 
 class SwitchMapActor
     extends Actor
@@ -45,7 +44,7 @@ class SwitchMapActor
 
   override def postStop(): Unit = {
     log.info("Persisting tab switch map due to processing stop")
-    self ! PersistSwitchMap
+    self ! SwitchMapActor.PersistSwitchMap
   }
 
   override def receive: Actor.Receive = {
@@ -61,11 +60,11 @@ class SwitchMapActor
       tabSwitches.updateWith(switchIdentifier)(TabSwitchMeta(_, meta1, meta2))
 
       // push the tab switch to statistics
-      statistics ! TabSwitch(prevTab, newTab)
+      statistics ! StatisticsActor.TabSwitch(prevTab, newTab)
     }
 
     case QueryTabSwitchMap =>
-      sender() ! CurrentSwitchMap(tabSwitches.toMap)
+      sender() ! SwitchGraphActor.CurrentSwitchMap(tabSwitches.toMap)
 
     case PersistSwitchMap =>
       Persistence.persistJson("tab_switches.json", tabSwitches.asJson)

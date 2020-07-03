@@ -43,7 +43,7 @@ class TabSwitchActor extends Actor with ActorLogging {
       (switchFromIrrelevantTab, switchToIrrelevantTab) match {
         // process a normal tab switch
         case (false, false) if prevTab.hash != newTab.hash => {
-          switchMap ! ProcessTabSwitch(prevTab, newTab)
+          switchMap ! SwitchMapActor.ProcessTabSwitch(prevTab, newTab)
           temp = None
         }
         // process a switch to an irrelevant tab
@@ -52,7 +52,8 @@ class TabSwitchActor extends Actor with ActorLogging {
         }
         // process a switch from an irrelevant tab
         case (true, false) => {
-          if (temp.isDefined) switchMap ! ProcessTabSwitch(temp.get, newTab)
+          if (temp.isDefined)
+            switchMap ! SwitchMapActor.ProcessTabSwitch(temp.get, newTab)
           temp = None
         }
         case _ =>

@@ -192,6 +192,16 @@ class StatisticsActor
 
     }
 
+    case AggregateNow => {
+      aggregationWindows.foreach {
+        case (window, dataPoints) => {
+          val statistics = computeAggregateStatistics(dataPoints)
+          log.debug(s"Aggregated window $window: ${statistics}")
+          logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
+        }
+      }
+    }
+
     case message => log.info(s"Received unknown message ${message.toString}")
   }
 
@@ -199,6 +209,7 @@ class StatisticsActor
 
 object StatisticsActor extends LazyLogging {
   case object AggregateWindows
+  case object AggregateNow
 
   case class TabSwitch(fromTab: Tab, toTab: Tab)
 

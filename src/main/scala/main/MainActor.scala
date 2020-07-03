@@ -70,7 +70,11 @@ class MainActor extends Actor with ActorLogging {
       if (heuristics.isDefined) heuristics.get ! PoisonPill
 
       val statistics = context.child("Statistics")
-      if (statistics.isDefined) statistics.get ! PoisonPill
+      if (statistics.isDefined) {
+        statistics.get ! StatisticsActor.AggregateWindows
+        statistics.get ! StatisticsActor.AggregateNow
+        statistics.get ! PoisonPill
+      }
 
       NativeMessaging.writeNativeMessage(
         HeuristicsAction.HEURISTICS_STATUS("STOPPED")

@@ -11,16 +11,15 @@ import akka.actor.Props
 import akka.actor.Timers
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.scalalogging.LazyLogging
 import groupnaming.BasicKeywords
 import heuristics.TabGroup
 import io.circe.syntax._
 import messaging.NativeMessaging
+import tabswitches.SwitchMapActor.DiscardTabSwitch
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 import tabswitches.TabSwitchActor.ComputeGroups
-import tabswitches.SwitchMapActor
-import tabswitches.SwitchMapActor.DiscardTabSwitch
-import com.typesafe.scalalogging.LazyLogging
 
 class HeuristicsActor extends Actor with ActorLogging with Timers {
 

@@ -1,10 +1,11 @@
 package heuristics
 
+import java.math.BigInteger
+import java.security.MessageDigest
+
 import io.circe._
 import io.circe.generic.semiauto._
 import tabswitches.TabMeta
-import java.security.MessageDigest
-import java.math.BigInteger
 
 case class TabGroup(
     id: String,

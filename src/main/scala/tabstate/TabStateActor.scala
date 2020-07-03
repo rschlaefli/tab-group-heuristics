@@ -12,19 +12,13 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
-import heuristics.HeuristicsActor.ComputeHeuristics
-import heuristics.HeuristicsActor.UpdateCuratedGroups
-import main.MainActor.StartProcessing
-import main.MainActor.StopProcessing
+import heuristics.HeuristicsActor
+import main.MainActor
 import messaging._
 import org.slf4j.MarkerFactory
+import tabstate.CurrentTabsActor
 import tabstate.Tab
-import tabswitches.TabSwitchActor.TabSwitch
-
-import CurrentTabsActor.InitializeTabs
-import CurrentTabsActor.UpdateTab
-import CurrentTabsActor.ActivateTab
-import CurrentTabsActor.RemoveTab
+import tabswitches.TabSwitchActor
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
@@ -46,7 +40,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
 
     // query the webextension for the list of current tab groups repeatedly
-    context.system.scheduler.scheduleWithFixedDelay(10 seconds, 1 minute) {
+    context.system.scheduler.scheduleWithFixedDelay(30 seconds, 30 seconds) {
       () => NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
     }(context.system.dispatcher)
   }
@@ -55,26 +49,28 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
     case RefreshGroupsEvent => {
       log.info("Refreshing groups")
-      heuristics ! ComputeHeuristics
+      heuristics ! HeuristicsActor.ComputeHeuristics
     }
 
     case PauseEvent => {
       log.info("Pausing processing")
-      context.parent ! StopProcessing
+      context.parent ! MainActor.StopProcessing
     }
 
     case ResumeEvent => {
       log.info("Resuming processing")
-      context.parent ! StartProcessing
+      context.parent ! MainActor.StartProcessing
     }
 
     case TabInitializationEvent(initialTabs) => {
-      currentTabs ! InitializeTabs(initialTabs)
+      currentTabs ! CurrentTabsActor.InitializeTabs(initialTabs)
 
       initialTabs.foreach(tab => {
-        val message =
-          s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-        logger.info(logToCsv, message)
+        logger.info(
+          logToCsv,
+          Seq("UPDATE", tab.id, tab.hash, tab.baseUrl, tab.normalizedTitle)
+            .mkString(";")
+        )
       })
     }
 
@@ -84,10 +80,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
       implicit val timeout = Timeout(1 seconds)
 
-      val tabSwitchFuture = (currentTabs ? UpdateTab(tab))
-        .mapTo[TabUpdated]
+      val tabSwitchFuture = (currentTabs ? CurrentTabsActor.UpdateTab(tab))
+        .mapTo[TabStateActor.TabUpdated]
         .map {
-          case TabUpdated(prevTab, newTab) => TabSwitch(prevTab, newTab)
+          case TabStateActor.TabUpdated(prevTab, newTab) =>
+            TabSwitchActor.TabSwitch(prevTab, newTab)
         }
 
       for {
@@ -95,36 +92,54 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
         tabSwitchesRef <- tabSwitches.resolveOne
       } yield (tabSwitchesRef ! tabSwitch)
 
-      val message =
-        s"UPDATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-      logger.info(logToCsv, message)
+      logger.info(
+        logToCsv,
+        Seq("UPDATE", tab.id, tab.hash, tab.baseUrl, tab.normalizedTitle)
+          .mkString(";")
+      )
     }
 
     case activateEvent: TabActivateEvent => {
       val TabActivateEvent(id, windowId, previousTabId) = activateEvent
 
-      currentTabs ! ActivateTab(previousTabId, id, windowId)
+      currentTabs ! CurrentTabsActor.ActivateTab(previousTabId, id, windowId)
     }
 
     case TabRemoveEvent(id, windowId) => {
-      logger.info(logToCsv, s"REMOVE;${id};;;")
+      logger.info(logToCsv, Seq("REMOVE", id, windowId).mkString(";"))
 
-      currentTabs ! RemoveTab(id)
+      currentTabs ! CurrentTabsActor.RemoveTab(id)
     }
 
     case TabGroupUpdateEvent(tabGroups) => {
-      logger.info(logToCsv, s"UPDATE_GROUPS;;;;")
-
-      heuristics ! UpdateCuratedGroups(tabGroups)
+      heuristics ! HeuristicsActor.UpdateCuratedGroups(tabGroups)
     }
 
     case TabActivated(prevTab, tab) => {
-      val message =
-        s"ACTIVATE;${tab.id};${tab.hash};${tab.baseUrl};${tab.normalizedTitle}"
-      logger.info(logToCsv, message)
+      logger.info(
+        logToCsv,
+        Seq("ACTIVATE", tab.id, tab.hash, tab.baseUrl, tab.normalizedTitle)
+          .mkString(";")
+      )
 
-      tabSwitches ! TabSwitch(prevTab, tab)
+      tabSwitches ! TabSwitchActor.TabSwitch(prevTab, tab)
     }
+
+    case SuggestedGroupDiscardEvent(groupHash) =>
+      heuristics ! HeuristicsActor.DiscardSuggestion(groupHash)
+
+    case SuggestedGroupAcceptEvent(groupHash) =>
+      heuristics ! HeuristicsActor.AcceptSuggestion(groupHash)
+
+    case SuggestedTabAcceptEvent(groupHash, tabHash, targetGroup) =>
+      heuristics ! HeuristicsActor.AcceptSuggestedTab(
+        groupHash,
+        tabHash,
+        targetGroup
+      )
+
+    case SuggestedTabDiscardEvent(groupHash, tabHash) =>
+      heuristics ! HeuristicsActor.DiscardSuggestedTab(groupHash, tabHash)
 
     case message =>
       log.info(s"Received unknown TabEvent $message")

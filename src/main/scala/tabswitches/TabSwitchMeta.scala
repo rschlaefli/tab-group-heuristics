@@ -16,8 +16,20 @@ case class TabSwitchMeta(
     count: Int,
     lastUsed: Long,
     sameOrigin: Option[Boolean],
-    urlSimilarity: Option[Float]
-)
+    urlSimilarity: Option[Float],
+    wasDiscarded: Option[Boolean]
+) {
+  def discarded =
+    TabSwitchMeta(
+      tab1,
+      tab2,
+      count,
+      lastUsed,
+      sameOrigin,
+      urlSimilarity,
+      Some(true)
+    )
+}
 
 object TabSwitchMeta {
   implicit val encoder: Encoder[TabSwitchMeta] = deriveEncoder
@@ -27,7 +39,8 @@ object TabSwitchMeta {
       tab1: TabMeta,
       tab2: TabMeta,
       count: Int = 1,
-      lastUsed: Option[Long] = None
+      lastUsed: Option[Long] = None,
+      wasDiscarded: Option[Boolean] = Some(false)
   ): TabSwitchMeta = {
 
     val (sameOrigin, urlSimilarity) = Try {
@@ -54,7 +67,8 @@ object TabSwitchMeta {
       count = count,
       lastUsed = lastUsed getOrElse DateTime.now().getMillis(),
       sameOrigin = sameOrigin,
-      urlSimilarity = urlSimilarity
+      urlSimilarity = urlSimilarity,
+      wasDiscarded = wasDiscarded
     )
   }
 
@@ -64,8 +78,16 @@ object TabSwitchMeta {
       tab2: TabMeta
   ): Option[TabSwitchMeta] =
     existingMeta match {
-      case Some(existing) => Some(TabSwitchMeta(tab1, tab2, existing.count + 1))
-      case None           => Some(TabSwitchMeta(tab1, tab2))
+      case Some(existing) =>
+        Some(
+          TabSwitchMeta(
+            tab1,
+            tab2,
+            count = existing.count + 1,
+            wasDiscarded = existing.wasDiscarded
+          )
+        )
+      case None => Some(TabSwitchMeta(tab1, tab2))
     }
 
   def clone(existingMeta: TabSwitchMeta): TabSwitchMeta = {
@@ -73,7 +95,8 @@ object TabSwitchMeta {
       tab1 = existingMeta.tab1,
       tab2 = existingMeta.tab2,
       count = existingMeta.count,
-      lastUsed = Some(existingMeta.lastUsed)
+      lastUsed = Some(existingMeta.lastUsed),
+      wasDiscarded = existingMeta.wasDiscarded
     )
   }
 }

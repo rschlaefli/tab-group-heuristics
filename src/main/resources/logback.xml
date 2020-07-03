@@ -56,6 +56,26 @@
     </rollingPolicy>
   </appender>
 
+  <appender name="HeuristicsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>heuristics.csv</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date;%msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker != null &amp;&amp; marker.contains("CSV")</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>heuristics.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
   <appender name="StatisticsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>statistics.csv</file>
     <append>true</append>
@@ -134,7 +154,9 @@
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="heuristics.HeuristicsActor" level="debug" />
+  <logger name="heuristics.HeuristicsActor" level="info">
+    <appender-ref ref="HeuristicsCSV" />
+  </logger>
 
   <logger name="messaging.NativeMessaging" level="info" />
 

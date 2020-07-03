@@ -12,14 +12,11 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import communitydetection._
-import heuristics.HeuristicsActor.TabSwitchHeuristicsResults
+import heuristics.HeuristicsActor
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultWeightedEdge
-import org.slf4j.MarkerFactory
 import tabstate.Tab
-
-import SwitchMapActor.ProcessTabSwitch
-import SwitchGraphActor.ComputeGraph
+import tabswitches.SwitchGraphActor
 
 class TabSwitchActor extends Actor with ActorLogging {
 
@@ -29,8 +26,6 @@ class TabSwitchActor extends Actor with ActorLogging {
 
   val switchMap = context.actorOf(Props[SwitchMapActor], "TabSwitchMap")
   val switchGraph = context.actorOf(Props[SwitchGraphActor], "TabSwitchGraph")
-
-  val logToCsv = MarkerFactory.getMarker("CSV")
 
   var temp: Option[Tab] = None
 
@@ -43,7 +38,7 @@ class TabSwitchActor extends Actor with ActorLogging {
       (switchFromIrrelevantTab, switchToIrrelevantTab) match {
         // process a normal tab switch
         case (false, false) if prevTab.hash != newTab.hash => {
-          switchMap ! ProcessTabSwitch(prevTab, newTab)
+          switchMap ! SwitchMapActor.ProcessTabSwitch(prevTab, newTab)
           temp = None
         }
         // process a switch to an irrelevant tab
@@ -52,7 +47,8 @@ class TabSwitchActor extends Actor with ActorLogging {
         }
         // process a switch from an irrelevant tab
         case (true, false) => {
-          if (temp.isDefined) switchMap ! ProcessTabSwitch(temp.get, newTab)
+          if (temp.isDefined)
+            switchMap ! SwitchMapActor.ProcessTabSwitch(temp.get, newTab)
           temp = None
         }
         case _ =>
@@ -62,19 +58,27 @@ class TabSwitchActor extends Actor with ActorLogging {
 
     case ComputeGroups => {
       implicit val timeout = Timeout(10 seconds)
-      (switchGraph ? ComputeGraph)
-        .mapTo[CurrentSwitchGraph]
+      (switchGraph ? SwitchGraphActor.ComputeGraph)
+        .mapTo[TabSwitchActor.CurrentSwitchGraph]
         .map {
-          case CurrentSwitchGraph(graph) => {
-            Watset(graph, WatsetParams(), "clusters_watset.txt")
+          case TabSwitchActor.CurrentSwitchGraph(graph) => {
+            Watset(
+              graph,
+              WatsetParams(),
+              s"clusters_watset_${java.time.LocalDate.now}.txt"
+            )
 
             val simapClusters =
-              SiMap(graph, SiMapParams(), "clusters_simap.txt")
+              SiMap(
+                graph,
+                SiMapParams(),
+                s"clusters_simap_${java.time.LocalDate.now}.txt"
+              )
 
             val (clusterIndex, clusters) =
               buildClusterIndexWithStats(simapClusters)
 
-            TabSwitchHeuristicsResults(clusterIndex, clusters)
+            HeuristicsActor.TabSwitchHeuristicsResults(clusterIndex, clusters)
           }
         }
         .pipeTo(sender())

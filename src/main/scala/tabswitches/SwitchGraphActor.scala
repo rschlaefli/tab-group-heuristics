@@ -51,10 +51,10 @@ class SwitchGraphActor extends Actor with ActorLogging {
       val switchMap = context.actorSelection(
         "/user/Main/Heuristics/TabSwitches/TabSwitchMap"
       )
-      (switchMap ? QueryTabSwitchMap)
-        .mapTo[CurrentSwitchMap]
+      (switchMap ? SwitchMapActor.QueryTabSwitchMap)
+        .mapTo[SwitchGraphActor.CurrentSwitchMap]
         .map {
-          case CurrentSwitchMap(tabSwitchMap) => {
+          case SwitchGraphActor.CurrentSwitchMap(tabSwitchMap) => {
             log.debug(
               s"Constructing tab switch graph from switch map with ${tabSwitchMap.size} entries"
             )
@@ -68,9 +68,9 @@ class SwitchGraphActor extends Actor with ActorLogging {
 
             context.actorSelection(
               "/user/Main/Heuristics/TabSwitches/TabSwitchGraph"
-            ) ! ExportGraph(tabSwitchGraph)
+            ) ! SwitchGraphActor.ExportGraph(tabSwitchGraph)
 
-            CurrentSwitchGraph(tabSwitchGraph)
+            TabSwitchActor.CurrentSwitchGraph(tabSwitchGraph)
           }
         }
         .pipeTo(sender())
@@ -111,9 +111,13 @@ object SwitchGraphActor extends LazyLogging {
       DateTime.now().getMillis() - params.expireAfter.toMillis
 
     tabSwitchMap.values
-      .filter(_.lastUsed >= expirationFrontier)
-      .filter(_.count >= params.minWeight)
-      .filter(switch => switch.tab1.url != switch.tab2.url)
+      .filter(switchData =>
+        switchData.lastUsed >= expirationFrontier
+          && switchData.count >= params.minWeight
+          && switchData.tab1.url != switchData.tab2.url
+        // simply ignore tab switches that were discarded
+          && !switchData.wasDiscarded.getOrElse(false)
+      )
       .map((switchData: TabSwitchMeta) =>
         Try {
           tabGraph.addVertex(switchData.tab1)

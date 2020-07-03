@@ -21,6 +21,17 @@ object SuggestedGroupAcceptEvent {
     deriveDecoder
 }
 
+case class SuggestedTabAcceptEvent(
+    groupHash: String,
+    tabHash: String,
+    targetGroup: String
+) extends TabEvent
+object SuggestedTabAcceptEvent {
+  implicit val suggestedTabAcceptEventDecoder
+      : Decoder[SuggestedTabAcceptEvent] =
+    deriveDecoder
+}
+
 case class SuggestedGroupDiscardEvent(groupHash: String) extends TabEvent
 object SuggestedGroupDiscardEvent {
   implicit val suggestedGroupDiscardEventDecoder
@@ -173,15 +184,16 @@ object TabEvent extends LazyLogging {
           cursor.get[SuggestedGroupAcceptEvent]("payload")
         )
 
+      case "ACCEPT_TAB" =>
+        extractDecoderResult(
+          cursor.get[SuggestedTabAcceptEvent]("payload")
+        )
+
       case _ => {
         logger.warn(s"> Unknown tab event received: $action ($message)")
         None
       }
 
-      // TODO: case MOVE
-      // TODO: case ATTACH
-      // TODO: case GROUP_ASSOC
-      // TODO: case GROUP_REMOVE
     }
 
   }

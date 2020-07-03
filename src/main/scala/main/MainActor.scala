@@ -25,7 +25,7 @@ class MainActor extends Actor with ActorLogging {
   val tabState = context.actorOf(Props[TabStateActor], "TabState")
 
   override def preStart(): Unit = {
-    self ! StartProcessing
+    self ! MainActor.StartProcessing
   }
 
   override def receive: Actor.Receive = {
@@ -33,12 +33,12 @@ class MainActor extends Actor with ActorLogging {
     // forward tab events to the tab state processor
     case event: TabEvent => {
       tabState ! event
-      sender() ! StreamAck
+      sender() ! Main.StreamAck
     }
 
     case StreamInit =>
       log.info("Stream initialized")
-      sender() ! StreamAck
+      sender() ! Main.StreamAck
 
     case StreamComplete =>
       log.info("Stream complete")
@@ -61,6 +61,8 @@ class MainActor extends Actor with ActorLogging {
       NativeMessaging.writeNativeMessage(
         HeuristicsAction.HEURISTICS_STATUS("RUNNING")
       )
+
+      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
     }
 
     case StopProcessing => {
@@ -68,7 +70,11 @@ class MainActor extends Actor with ActorLogging {
       if (heuristics.isDefined) heuristics.get ! PoisonPill
 
       val statistics = context.child("Statistics")
-      if (statistics.isDefined) statistics.get ! PoisonPill
+      if (statistics.isDefined) {
+        statistics.get ! StatisticsActor.AggregateWindows
+        statistics.get ! StatisticsActor.AggregateNow
+        statistics.get ! PoisonPill
+      }
 
       NativeMessaging.writeNativeMessage(
         HeuristicsAction.HEURISTICS_STATUS("STOPPED")

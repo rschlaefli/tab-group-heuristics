@@ -12,13 +12,11 @@ import akka.actor.Timers
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import heuristics.HeuristicsActor.CurrentTabGroups
-import heuristics.HeuristicsActor.QueryTabGroups
+import heuristics.HeuristicsActor
 import org.slf4j.MarkerFactory
 import scalaz._
 import statistics._
-import tabstate.CurrentTabsActor.CurrentTabs
-import tabstate.CurrentTabsActor.QueryTabs
+import tabstate.CurrentTabsActor
 import tabstate.Tab
 
 import Scalaz._
@@ -42,8 +40,11 @@ class StatisticsActor
   // initialize a data structure for aggregating data across windows
   val aggregationWindows: mutable.Map[Long, List[DataPoint]] = mutable.Map()
 
-  // initialize a queue where tab switches will be pushed for analysis
+  // initialize a queue where tab switches will be pushed for aggregation
   val tabSwitchQueue = mutable.Queue[TabSwitch]()
+
+  // initialize a queue where suggestion interactions will be pushed for aggregation
+  val suggestionInteractionsQueue = mutable.Queue[SuggestionInteraction]()
 
   override def preStart: Unit = {
     log.info("Starting to collect statistics")
@@ -54,6 +55,11 @@ class StatisticsActor
     case tabSwitch: TabSwitch => {
       log.info("Pushing tab switch to queue")
       tabSwitchQueue.enqueue(tabSwitch)
+    }
+
+    case suggestionInteraction: SuggestionInteraction => {
+      log.info("Pushing suggestion interaction to queue")
+      suggestionInteractionsQueue.enqueue(suggestionInteraction)
     }
 
     case AggregateWindows => {
@@ -67,12 +73,12 @@ class StatisticsActor
 
       // query the current tabs and tab groups from the other actors
       implicit val timeout = Timeout(1 second)
-      val currentTabsQuery = currentTabsActor ? QueryTabs
-      val tabGroupsQuery = heuristicsActor ? QueryTabGroups
+      val currentTabsQuery = currentTabsActor ? CurrentTabsActor.QueryTabs
+      val tabGroupsQuery = heuristicsActor ? HeuristicsActor.QueryTabGroups
 
       val results = for {
-        CurrentTabs(tabs) <- currentTabsQuery
-        CurrentTabGroups(groupIndex, groups) <- tabGroupsQuery
+        CurrentTabsActor.CurrentTabs(tabs) <- currentTabsQuery
+        HeuristicsActor.CurrentTabGroups(groupIndex, groups) <- tabGroupsQuery
       } yield (tabs, groups, groupIndex)
 
       results foreach {
@@ -80,7 +86,8 @@ class StatisticsActor
           log.debug(s"Queried current tabs and tab groups from other actors")
 
           val openTabHashes = currentTabs.map(_.hashCode()).toSet
-          val clusterTabHashes = tabGroups.flatMap(_._2.map(_.hashCode())).toSet
+          val clusterTabHashes =
+            tabGroups.flatMap(_.tabs.map(_.hashCode())).toSet
 
           // compute the number of tabs that is currently open and not in any group
           // as well as the number of tabs that are not grouped
@@ -136,6 +143,24 @@ class StatisticsActor
 
           dataPoint.updateSwitchStatistics(switchStatistics)
 
+          val interactionStatistics = InteractionStatistics.fromTuple(
+            suggestionInteractionsQueue
+              .dequeueAll(_ => true)
+              .map {
+                case AcceptSuggestedGroup(_) =>
+                  InteractionStatistics.AcceptedGroup
+                case AcceptSuggestedTab(_) =>
+                  InteractionStatistics.AcceptedTab
+                case DiscardSuggestedGroup(_) =>
+                  InteractionStatistics.DiscardedGroup
+                case DiscardSuggestedTab(_) =>
+                  InteractionStatistics.DiscardedTab
+              }
+              .foldLeft(0, 0, 0, 0) { case (acc, stat) => acc |+| stat.value }
+          )
+
+          dataPoint.updateSuggestionInteractionStatistics(interactionStatistics)
+
           // push the values into a window
           aggregationWindows.updateWith(minuteBlock) {
             _.map(_.appended(dataPoint)).orElse(Some(List(dataPoint)))
@@ -157,7 +182,7 @@ class StatisticsActor
             if (isWindowExpired) {
               val statistics = computeAggregateStatistics(dataPoints)
               log.debug(s"Aggregated window $window: ${statistics}")
-              logger.info(logToCsv, s"$window;${statistics.asCsv}")
+              logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
             }
 
             !isWindowExpired
@@ -167,6 +192,16 @@ class StatisticsActor
 
     }
 
+    case AggregateNow => {
+      aggregationWindows.foreach {
+        case (window, dataPoints) => {
+          val statistics = computeAggregateStatistics(dataPoints)
+          log.debug(s"Aggregated window $window: ${statistics}")
+          logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
+        }
+      }
+    }
+
     case message => log.info(s"Received unknown message ${message.toString}")
   }
 
@@ -174,8 +209,18 @@ class StatisticsActor
 
 object StatisticsActor extends LazyLogging {
   case object AggregateWindows
+  case object AggregateNow
 
   case class TabSwitch(fromTab: Tab, toTab: Tab)
+
+  sealed class SuggestionInteraction
+  case class DiscardSuggestedGroup(groupHash: String)
+      extends SuggestionInteraction
+  case class DiscardSuggestedTab(groupHash: String)
+      extends SuggestionInteraction
+  case class AcceptSuggestedGroup(groupHash: String)
+      extends SuggestionInteraction
+  case class AcceptSuggestedTab(groupHash: String) extends SuggestionInteraction
 
   def computeAggregateStatistics(
       dataPoints: List[DataPoint]

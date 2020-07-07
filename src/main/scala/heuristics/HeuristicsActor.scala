@@ -124,77 +124,94 @@ class HeuristicsActor
       sender() ! HeuristicsActor.CurrentTabGroups(tabGroupIndex, tabGroups)
 
     case AcceptSuggestion(groupHash) => {
-      val targetGroup = tabGroups.find(_.id == groupHash).get
+      tabGroups.find(_.id == groupHash).foreach {
+        case targetGroup => {
+          statistics ! StatisticsActor.AcceptSuggestedGroup(groupHash)
 
-      statistics ! StatisticsActor.AcceptSuggestedGroup(groupHash)
-
-      logger.info(
-        logToCsv,
-        Seq("ACCEPT_GROUP", groupHash, targetGroup.name, targetGroup.tabs.size)
-          .mkString(";")
-      )
-
+          logger.info(
+            logToCsv,
+            Seq(
+              "ACCEPT_GROUP",
+              groupHash,
+              targetGroup.name,
+              targetGroup.tabs.size
+            ).mkString(";")
+          )
+        }
+      }
     }
 
     case AcceptSuggestedTab(sourceGroupHash, tabHash, targetGroupHash) => {
-      val sourceGroup = tabGroups.find(_.id == sourceGroupHash).get
-      val targetGroup = curatedGroups.find(_.id == targetGroupHash)
-      val tab = sourceGroup.tabs.find(_.hash == tabHash)
+      tabGroups.find(_.id == sourceGroupHash).foreach {
+        case sourceGroup => {
+          val targetGroup = curatedGroups.find(_.id == targetGroupHash)
+          val tab = sourceGroup.tabs.find(_.hash == tabHash)
 
-      statistics ! StatisticsActor.AcceptSuggestedTab(sourceGroupHash)
+          statistics ! StatisticsActor.AcceptSuggestedTab(sourceGroupHash)
 
-      logger.info(
-        logToCsv,
-        Seq(
-          "ACCEPT_TAB",
-          sourceGroupHash,
-          sourceGroup.name,
-          tabHash,
-          tab.map(_.title).getOrElse("NONE"),
-          targetGroup.map(_.name).getOrElse("NONE")
-        ).mkString(";")
-      )
+          logger.info(
+            logToCsv,
+            Seq(
+              "ACCEPT_TAB",
+              sourceGroupHash,
+              sourceGroup.name,
+              tabHash,
+              tab.map(_.title).getOrElse("NONE"),
+              targetGroup.map(_.name).getOrElse("NONE")
+            ).mkString(";")
+          )
+        }
+      }
     }
 
     case DiscardSuggestion(groupHash) => {
-      val targetGroup = tabGroups.find(_.id == groupHash).get
+      tabGroups.find(_.id == groupHash).foreach {
+        case targetGroup => {
+          statistics ! StatisticsActor.DiscardSuggestedGroup(groupHash)
 
-      statistics ! StatisticsActor.DiscardSuggestedGroup(groupHash)
+          computeHashCombinations(targetGroup)
+            .foreach(switchIdentifier =>
+              switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
+            )
 
-      computeHashCombinations(targetGroup)
-        .foreach(switchIdentifier =>
-          switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
-        )
-
-      logger.info(
-        logToCsv,
-        Seq("DISCARD_GROUP", groupHash, targetGroup.name, targetGroup.tabs.size)
-          .mkString(";")
-      )
+          logger.info(
+            logToCsv,
+            Seq(
+              "DISCARD_GROUP",
+              groupHash,
+              targetGroup.name,
+              targetGroup.tabs.size
+            ).mkString(";")
+          )
+        }
+      }
     }
 
     case DiscardSuggestedTab(groupHash, tabHash) => {
-      val targetGroup = tabGroups.find(_.id == groupHash).get
-      val targetTab = targetGroup.tabs.find(_.hash == tabHash)
+      tabGroups.find(_.id == groupHash).foreach {
+        case targetGroup => {
+          val targetTab = targetGroup.tabs.find(_.hash == tabHash)
 
-      statistics ! StatisticsActor.DiscardSuggestedTab(groupHash)
+          statistics ! StatisticsActor.DiscardSuggestedTab(groupHash)
 
-      computeHashCombinations(targetGroup)
-        .filter(_.contains(tabHash))
-        .foreach(switchIdentifier =>
-          switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
-        )
+          computeHashCombinations(targetGroup)
+            .filter(_.contains(tabHash))
+            .foreach(switchIdentifier =>
+              switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
+            )
 
-      logger.info(
-        logToCsv,
-        Seq(
-          "DISCARD_TAB",
-          groupHash,
-          targetGroup.name,
-          tabHash,
-          targetTab.map(_.title).getOrElse("NONE")
-        ).mkString(";")
-      )
+          logger.info(
+            logToCsv,
+            Seq(
+              "DISCARD_TAB",
+              groupHash,
+              targetGroup.name,
+              tabHash,
+              targetTab.map(_.title).getOrElse("NONE")
+            ).mkString(";")
+          )
+        }
+      }
     }
 
     case message => log.info(s"Received message $message")

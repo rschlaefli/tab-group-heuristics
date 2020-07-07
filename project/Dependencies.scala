@@ -1,7 +1,7 @@
 import sbt._
 
 object Dependencies {
-  val scalatestVersion = "3.1.2"
+  val scalatestVersion = "3.2.0"
 
   val scalaz = "org.scalaz" %% "scalaz-core" % "7.3.1"
   val scalactic = "org.scalactic" %% "scalactic" % scalatestVersion

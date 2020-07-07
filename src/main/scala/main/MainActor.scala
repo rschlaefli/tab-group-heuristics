@@ -8,10 +8,7 @@ import akka.actor.PoisonPill
 import akka.actor.Props
 import heuristics.HeuristicsAction
 import heuristics.HeuristicsActor
-import main.Main.StreamAck
-import main.Main.StreamComplete
-import main.Main.StreamFail
-import main.Main.StreamInit
+import main.Main
 import messaging.NativeMessaging
 import statistics.StatisticsActor
 import tabstate.TabEvent
@@ -36,15 +33,15 @@ class MainActor extends Actor with ActorLogging {
       sender() ! Main.StreamAck
     }
 
-    case StreamInit =>
+    case Main.StreamInit =>
       log.info("Stream initialized")
       sender() ! Main.StreamAck
 
-    case StreamComplete =>
+    case Main.StreamComplete =>
       log.info("Stream complete")
       context.stop(self)
 
-    case StreamFail(ex) =>
+    case Main.StreamFail(ex) =>
       log.warning(s"Stream failed with $ex")
 
     case StartProcessing => {

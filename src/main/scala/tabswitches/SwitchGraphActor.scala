@@ -16,9 +16,6 @@ import org.jgrapht.graph.SimpleWeightedGraph
 import org.joda.time.DateTime
 import persistence.Persistence
 
-import SwitchMapActor.QueryTabSwitchMap
-import TabSwitchActor.CurrentSwitchGraph
-
 case class GraphGenerationParams(
     /**
       * Ignore edges with a lower weight

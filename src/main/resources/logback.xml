@@ -57,7 +57,7 @@
   </appender>
 
   <appender name="HeuristicsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>heuristics.csv</file>
+    <file>heuristics/heuristics.csv</file>
     <append>true</append>
     <encoder>
       <pattern>%date;%msg%n</pattern>
@@ -77,7 +77,7 @@
   </appender>
 
   <appender name="StatisticsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>statistics.csv</file>
+    <file>statistics/statistics.csv</file>
     <append>true</append>
     <encoder>
       <pattern>%date;%msg%n</pattern>
@@ -97,7 +97,7 @@
   </appender>
 
   <appender name="TabEventsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>tab_events.csv</file>
+    <file>events/tab_events.csv</file>
     <append>true</append>
     <encoder>
       <pattern>%date;%msg%n</pattern>
@@ -117,7 +117,7 @@
   </appender>
 
   <appender name="TabSwitchesCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>tab_switches.csv</file>
+    <file>switches/tab_switches.csv</file>
     <append>true</append>
     <encoder>
       <pattern>%date;%msg%n</pattern>
@@ -162,7 +162,7 @@
 
   <logger name="persistence.Persistence" level="info" />
 
-  <logger name="statistics.StatisticsActor" level="info">
+  <logger name="statistics.StatisticsActor" level="debug">
     <appender-ref ref="StatisticsCSV" />
   </logger>
 

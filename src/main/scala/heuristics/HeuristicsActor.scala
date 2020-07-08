@@ -52,7 +52,7 @@ class HeuristicsActor
     timers.startTimerAtFixedRate(
       "heuristics",
       ComputeHeuristics,
-      3 minutes
+      5 minutes
     )
   }
 
@@ -62,7 +62,7 @@ class HeuristicsActor
       curatedGroups = tabGroups
       val (curatedIndex, _) =
         TabSwitchActor.buildClusterIndex(curatedGroups.map(_.tabs))
-      log.info(s"Received tab groups $tabGroups with index $curatedIndex")
+      log.debug(s"Received tab groups $tabGroups with index $curatedIndex")
       curatedGroupIndex = curatedIndex
     }
 

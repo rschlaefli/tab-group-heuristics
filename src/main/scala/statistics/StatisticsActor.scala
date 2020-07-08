@@ -20,6 +20,10 @@ import tabstate.CurrentTabsActor
 import tabstate.Tab
 
 import Scalaz._
+import persistence.Persistence
+import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
 
 class StatisticsActor
     extends Actor
@@ -29,13 +33,16 @@ class StatisticsActor
 
   import StatisticsActor._
 
+  val logToCsv = MarkerFactory.getMarker("CSV")
+
   implicit val executionContext = context.dispatcher
 
   val heuristicsActor = context.actorSelection("/user/Main/Heuristics")
   val currentTabsActor =
     context.actorSelection("/user/Main/TabState/CurrentTabs")
 
-  val logToCsv = MarkerFactory.getMarker("CSV")
+  // usage statistics
+  var usageStatistics = UsageStatistics()
 
   // initialize a data structure for aggregating data across windows
   val aggregationWindows: mutable.Map[Long, List[DataPoint]] = mutable.Map()
@@ -49,6 +56,22 @@ class StatisticsActor
   override def preStart: Unit = {
     log.info("Starting to collect statistics")
     timers.startTimerAtFixedRate("statistics", AggregateWindows, 20 seconds)
+
+    val timestamp = java.time.LocalDate.now().toString()
+    val usageJson =
+      Persistence.restoreJson(s"usage/usage_${timestamp}.json") match {
+        case scala.util.Success(value) => parse(value).getOrElse(Json.Null)
+        case scala.util.Failure(_)     =>
+      }
+    log.debug(s"Restored usage data $usageJson")
+  }
+
+  override def postStop(): Unit = {
+    val timestamp = java.time.LocalDate.now().toString()
+    Persistence.persistJson(
+      s"usage/usage_${timestamp}.json",
+      usageStatistics.asJson
+    )
   }
 
   override def receive: Actor.Receive = {
@@ -83,7 +106,9 @@ class StatisticsActor
 
       results foreach {
         case (currentTabs, tabGroups, groupIndex) => {
-          log.debug(s"Queried current tabs and tab groups from other actors")
+          log.debug(
+            s"Queried current tabs and tab groups from other actors $currentTabs"
+          )
 
           val openTabHashes = currentTabs.map(_.hashCode()).toSet
           val clusterTabHashes =

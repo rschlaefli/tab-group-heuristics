@@ -13,7 +13,7 @@ case class Tab(
     // Tabs.Tab properties that are important for grouping
     id: Int,
     index: Int,
-    lastAccessed: Option[Double],
+    lastAccessed: Option[Long],
     openerTabId: Option[Int],
     pinned: Boolean,
     sessionId: Option[Int],
@@ -44,6 +44,10 @@ case class Tab(
 
   // override toString to reduce clutter in graph representations
   override def toString(): String = s"$normalizedTitle (${hashCode()})"
+
+  def withAccessTs(ts: Long) = this.copy(lastAccessed = Some(ts))
+  def withCurrentAccessTs =
+    this.copy(lastAccessed = Some(java.time.Instant.EPOCH.getEpochSecond()))
 }
 
 object Tab {

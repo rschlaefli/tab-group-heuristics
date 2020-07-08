@@ -97,7 +97,7 @@ case class TabUpdateEvent(
     title: String,
     normalizedTitle: String,
     pinned: Boolean,
-    lastAccessed: Option[Double],
+    lastAccessed: Option[Long],
     openerTabId: Option[Int],
     sessionId: Option[Int],
     successorTabId: Option[Int]
@@ -126,7 +126,7 @@ object TabEvent extends LazyLogging {
     if (json == Json.Null) {
       val fixedMessage = "{ \"ac" + message
       json = parse(fixedMessage).getOrElse(Json.Null)
-      logger.warn(
+      logger.debug(
         s"Fixed payload for message ${if (fixedMessage.length() > 50) fixedMessage.substring(0, 50)
         else fixedMessage}"
       )

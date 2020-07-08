@@ -25,7 +25,9 @@ case class Tab(
     normalizedTitle: String,
     hash: String,
     origin: String,
-    baseUrl: String
+    baseUrl: String,
+    // internal properties
+    createdAt: Long = java.time.Instant.EPOCH.getEpochSecond()
 ) extends Tabs {
 
   // override canEqual, equals, and hashCode to ensure that tabs are compared by base hash
@@ -55,7 +57,7 @@ object Tab {
   implicit val tabDecoder: Decoder[Tab] = deriveDecoder
   implicit val tabEncoder: Encoder[Tab] = deriveEncoder
 
-  def fromEvent(event: TabUpdateEvent): Tab = new Tab(
+  def fromEvent(event: TabUpdateEvent): Tab = Tab(
     event.id,
     event.index,
     event.lastAccessed,

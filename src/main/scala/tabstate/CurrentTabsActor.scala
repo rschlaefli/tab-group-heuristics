@@ -34,7 +34,9 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
     case UpdateTab(tab) => {
       val prevTabState = currentTabs.get(tab.id)
-      currentTabs(tab.id) = tab
+      val tabWithCurrentAccessTs = tab.withCurrentAccessTs
+      currentTabs(tab.id) = tabWithCurrentAccessTs
+      lastAccessed(tab.id) = tabWithCurrentAccessTs.lastAccessed.get
       sender() ! TabStateActor.TabUpdated(prevTabState, tab)
     }
 

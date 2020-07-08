@@ -106,9 +106,11 @@ class StatisticsActor
 
       results foreach {
         case (currentTabs, tabGroups, groupIndex) => {
-          log.debug(
-            s"Queried current tabs and tab groups from other actors $currentTabs"
-          )
+          log.info(s"Current tabs $currentTabs")
+
+          val currentEpochTs = java.time.Instant.now().getEpochSecond()
+
+          val currentTabsAge = currentTabs.map(_.createdAt)
 
           val openTabHashes = currentTabs.map(_.hashCode()).toSet
           val clusterTabHashes =

@@ -162,7 +162,7 @@
 
   <logger name="persistence.Persistence" level="info" />
 
-  <logger name="statistics.StatisticsActor" level="debug">
+  <logger name="statistics.StatisticsActor" level="info">
     <appender-ref ref="StatisticsCSV" />
   </logger>
 

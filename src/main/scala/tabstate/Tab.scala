@@ -27,7 +27,7 @@ case class Tab(
     origin: String,
     baseUrl: String,
     // internal properties
-    createdAt: Long = java.time.Instant.EPOCH.getEpochSecond()
+    createdAt: Option[Long] = Some(java.time.Instant.EPOCH.getEpochSecond())
 ) extends Tabs {
 
   // override canEqual, equals, and hashCode to ensure that tabs are compared by base hash
@@ -47,6 +47,7 @@ case class Tab(
   // override toString to reduce clutter in graph representations
   override def toString(): String = s"$normalizedTitle (${hashCode()})"
 
+  def withCreationTs(ts: Long) = this.copy(createdAt = Some(ts))
   def withAccessTs(ts: Long) = this.copy(lastAccessed = Some(ts))
   def withCurrentAccessTs =
     this.copy(lastAccessed = Some(java.time.Instant.EPOCH.getEpochSecond()))

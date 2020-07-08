@@ -59,6 +59,7 @@ class MainActor extends Actor with ActorLogging {
         HeuristicsAction.HEURISTICS_STATUS("RUNNING")
       )
 
+      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
       NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
     }
 

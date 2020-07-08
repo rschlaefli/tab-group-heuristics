@@ -98,11 +98,7 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
         currentTabs -= (tabId)
         // lastAccessed -= (tabId)
       } else {
-        timers.startSingleTimer(
-          s"remove-$tabId",
-          removeEvent,
-          400 milliseconds
-        )
+        timers.startSingleTimer(s"remove-$tabId", removeEvent, 1 second)
       }
     }
 

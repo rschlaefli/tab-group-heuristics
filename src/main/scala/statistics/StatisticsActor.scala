@@ -24,6 +24,7 @@ import persistence.Persistence
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
+import smile.math.MathEx._
 
 class StatisticsActor
     extends Actor
@@ -109,8 +110,14 @@ class StatisticsActor
           log.info(s"Current tabs $currentTabs")
 
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
-
-          val currentTabsAge = currentTabs.map(_.createdAt)
+          val currentTabsAge = currentTabs
+            .flatMap(_.createdAt)
+            .map(creationTs => (currentEpochTs - creationTs) / 60d)
+            .toArray
+          val currentTabsStaleness = currentTabs
+            .flatMap(_.lastAccessed)
+            .map(accessTs => (currentEpochTs - accessTs) / 60d)
+            .toArray
 
           val openTabHashes = currentTabs.map(_.hashCode()).toSet
           val clusterTabHashes =
@@ -125,7 +132,9 @@ class StatisticsActor
           val dataPoint = new DataPoint(
             openTabHashes.size,
             openTabsUngrouped,
-            openTabsGrouped
+            openTabsGrouped,
+            mean(currentTabsAge),
+            mean(currentTabsStaleness)
           )
 
           // process the tab switch queue

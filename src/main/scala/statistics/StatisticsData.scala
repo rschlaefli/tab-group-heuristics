@@ -15,6 +15,8 @@ class StatisticsData() {
   var acceptedTabs: List[Int] = List()
   var discardedGroups: List[Int] = List()
   var discardedTabs: List[Int] = List()
+  var tabAge: List[Double] = List()
+  var tabStaleness: List[Double] = List()
 
   def withDataPoint(dataPoint: DataPoint): StatisticsData = {
     numCurrentTabs = numCurrentTabs.appended(dataPoint.currentlyOpenTabs)
@@ -33,6 +35,8 @@ class StatisticsData() {
     acceptedTabs = acceptedTabs.appended(dataPoint.acceptedTabs)
     discardedGroups = discardedGroups.appended(dataPoint.discardedGroups)
     discardedTabs = discardedTabs.appended(dataPoint.discardedTabs)
+    tabAge = tabAge.appended(dataPoint.averageTabAge)
+    tabStaleness = tabStaleness.appended(dataPoint.averageTabStaleDuration)
     return this
   }
 
@@ -49,12 +53,17 @@ class StatisticsData() {
       acceptedGroups.sum,
       acceptedTabs.sum,
       discardedGroups.sum,
-      discardedTabs.sum
+      discardedTabs.sum,
+      round(mean(tabAge.toArray), 2),
+      round(mean(tabStaleness.toArray), 2)
     )
 
   override def toString(): String = {
-    s"StatisticsData($numCurrentTabs, $openTabsGrouped, $openTabsUngrouped, " +
+    s"StatisticsData(" +
+      s"$numCurrentTabs, $openTabsGrouped, $openTabsUngrouped, " +
       s"$tabSwitchWithinGroups, $tabSwitchBetweenGroups, $tabSwitchFromGroup, $tabSwitchToGroup, $tabSwitchUngrouped, " +
-      s"$acceptedGroups, $acceptedTabs, $discardedGroups, $discardedTabs)"
+      s"$acceptedGroups, $acceptedTabs, $discardedGroups, $discardedTabs, " +
+      s"$tabAge, $tabStaleness" +
+      s")"
   }
 }

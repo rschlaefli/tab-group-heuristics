@@ -1,7 +1,8 @@
 package main
 
 import java.io.BufferedOutputStream
-
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.PoisonPill
@@ -13,8 +14,10 @@ import messaging.NativeMessaging
 import statistics.StatisticsActor
 import tabstate.TabEvent
 import tabstate.TabStateActor
+import tabswitches.SwitchMapActor
+import akka.actor.Timers
 
-class MainActor extends Actor with ActorLogging {
+class MainActor extends Actor with ActorLogging with Timers {
 
   import MainActor._
 
@@ -23,9 +26,15 @@ class MainActor extends Actor with ActorLogging {
 
   override def preStart(): Unit = {
     self ! MainActor.StartProcessing
+    timers.startTimerWithFixedDelay("backup", PersistState, 1 minute)
   }
 
   override def receive: Actor.Receive = {
+
+    case PersistState => {
+      context.actorSelection("/user/Main/Heuristics/TabSwitches/TabSwitchMap") ! SwitchMapActor.PersistState
+      context.actorSelection("/user/Main/Statistics") ! StatisticsActor.PersistState
+    }
 
     // forward tab events to the tab state processor
     case event: TabEvent => {
@@ -84,6 +93,8 @@ class MainActor extends Actor with ActorLogging {
 }
 
 object MainActor {
+  case object PersistState
+
   case object StopProcessing
   case object StartProcessing
 }

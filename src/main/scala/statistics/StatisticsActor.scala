@@ -78,11 +78,12 @@ class StatisticsActor
     log.debug(s"Restored usage data $usageJson")
   }
 
-  override def postStop: Unit = {
-    persistUsageStatistics(usageStatistics)
-  }
+  override def postStop: Unit = self ! PersistState
 
   override def receive: Actor.Receive = {
+
+    case PersistState => persistUsageStatistics(usageStatistics)
+
     case tabSwitch: TabSwitch => {
       log.info("Pushing tab switch to queue")
       tabSwitchQueue.enqueue(tabSwitch)
@@ -279,6 +280,7 @@ class StatisticsActor
 }
 
 object StatisticsActor extends LazyLogging {
+  case object PersistState
   case object RequestInteraction
   case object AggregateWindows
   case object AggregateNow

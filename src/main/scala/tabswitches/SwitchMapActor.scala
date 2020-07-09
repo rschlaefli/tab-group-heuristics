@@ -44,10 +44,14 @@ class SwitchMapActor
 
   override def postStop(): Unit = {
     log.info("Persisting tab switch map due to processing stop")
-    self ! SwitchMapActor.PersistSwitchMap
+    self ! PersistState
   }
 
   override def receive: Actor.Receive = {
+
+    case PersistState =>
+      Persistence.persistJson("tab_switches.json", tabSwitches.asJson)
+
     case ProcessTabSwitch(prevTab, newTab) => {
       logger.info(
         logToCsv,
@@ -75,9 +79,6 @@ class SwitchMapActor
     case QueryTabSwitchMap =>
       sender() ! SwitchGraphActor.CurrentSwitchMap(tabSwitches.toMap)
 
-    case PersistSwitchMap =>
-      Persistence.persistJson("tab_switches.json", tabSwitches.asJson)
-
     case DiscardTabSwitch(switchIdentifier) =>
       tabSwitches.updateWith(switchIdentifier) {
         case Some(value) => Some(value.discarded)
@@ -89,6 +90,8 @@ class SwitchMapActor
 }
 
 object SwitchMapActor {
+
+  case object PersistState
 
   case object QueryTabSwitchMap
   case object PersistSwitchMap

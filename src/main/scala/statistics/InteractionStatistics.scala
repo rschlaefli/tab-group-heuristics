@@ -5,7 +5,9 @@ case class InteractionStatistics(
     acceptedTabs: Int,
     discardedGroups: Int,
     discardedTabs: Int
-)
+) {
+  def count = acceptedGroups + acceptedTabs + discardedGroups + discardedTabs
+}
 
 object InteractionStatistics {
   def fromTuple(tuple: (Int, Int, Int, Int)) = {

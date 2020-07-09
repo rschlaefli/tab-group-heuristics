@@ -25,6 +25,9 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import smile.math.MathEx._
+import messaging.NativeMessaging
+import heuristics.HeuristicsAction
+import java.io.BufferedOutputStream
 
 class StatisticsActor
     extends Actor
@@ -35,7 +38,9 @@ class StatisticsActor
   import StatisticsActor._
 
   val logToCsv = MarkerFactory.getMarker("CSV")
+  val aggregateInterval = 20
 
+  implicit val out = new BufferedOutputStream(System.out)
   implicit val executionContext = context.dispatcher
 
   val heuristicsActor = context.actorSelection("/user/Main/Heuristics")
@@ -56,23 +61,25 @@ class StatisticsActor
 
   override def preStart: Unit = {
     log.info("Starting to collect statistics")
-    timers.startTimerAtFixedRate("statistics", AggregateWindows, 20 seconds)
+    timers.startTimerAtFixedRate(
+      "statistics",
+      AggregateWindows,
+      aggregateInterval seconds
+    )
 
     val timestamp = java.time.LocalDate.now().toString()
-    val usageJson =
-      Persistence.restoreJson(s"usage/usage_${timestamp}.json") match {
-        case scala.util.Success(value) => parse(value).getOrElse(Json.Null)
-        case scala.util.Failure(_)     =>
-      }
+    val usageJson = Persistence
+      .restoreJson(s"usage/usage_${timestamp}.json")
+      .map(decode[UsageStatistics]) foreach {
+      case Right(restoredUsage) => usageStatistics = restoredUsage
+      case _                    =>
+    }
+
     log.debug(s"Restored usage data $usageJson")
   }
 
-  override def postStop(): Unit = {
-    val timestamp = java.time.LocalDate.now().toString()
-    Persistence.persistJson(
-      s"usage/usage_${timestamp}.json",
-      usageStatistics.asJson
-    )
+  override def postStop: Unit = {
+    persistUsageStatistics(usageStatistics)
   }
 
   override def receive: Actor.Receive = {
@@ -84,6 +91,12 @@ class StatisticsActor
     case suggestionInteraction: SuggestionInteraction => {
       log.info("Pushing suggestion interaction to queue")
       suggestionInteractionsQueue.enqueue(suggestionInteraction)
+    }
+
+    case RequestInteraction => {
+      NativeMessaging.writeNativeMessage(HeuristicsAction.REQUEST_INTERACTION)
+      usageStatistics = usageStatistics.logActionRequest()
+      persistUsageStatistics(usageStatistics)
     }
 
     case AggregateWindows => {
@@ -119,9 +132,12 @@ class StatisticsActor
             .map(accessTs => (currentEpochTs - accessTs) / 60d)
             .toArray
 
-          val openTabHashes = currentTabs.map(_.hashCode()).toSet
-          val clusterTabHashes =
-            tabGroups.flatMap(_.tabs.map(_.hashCode())).toSet
+          val openTabHashes = currentTabs
+            .map(_.hashCode())
+            .toSet
+          val clusterTabHashes = tabGroups
+            .flatMap(_.tabs.map(_.hashCode()))
+            .toSet
 
           // compute the number of tabs that is currently open and not in any group
           // as well as the number of tabs that are not grouped
@@ -194,8 +210,27 @@ class StatisticsActor
               }
               .foldLeft(0, 0, 0, 0) { case (acc, stat) => acc |+| stat.value }
           )
-
           dataPoint.updateSuggestionInteractionStatistics(interactionStatistics)
+
+          // log the number of interactions in usage statistics
+          usageStatistics = usageStatistics
+            .logInteractions(interactionStatistics.count)
+
+          // increment the active minutes in the usage statistics
+          usageStatistics = usageStatistics
+            .timeIncremented(aggregateInterval)
+
+          // if there are only very few interactions with suggestions
+          if (!usageStatistics.actionRequested && usageStatistics.suggestionInteractions <= 2) {
+            val strongActiveDuration = usageStatistics.activeSeconds >= 120 * 60
+            val weakerActiveDuration = usageStatistics.activeSeconds >= 45 * 60
+            val timeLateAfternoon = java.time.LocalTime.now().getHour() >= 15
+
+            // if the user was active for a long time, or less time but it is late in the day
+            if (strongActiveDuration || (weakerActiveDuration && timeLateAfternoon)) {
+              self ! RequestInteraction
+            }
+          }
 
           // push the values into a window
           aggregationWindows.updateWith(minuteBlock) {
@@ -244,6 +279,7 @@ class StatisticsActor
 }
 
 object StatisticsActor extends LazyLogging {
+  case object RequestInteraction
   case object AggregateWindows
   case object AggregateNow
 
@@ -266,5 +302,13 @@ object StatisticsActor extends LazyLogging {
     }
     logger.debug(s"Combined data into a single object ${output.toString()}")
     output.aggregated
+  }
+
+  def persistUsageStatistics(usageStatistics: UsageStatistics) = {
+    val timestamp = java.time.LocalDate.now().toString()
+    Persistence.persistJson(
+      s"usage/usage_${timestamp}.json",
+      usageStatistics.asJson
+    )
   }
 }

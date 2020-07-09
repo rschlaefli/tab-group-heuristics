@@ -20,6 +20,7 @@ object HeuristicsAction {
   def QUERY_TABS = HeuristicsAction("QUERY_TABS", Json.Null)
   def QUERY_GROUPS = HeuristicsAction("QUERY_GROUPS", Json.Null)
   def UPDATE_GROUPS(json: Json) = HeuristicsAction("UPDATE_GROUPS", json)
+  def REQUEST_INTERACTION = HeuristicsAction("REQUEST_INTERACTION", Json.Null)
 }
 
 // case class QueryTabsAction() extends HeuristicsAction("QUERY_TABS", Json.Null)

@@ -1,12 +1,15 @@
 package main
 
 import java.io.BufferedOutputStream
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.PoisonPill
 import akka.actor.Props
+import akka.actor.Timers
 import heuristics.HeuristicsAction
 import heuristics.HeuristicsActor
 import main.Main
@@ -15,7 +18,6 @@ import statistics.StatisticsActor
 import tabstate.TabEvent
 import tabstate.TabStateActor
 import tabswitches.SwitchMapActor
-import akka.actor.Timers
 
 class MainActor extends Actor with ActorLogging with Timers {
 

@@ -1,5 +1,6 @@
 package statistics
 
+import java.io.BufferedOutputStream
 import java.time.Instant
 
 import scala.collection.mutable
@@ -12,22 +13,20 @@ import akka.actor.Timers
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import heuristics.HeuristicsAction
 import heuristics.HeuristicsActor
+import io.circe.parser._
+import io.circe.syntax._
+import messaging.NativeMessaging
 import org.slf4j.MarkerFactory
+import persistence.Persistence
 import scalaz._
+import smile.math.MathEx._
 import statistics._
 import tabstate.CurrentTabsActor
 import tabstate.Tab
 
 import Scalaz._
-import persistence.Persistence
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
-import smile.math.MathEx._
-import messaging.NativeMessaging
-import heuristics.HeuristicsAction
-import java.io.BufferedOutputStream
 
 class StatisticsActor
     extends Actor

@@ -198,15 +198,16 @@ class StatisticsActor
           val interactionStatistics = InteractionStatistics.fromTuple(
             suggestionInteractionsQueue
               .dequeueAll(_ => true)
-              .map {
+              .flatMap {
                 case AcceptSuggestedGroup(_) =>
-                  InteractionStatistics.AcceptedGroup
+                  Some(InteractionStatistics.AcceptedGroup)
                 case AcceptSuggestedTab(_) =>
-                  InteractionStatistics.AcceptedTab
+                  Some(InteractionStatistics.AcceptedTab)
                 case DiscardSuggestedGroup(_) =>
-                  InteractionStatistics.DiscardedGroup
+                  Some(InteractionStatistics.DiscardedGroup)
                 case DiscardSuggestedTab(_) =>
-                  InteractionStatistics.DiscardedTab
+                  Some(InteractionStatistics.DiscardedTab)
+                case _ => None
               }
               .foldLeft(0, 0, 0, 0) { case (acc, stat) => acc |+| stat.value }
           )

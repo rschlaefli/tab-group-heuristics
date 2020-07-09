@@ -4,20 +4,57 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
+import io.circe.syntax._
+
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.Timers
 import tabstate.Tab
+import messaging.NativeMessaging
+import heuristics.HeuristicsAction
+import java.io.BufferedOutputStream
 
 class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
   import CurrentTabsActor._
 
+  implicit val out = new BufferedOutputStream(System.out)
+
   var activeTab = -1
   var activeWindow = -1
   var currentTabs = mutable.Map[Int, Tab]()
 
+  override def preStart(): Unit = {
+    timers.startTimerWithFixedDelay("cleanup", FilterStaleTabs, 5 minutes)
+  }
+
   override def receive: Actor.Receive = {
+
+    case FilterStaleTabs => {
+      val currentTs = java.time.Instant.now().getEpochSecond()
+
+      // compute a list of stale tabs (i.e., tabs that have not been accessed in a long time)
+      val staleTabs = currentTabs
+        .filter {
+          case (_, tab) =>
+            tab.id != activeTab && tab.lastAccessed.fold(false)(time =>
+              time > 0 && (currentTs - time) >= 60 * 60
+            )
+        }
+
+      log.debug(s"stale tabs ${currentTabs.toString()} ${staleTabs.toString()}")
+
+      // update stale tabs in the webextension
+      NativeMessaging.writeNativeMessage(
+        HeuristicsAction.STALE_TABS(
+          staleTabs.values
+            .map(_.hash)
+            .toSet
+            .asJson
+        )
+      )
+    }
+
     case InitializeTabs(initialTabs) => {
       // map initial tabs such that they connect an appropriate lastAccessed timestamp
       // if there was already a timestamp in the internal mapping, reuse
@@ -36,9 +73,7 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
     case UpdateTab(tab) => {
       val prevTabState = currentTabs.get(tab.id)
-      val tabWithCurrentAccessTs = tab.withCurrentAccessTs
-      currentTabs(tab.id) = tabWithCurrentAccessTs
-      // lastAccessed(tab.id) = tabWithCurrentAccessTs.lastAccessed.get
+      currentTabs(tab.id) = tab.withCurrentAccessTs
       sender() ! TabStateActor.TabUpdated(prevTabState, tab)
     }
 
@@ -56,20 +91,12 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
         // update the lastAccessed property of the newly activated and previous tabs
         currentTabs.updateWith(tabId) {
-          case Some(tab) => {
-            val updatedTab = tab.withCurrentAccessTs
-            // lastAccessed(updatedTab.id) = updatedTab.lastAccessed.get
-            Some(updatedTab)
-          }
-          case None => None
+          case Some(tab) => Some(tab.withCurrentAccessTs)
+          case None      => None
         }
         currentTabs.updateWith(previousTabId) {
-          case Some(tab) => {
-            val updatedTab = tab.withCurrentAccessTs
-            // lastAccessed(updatedTab.id) = updatedTab.lastAccessed.get
-            Some(updatedTab)
-          }
-          case None => None
+          case Some(tab) => Some(tab.withCurrentAccessTs)
+          case None      => None
         }
 
         // let the sender know that we have completed tab activation
@@ -96,7 +123,6 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
         // remove the current tab
         currentTabs -= (tabId)
-        // lastAccessed -= (tabId)
       } else {
         timers.startSingleTimer(s"remove-$tabId", removeEvent, 1 second)
       }
@@ -116,6 +142,9 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
 }
 
 object CurrentTabsActor {
+
+  case object FilterStaleTabs
+
   case class InitializeTabs(initialTabs: List[Tab])
 
   case class UpdateTab(tab: Tab)
@@ -129,4 +158,5 @@ object CurrentTabsActor {
 
   case object QueryActiveTab
   case class ActiveTab(tab: Option[Tab], tabId: Int, windowId: Int)
+
 }

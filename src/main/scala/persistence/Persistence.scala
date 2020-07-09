@@ -22,4 +22,8 @@ object Persistence extends LazyLogging {
   def persistString(fileName: String, content: String): Try[Unit] = Try {
     Some(new PrintWriter(fileName)).foreach { p => p.write(content); p.close }
   }
+
+  def restoreString(fileName: String): Try[String] = Try {
+    scala.io.Source.fromFile(fileName).getLines.mkString
+  }
 }

@@ -19,12 +19,26 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
   override def receive: Actor.Receive = {
     case InitializeTabs(initialTabs) => {
-      currentTabs ++= initialTabs.map(tab => (tab.id, tab))
+      // map initial tabs such that they connect an appropriate lastAccessed timestamp
+      // if there was already a timestamp in the internal mapping, reuse
+      // otherwise, set the current time as the lastAccessed timestamp
+      currentTabs = mutable.Map.from(
+        initialTabs
+          .map(tab => {
+            currentTabs
+              .get(tab.id)
+              .flatMap(_.lastAccessed.map(tab.withAccessTs(_)))
+              .getOrElse(tab.withCurrentAccessTs)
+          })
+          .map(tab => (tab.id, tab))
+      )
     }
 
     case UpdateTab(tab) => {
       val prevTabState = currentTabs.get(tab.id)
-      currentTabs(tab.id) = tab
+      val tabWithCurrentAccessTs = tab.withCurrentAccessTs
+      currentTabs(tab.id) = tabWithCurrentAccessTs
+      // lastAccessed(tab.id) = tabWithCurrentAccessTs.lastAccessed.get
       sender() ! TabStateActor.TabUpdated(prevTabState, tab)
     }
 
@@ -33,11 +47,30 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
 
       if (currentTabs.contains(tabId)) {
         // get the previous tab
-        val previousTab = currentTabs.get(prevTabId.getOrElse(activeTab))
+        val previousTabId = prevTabId.getOrElse(activeTab)
+        val previousTab = currentTabs.get(previousTabId)
 
         // update internal representations of active tab and window
         activeTab = tabId
         activeWindow = windowId
+
+        // update the lastAccessed property of the newly activated and previous tabs
+        currentTabs.updateWith(tabId) {
+          case Some(tab) => {
+            val updatedTab = tab.withCurrentAccessTs
+            // lastAccessed(updatedTab.id) = updatedTab.lastAccessed.get
+            Some(updatedTab)
+          }
+          case None => None
+        }
+        currentTabs.updateWith(previousTabId) {
+          case Some(tab) => {
+            val updatedTab = tab.withCurrentAccessTs
+            // lastAccessed(updatedTab.id) = updatedTab.lastAccessed.get
+            Some(updatedTab)
+          }
+          case None => None
+        }
 
         // let the sender know that we have completed tab activation
         context.actorSelection("/user/Main/TabState") ! TabStateActor
@@ -54,12 +87,19 @@ class CurrentTabsActor extends Actor with ActorLogging with Timers {
       }
     }
 
-    case RemoveTab(tabId) => {
-      // if there is a job scheduled for the tab under removal, cancel the job and remove the schedule
-      timers.cancel(s"activate-$tabId")
+    case removeEvent: RemoveTab => {
+      val RemoveTab(tabId) = removeEvent
 
-      // remove the current tab
-      currentTabs -= (tabId)
+      if (currentTabs.contains(tabId)) {
+        // if there is a job scheduled for the tab under removal, cancel the job and remove the schedule
+        timers.cancel(s"activate-$tabId")
+
+        // remove the current tab
+        currentTabs -= (tabId)
+        // lastAccessed -= (tabId)
+      } else {
+        timers.startSingleTimer(s"remove-$tabId", removeEvent, 1 second)
+      }
     }
 
     case QueryTabs =>

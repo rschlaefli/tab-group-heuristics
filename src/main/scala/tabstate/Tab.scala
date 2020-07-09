@@ -13,7 +13,7 @@ case class Tab(
     // Tabs.Tab properties that are important for grouping
     id: Int,
     index: Int,
-    lastAccessed: Option[Double],
+    lastAccessed: Option[Long],
     openerTabId: Option[Int],
     pinned: Boolean,
     sessionId: Option[Int],
@@ -25,7 +25,9 @@ case class Tab(
     normalizedTitle: String,
     hash: String,
     origin: String,
-    baseUrl: String
+    baseUrl: String,
+    // internal properties
+    createdAt: Option[Long] = Some(java.time.Instant.EPOCH.getEpochSecond())
 ) extends Tabs {
 
   // override canEqual, equals, and hashCode to ensure that tabs are compared by base hash
@@ -44,6 +46,11 @@ case class Tab(
 
   // override toString to reduce clutter in graph representations
   override def toString(): String = s"$normalizedTitle (${hashCode()})"
+
+  def withCreationTs(ts: Long) = this.copy(createdAt = Some(ts))
+  def withAccessTs(ts: Long) = this.copy(lastAccessed = Some(ts))
+  def withCurrentAccessTs =
+    this.copy(lastAccessed = Some(java.time.Instant.EPOCH.getEpochSecond()))
 }
 
 object Tab {
@@ -51,7 +58,7 @@ object Tab {
   implicit val tabDecoder: Decoder[Tab] = deriveDecoder
   implicit val tabEncoder: Encoder[Tab] = deriveEncoder
 
-  def fromEvent(event: TabUpdateEvent): Tab = new Tab(
+  def fromEvent(event: TabUpdateEvent): Tab = Tab(
     event.id,
     event.index,
     event.lastAccessed,

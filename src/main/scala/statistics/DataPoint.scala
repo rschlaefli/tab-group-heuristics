@@ -3,7 +3,9 @@ package statistics
 class DataPoint(
     val currentlyOpenTabs: Int,
     val openTabsUngrouped: Int,
-    val openTabsGrouped: Int
+    val openTabsGrouped: Int,
+    val averageTabAge: Double,
+    val averageTabStaleDuration: Double
 ) {
 
   var switchesWithinGroups: Int = 0
@@ -35,7 +37,10 @@ class DataPoint(
   }
 
   override def toString(): String = {
-    s"DataPoint($currentlyOpenTabs, $openTabsGrouped, $openTabsUngrouped, $switchesWithinGroups, " +
-      s"$switchesBetweenGroups, $switchesFromGroups, $switchesToGroups, $switchesOutsideGroups)"
+    s"DataPoint(" +
+      s"$currentlyOpenTabs, $openTabsGrouped, $openTabsUngrouped, $switchesWithinGroups, " +
+      s"$switchesBetweenGroups, $switchesFromGroups, $switchesToGroups, $switchesOutsideGroups, " +
+      s"$averageTabAge, $averageTabStaleDuration" +
+      s")"
   }
 }

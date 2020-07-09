@@ -62,17 +62,21 @@ class TabSwitchActor extends Actor with ActorLogging {
         .mapTo[TabSwitchActor.CurrentSwitchGraph]
         .map {
           case TabSwitchActor.CurrentSwitchGraph(graph) => {
+            val timestamp = java.time.LocalDateTime
+              .now()
+              .truncatedTo(java.time.temporal.ChronoUnit.HOURS)
+
             Watset(
               graph,
               WatsetParams(),
-              s"clusters_watset_${java.time.LocalDate.now}.txt"
+              s"clusters/clusters_watset_$timestamp.txt"
             )
 
             val simapClusters =
               SiMap(
                 graph,
                 SiMapParams(),
-                s"clusters_simap_${java.time.LocalDate.now}.txt"
+                s"clusters/clusters_simap_$timestamp.txt"
               )
 
             val (clusterIndex, clusters) =

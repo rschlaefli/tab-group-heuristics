@@ -12,7 +12,9 @@ case class StatisticsOutput(
     acceptedGroups: Int,
     acceptedTabs: Int,
     discardedGroups: Int,
-    discardedTabs: Int
+    discardedTabs: Int,
+    tabAge: Double,
+    tabStaleness: Double
 ) {
   def asCsv: String =
     Seq(
@@ -27,6 +29,8 @@ case class StatisticsOutput(
       acceptedGroups,
       acceptedTabs,
       discardedGroups,
-      discardedTabs
+      discardedTabs,
+      tabAge,
+      tabStaleness
     ).mkString(";")
 }

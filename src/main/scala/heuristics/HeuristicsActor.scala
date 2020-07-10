@@ -134,7 +134,10 @@ class HeuristicsActor
               "ACCEPT_GROUP",
               groupHash,
               targetGroup.name,
-              targetGroup.tabs.size
+              targetGroup.tabs.size,
+              targetGroup.tabs
+                .map(tab => s"${tab.hash}/${tab.title}")
+                .mkString("_")
             ).mkString(";")
           )
         }
@@ -180,7 +183,10 @@ class HeuristicsActor
               "DISCARD_GROUP",
               groupHash,
               targetGroup.name,
-              targetGroup.tabs.size
+              targetGroup.tabs.size,
+              targetGroup.tabs
+                .map(tab => s"${tab.hash}/${tab.title}")
+                .mkString("_")
             ).mkString(";")
           )
         }

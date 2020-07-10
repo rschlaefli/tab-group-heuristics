@@ -70,7 +70,7 @@
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>heuristics.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <fileNamePattern>heuristics/heuristics.%d{yyyy-MM-dd}.csv</fileNamePattern>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
     </rollingPolicy>
@@ -90,7 +90,7 @@
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>statistics.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <fileNamePattern>statistics/statistics.%d{yyyy-MM-dd}.csv</fileNamePattern>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
     </rollingPolicy>
@@ -110,7 +110,7 @@
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>tab_events.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <fileNamePattern>events/tab_events.%d{yyyy-MM-dd}.csv</fileNamePattern>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
     </rollingPolicy>
@@ -130,7 +130,7 @@
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>tab_switches.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <fileNamePattern>switches/tab_switches.%d{yyyy-MM-dd}.csv</fileNamePattern>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
     </rollingPolicy>

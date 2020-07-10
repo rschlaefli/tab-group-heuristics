@@ -33,6 +33,12 @@ class MainActor extends Actor with ActorLogging with Timers {
 
   override def receive: Actor.Receive = {
 
+    case QueryCurrentState => {
+      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
+      Thread.sleep(300)
+      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
+    }
+
     case PersistState => {
       context.actorSelection("/user/Main/Heuristics/TabSwitches/TabSwitchMap") ! SwitchMapActor.PersistState
       context.actorSelection("/user/Main/Statistics") ! StatisticsActor.PersistState
@@ -70,8 +76,7 @@ class MainActor extends Actor with ActorLogging with Timers {
         HeuristicsAction.HEURISTICS_STATUS("RUNNING")
       )
 
-      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
-      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
+      timers.startSingleTimer("initial-state", QueryCurrentState, 5 seconds)
     }
 
     case StopProcessing => {
@@ -95,6 +100,7 @@ class MainActor extends Actor with ActorLogging with Timers {
 }
 
 object MainActor {
+  case object QueryCurrentState
   case object PersistState
 
   case object StopProcessing

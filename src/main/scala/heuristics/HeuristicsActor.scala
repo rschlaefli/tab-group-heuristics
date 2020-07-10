@@ -172,10 +172,9 @@ class HeuristicsActor
         case targetGroup => {
           statistics ! StatisticsActor.DiscardSuggestedGroup(groupHash)
 
-          computeHashCombinations(targetGroup)
-            .foreach(switchIdentifier =>
-              switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
-            )
+          computeHashCombinations(targetGroup).foreach(switchIdentifier =>
+            switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
+          )
 
           logger.info(
             logToCsv,
@@ -196,26 +195,33 @@ class HeuristicsActor
     case DiscardSuggestedTab(groupHash, tabHash) => {
       tabGroups.find(_.id == groupHash).foreach {
         case targetGroup => {
+
           val targetTab = targetGroup.tabs.find(_.hash == tabHash)
 
-          statistics ! StatisticsActor.DiscardSuggestedTab(groupHash)
+          // if the discarded tab is the only tab in the suggested group
+          // discard the entire group instead
+          if (targetTab.isDefined && targetGroup.tabs.size == 1) {
+            self ! DiscardSuggestion(groupHash)
+          } else {
+            statistics ! StatisticsActor.DiscardSuggestedTab(groupHash)
 
-          computeHashCombinations(targetGroup)
-            .filter(_.contains(tabHash))
-            .foreach(switchIdentifier =>
-              switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
+            computeHashCombinations(targetGroup)
+              .filter(_.contains(tabHash))
+              .foreach(switchIdentifier =>
+                switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
+              )
+
+            logger.info(
+              logToCsv,
+              Seq(
+                "DISCARD_TAB",
+                groupHash,
+                targetGroup.name,
+                tabHash,
+                targetTab.map(_.title).getOrElse("NONE")
+              ).mkString(";")
             )
-
-          logger.info(
-            logToCsv,
-            Seq(
-              "DISCARD_TAB",
-              groupHash,
-              targetGroup.name,
-              tabHash,
-              targetTab.map(_.title).getOrElse("NONE")
-            ).mkString(";")
-          )
+          }
         }
       }
     }
@@ -252,8 +258,9 @@ object HeuristicsActor extends LazyLogging {
 
     tabHashes
       .combinations(2)
-      .map(_.sorted)
-      .map { case List(hash1, hash2) => s"${hash1}_${hash2}" }
+      .flatMap {
+        case list => List(list.mkString("_"), list.reverse.mkString("_"))
+      }
       .toList
 
   }

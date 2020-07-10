@@ -60,7 +60,7 @@ object Main extends App with LazyLogging {
     case Success(socket) => {
       serverSocket = socket
     }
-    case Failure(e) => {
+    case Failure(_) => {
       logger.error(
         "> Unable to bind to the socket (there might be another instance running). Exiting..."
       )

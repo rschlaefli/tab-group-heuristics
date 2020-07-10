@@ -1,8 +1,6 @@
 package tabswitches
 
 import scala.collection.mutable
-import scala.concurrent.duration._
-import scala.language.postfixOps
 
 import akka.actor.Actor
 import akka.actor.ActorLogging
@@ -38,8 +36,6 @@ class SwitchMapActor
           tabSwitches.mapValuesInPlace((_, meta) => TabSwitchMeta.clone(meta))
       case _ =>
     }
-
-    timers.startTimerWithFixedDelay("persist", PersistSwitchMap, 60 seconds)
   }
 
   override def postStop(): Unit = {
@@ -94,7 +90,6 @@ object SwitchMapActor {
   case object PersistState
 
   case object QueryTabSwitchMap
-  case object PersistSwitchMap
 
   case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
   case class DiscardTabSwitch(switchIdenfitier: String)

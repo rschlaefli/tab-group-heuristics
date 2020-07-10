@@ -19,16 +19,7 @@ case class TabSwitchMeta(
     urlSimilarity: Option[Float],
     wasDiscarded: Option[Boolean]
 ) {
-  def discarded =
-    TabSwitchMeta(
-      tab1,
-      tab2,
-      count,
-      lastUsed,
-      sameOrigin,
-      urlSimilarity,
-      Some(true)
-    )
+  def discarded = this.copy(wasDiscarded = Some(true))
 }
 
 object TabSwitchMeta {

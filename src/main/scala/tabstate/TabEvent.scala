@@ -12,7 +12,12 @@ sealed class TabEvent
 case object PauseEvent extends TabEvent
 case object ResumeEvent extends TabEvent
 
-case object RefreshGroupsEvent extends TabEvent
+case class RefreshGroupsEvent(algorithm: String, parameters: JsonObject)
+    extends TabEvent
+object RefreshGroupsEvent {
+  implicit val refreshGroupsEventDecoder: Decoder[RefreshGroupsEvent] =
+    deriveDecoder
+}
 
 case class SuggestedGroupAcceptEvent(groupHash: String) extends TabEvent
 object SuggestedGroupAcceptEvent {
@@ -167,7 +172,10 @@ object TabEvent extends LazyLogging {
 
       case "RESUME" => Some(ResumeEvent)
 
-      case "REFRESH_GROUPS" => Some(RefreshGroupsEvent)
+      case "REFRESH_GROUPS" =>
+        extractDecoderResult(
+          cursor.get[RefreshGroupsEvent]("payload")
+        )
 
       case "DISCARD_GROUP" =>
         extractDecoderResult(

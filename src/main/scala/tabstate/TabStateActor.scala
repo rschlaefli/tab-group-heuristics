@@ -47,8 +47,8 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
   override def receive: Actor.Receive = {
 
-    case RefreshGroupsEvent => {
-      log.info("Refreshing groups")
+    case RefreshGroupsEvent(algorithm, parameters) => {
+      log.info(s"Refreshing groups using $algorithm with $parameters")
       heuristics ! HeuristicsActor.ComputeHeuristics
     }
 

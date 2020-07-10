@@ -1,18 +1,18 @@
 package tabstate
 
+import java.io.BufferedOutputStream
+
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-import io.circe.syntax._
-
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.Timers
-import tabstate.Tab
-import messaging.NativeMessaging
 import heuristics.HeuristicsAction
-import java.io.BufferedOutputStream
+import io.circe.syntax._
+import messaging.NativeMessaging
+import tabstate.Tab
 
 class CurrentTabsActor extends Actor with ActorLogging with Timers {
 

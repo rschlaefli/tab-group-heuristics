@@ -49,7 +49,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
     case RefreshGroupsEvent(algorithm, parameters) => {
       log.info(s"Refreshing groups using $algorithm with $parameters")
-      heuristics ! HeuristicsActor.ComputeHeuristics
+      heuristics ! HeuristicsActor.ComputeHeuristics(algorithm, parameters)
     }
 
     case PauseEvent => {

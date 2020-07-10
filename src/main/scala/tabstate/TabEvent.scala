@@ -12,7 +12,7 @@ sealed class TabEvent
 case object PauseEvent extends TabEvent
 case object ResumeEvent extends TabEvent
 
-case class RefreshGroupsEvent(algorithm: String, parameters: JsonObject)
+case class RefreshGroupsEvent(algorithm: String, parameters: Json)
     extends TabEvent
 object RefreshGroupsEvent {
   implicit val refreshGroupsEventDecoder: Decoder[RefreshGroupsEvent] =

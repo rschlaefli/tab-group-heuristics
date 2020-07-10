@@ -21,6 +21,8 @@ import statistics.StatisticsActor
 import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
+import io.circe.JsonObject
+import io.circe.Json
 
 class HeuristicsActor
     extends Actor
@@ -66,7 +68,7 @@ class HeuristicsActor
       curatedGroupIndex = curatedIndex
     }
 
-    case ComputeHeuristics => {
+    case ComputeHeuristics(algorithm, parameters) => {
       implicit val timeout = Timeout(20 seconds)
 
       log.debug("Starting heuristics computation")
@@ -232,8 +234,12 @@ class HeuristicsActor
 }
 
 object HeuristicsActor extends LazyLogging {
-  case object ComputeHeuristics
   case object QueryTabGroups
+
+  case class ComputeHeuristics(
+      algorithm: String = "simap",
+      parameters: Json = Json.Null
+  )
 
   case class CurrentTabGroups(
       groupIndex: Map[Int, Int],

@@ -14,9 +14,9 @@ object BronKerbosch
     extends LazyLogging
     with CommunityDetector[TabSwitchActor.TabSwitchGraph, BronKerboschParams] {
 
-  val testGraph = loadTestGraph
+  // val testGraph = loadTestGraph
 
-  val tabGroups = apply(testGraph, BronKerboschParams())
+  // val tabGroups = apply(testGraph, BronKerboschParams())
 
   override def prepareGraph(
       graph: TabSwitchActor.TabSwitchGraph,

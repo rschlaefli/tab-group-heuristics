@@ -1,19 +1,24 @@
 package tabstate
 
 import com.typesafe.scalalogging.LazyLogging
+import heuristics.HeuristicsParameters
 import heuristics.TabGroup
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.parser._
 import tabstate.Tab
+import tabswitches.GraphGenerationParams
 
 sealed class TabEvent
 
 case object PauseEvent extends TabEvent
 case object ResumeEvent extends TabEvent
 
-case class RefreshGroupsEvent(algorithm: String, parameters: Json)
-    extends TabEvent
+case class RefreshGroupsEvent(
+    heuristics: HeuristicsParameters,
+    graphGeneration: GraphGenerationParams,
+    grouping: Json
+) extends TabEvent
 object RefreshGroupsEvent {
   implicit val refreshGroupsEventDecoder: Decoder[RefreshGroupsEvent] =
     deriveDecoder

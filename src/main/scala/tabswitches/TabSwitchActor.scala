@@ -56,31 +56,47 @@ class TabSwitchActor extends Actor with ActorLogging {
       }
     }
 
-    case ComputeGroups => {
+    case ComputeGroups(algorithm, algoParams, graphParams) => {
       implicit val timeout = Timeout(10 seconds)
-      (switchGraph ? SwitchGraphActor.ComputeGraph)
+      (switchGraph ? SwitchGraphActor.ComputeGraph(graphParams))
         .mapTo[TabSwitchActor.CurrentSwitchGraph]
         .map {
           case TabSwitchActor.CurrentSwitchGraph(graph) => {
-            val timestamp = java.time.LocalDateTime
-              .now()
-              .truncatedTo(java.time.temporal.ChronoUnit.HOURS)
+            val timestamp = java.time.LocalDateTime.now()
 
-            Watset(
-              graph,
-              WatsetParams(),
-              s"clusters/clusters_watset_$timestamp.txt"
-            )
-
-            val simapClusters =
-              SiMap(
-                graph,
-                SiMapParams(),
-                s"clusters/clusters_simap_$timestamp.txt"
-              )
+            val computedClusters = algorithm match {
+              case "watset" => {
+                Watset(
+                  graph,
+                  algoParams.asInstanceOf[WatsetParams],
+                  s"clusters/clusters_watset_manual_$timestamp.txt"
+                )
+              }
+              case "simap" => {
+                SiMap(
+                  graph,
+                  algoParams.asInstanceOf[SiMapParams],
+                  s"clusters/clusters_simap_manual_$timestamp.txt"
+                )
+              }
+              case _ => {
+                Watset(
+                  graph,
+                  WatsetParams(),
+                  s"clusters/clusters_watset_${timestamp
+                    .truncatedTo(java.time.temporal.ChronoUnit.HOURS)}.txt"
+                )
+                SiMap(
+                  graph,
+                  SiMapParams(),
+                  s"clusters/clusters_simap_${timestamp
+                    .truncatedTo(java.time.temporal.ChronoUnit.HOURS)}.txt"
+                )
+              }
+            }
 
             val (clusterIndex, clusters) =
-              buildClusterIndexWithStats(simapClusters)
+              buildClusterIndexWithStats(computedClusters)
 
             HeuristicsActor.TabSwitchHeuristicsResults(clusterIndex, clusters)
           }
@@ -96,7 +112,11 @@ object TabSwitchActor extends LazyLogging {
 
   type TabSwitchGraph = Graph[TabMeta, DefaultWeightedEdge]
 
-  case object ComputeGroups
+  case class ComputeGroups(
+      algorithm: String,
+      algoParams: CommunityDetectorParameters,
+      graphParams: GraphGenerationParams
+  )
 
   case class TabSwitch(tab1: Option[Tab], tab2: Tab)
   case class CurrentSwitchGraph(graph: TabSwitchGraph)

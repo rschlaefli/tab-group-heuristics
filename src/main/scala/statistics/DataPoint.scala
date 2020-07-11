@@ -3,7 +3,9 @@ package statistics
 class DataPoint(
     val currentlyOpenTabs: Int,
     val openTabsUngrouped: Int,
-    val openTabsGrouped: Int
+    val openTabsGrouped: Int,
+    val averageTabAge: Double,
+    val averageTabStaleDuration: Double
 ) {
 
   var switchesWithinGroups: Int = 0
@@ -11,6 +13,11 @@ class DataPoint(
   var switchesFromGroups: Int = 0
   var switchesToGroups: Int = 0
   var switchesOutsideGroups: Int = 0
+
+  var acceptedGroups: Int = 0
+  var acceptedTabs: Int = 0
+  var discardedGroups: Int = 0
+  var discardedTabs: Int = 0
 
   def updateSwitchStatistics(switchStatistics: SwitchStatistics): Unit = {
     switchesWithinGroups = switchStatistics.switchesWithinGroups
@@ -20,8 +27,20 @@ class DataPoint(
     switchesOutsideGroups = switchStatistics.switchesOutsideGroups
   }
 
+  def updateSuggestionInteractionStatistics(
+      interactionStatistics: InteractionStatistics
+  ): Unit = {
+    acceptedGroups = interactionStatistics.acceptedGroups
+    acceptedTabs = interactionStatistics.acceptedTabs
+    discardedGroups = interactionStatistics.discardedGroups
+    discardedTabs = interactionStatistics.discardedTabs
+  }
+
   override def toString(): String = {
-    s"DataPoint($currentlyOpenTabs, $openTabsGrouped, $openTabsUngrouped, $switchesWithinGroups, " +
-      s"$switchesBetweenGroups, $switchesFromGroups, $switchesToGroups, $switchesOutsideGroups)"
+    s"DataPoint(" +
+      s"$currentlyOpenTabs, $openTabsGrouped, $openTabsUngrouped, $switchesWithinGroups, " +
+      s"$switchesBetweenGroups, $switchesFromGroups, $switchesToGroups, $switchesOutsideGroups, " +
+      s"$averageTabAge, $averageTabStaleDuration" +
+      s")"
   }
 }

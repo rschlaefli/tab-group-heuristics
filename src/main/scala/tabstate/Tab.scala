@@ -1,8 +1,7 @@
 package tabstate
 
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._
-
-import messaging.TabUpdateEvent
+import io.circe._
+import io.circe.generic.semiauto._
 
 // create a trait that all nodes in the tab switch graph will be sharing
 sealed trait Tabs
@@ -14,7 +13,7 @@ case class Tab(
     // Tabs.Tab properties that are important for grouping
     id: Int,
     index: Int,
-    lastAccessed: Option[Double],
+    lastAccessed: Option[Long],
     openerTabId: Option[Int],
     pinned: Boolean,
     sessionId: Option[Int],
@@ -26,7 +25,9 @@ case class Tab(
     normalizedTitle: String,
     hash: String,
     origin: String,
-    baseUrl: String
+    baseUrl: String,
+    // internal properties
+    createdAt: Option[Long] = Some(java.time.Instant.now().getEpochSecond())
 ) extends Tabs {
 
   // override canEqual, equals, and hashCode to ensure that tabs are compared by base hash
@@ -44,7 +45,14 @@ case class Tab(
   override def hashCode(): Int = hash.hashCode()
 
   // override toString to reduce clutter in graph representations
-  override def toString(): String = s"$normalizedTitle (${hashCode()})"
+  override def toString(): String =
+    s"$normalizedTitle (${hashCode()}) [$lastAccessed, $createdAt]"
+
+  def withCreationTs(ts: Long) = this.copy(createdAt = Some(ts))
+  def withAccessTs(ts: Long) = this.copy(lastAccessed = Some(ts))
+  def withCurrentAccessTs =
+    this.copy(lastAccessed = Some(java.time.Instant.now().getEpochSecond()))
+
 }
 
 object Tab {
@@ -52,7 +60,7 @@ object Tab {
   implicit val tabDecoder: Decoder[Tab] = deriveDecoder
   implicit val tabEncoder: Encoder[Tab] = deriveEncoder
 
-  def fromEvent(event: TabUpdateEvent): Tab = new Tab(
+  def fromEvent(event: TabUpdateEvent): Tab = Tab(
     event.id,
     event.index,
     event.lastAccessed,

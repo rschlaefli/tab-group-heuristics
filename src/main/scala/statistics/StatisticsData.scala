@@ -11,6 +11,12 @@ class StatisticsData() {
   var tabSwitchFromGroup: List[Int] = List()
   var tabSwitchToGroup: List[Int] = List()
   var tabSwitchUngrouped: List[Int] = List()
+  var acceptedGroups: List[Int] = List()
+  var acceptedTabs: List[Int] = List()
+  var discardedGroups: List[Int] = List()
+  var discardedTabs: List[Int] = List()
+  var tabAge: List[Double] = List()
+  var tabStaleness: List[Double] = List()
 
   def withDataPoint(dataPoint: DataPoint): StatisticsData = {
     numCurrentTabs = numCurrentTabs.appended(dataPoint.currentlyOpenTabs)
@@ -25,23 +31,39 @@ class StatisticsData() {
     tabSwitchToGroup = tabSwitchToGroup.appended(dataPoint.switchesToGroups)
     tabSwitchUngrouped =
       tabSwitchUngrouped.appended(dataPoint.switchesOutsideGroups)
+    acceptedGroups = acceptedGroups.appended(dataPoint.acceptedGroups)
+    acceptedTabs = acceptedTabs.appended(dataPoint.acceptedTabs)
+    discardedGroups = discardedGroups.appended(dataPoint.discardedGroups)
+    discardedTabs = discardedTabs.appended(dataPoint.discardedTabs)
+    tabAge = tabAge.appended(dataPoint.averageTabAge)
+    tabStaleness = tabStaleness.appended(dataPoint.averageTabStaleDuration)
     return this
   }
 
   def aggregated: StatisticsOutput =
     StatisticsOutput(
-      mean(numCurrentTabs.toArray),
-      mean(openTabsGrouped.toArray),
-      mean(openTabsUngrouped.toArray),
+      round(mean(numCurrentTabs.toArray), 2),
+      round(mean(openTabsGrouped.toArray), 2),
+      round(mean(openTabsUngrouped.toArray), 2),
       tabSwitchWithinGroups.sum,
       tabSwitchBetweenGroups.sum,
       tabSwitchFromGroup.sum,
       tabSwitchToGroup.sum,
-      tabSwitchUngrouped.sum
+      tabSwitchUngrouped.sum,
+      acceptedGroups.sum,
+      acceptedTabs.sum,
+      discardedGroups.sum,
+      discardedTabs.sum,
+      round(mean(tabAge.toArray), 2),
+      round(mean(tabStaleness.toArray), 2)
     )
 
   override def toString(): String = {
-    s"StatisticsData($numCurrentTabs, $openTabsGrouped, $openTabsUngrouped, $tabSwitchWithinGroups " +
-      s"$tabSwitchBetweenGroups, $tabSwitchFromGroup, $tabSwitchToGroup, $tabSwitchUngrouped)"
+    s"StatisticsData(" +
+      s"$numCurrentTabs, $openTabsGrouped, $openTabsUngrouped, " +
+      s"$tabSwitchWithinGroups, $tabSwitchBetweenGroups, $tabSwitchFromGroup, $tabSwitchToGroup, $tabSwitchUngrouped, " +
+      s"$acceptedGroups, $acceptedTabs, $discardedGroups, $discardedTabs, " +
+      s"$tabAge, $tabStaleness" +
+      s")"
   }
 }

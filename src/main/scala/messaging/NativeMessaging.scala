@@ -1,64 +1,15 @@
 package messaging
 
-import scala.collection.mutable
-import com.typesafe.scalalogging.LazyLogging
-import java.io.InputStream
-import io.circe._, io.circe.parser._, io.circe.generic.semiauto._,
-io.circe.syntax._
 import java.io.OutputStream
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
-import util.Utils
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import com.typesafe.scalalogging.LazyLogging
+import heuristics.HeuristicsAction
+import io.circe.syntax._
 
 object NativeMessaging extends LazyLogging {
-  def apply(
-      in: InputStream,
-      tabEventsQueue: mutable.Queue[TabEvent]
-  ): Thread = {
-    val thread = new Thread(() => {
-      logger.info("> Starting to listen for messages")
-
-      Iterator
-        .continually(readNativeMessage(in))
-        // flatten to get rid of any null values (None)
-        .flatten
-        // try to decode the messages into tab events
-        .flatMap(TabEvent.decodeEventFromMessage)
-        // add all the processed tab events to the queue
-        .foreach(tabEvent => {
-          logger.debug(
-            s"> Processing tab event $tabEvent, current queue size ${tabEventsQueue.size}"
-          )
-          tabEventsQueue.synchronized {
-            tabEventsQueue.enqueue(tabEvent)
-            tabEventsQueue.notify()
-          }
-        })
-    })
-
-    thread.setName("NativeMessaging")
-    thread.setDaemon(true)
-    thread
-  }
-
-  def readToByteArray(in: InputStream, length: Int): Option[Array[Byte]] = {
-    val byteArray = new Array[Byte](length)
-    val count = in.read(byteArray)
-    if (count == -1) return None
-    Some(byteArray)
-  }
-
-  def byteArrayToInt(byteArray: Array[Byte]): Int = {
-    java.nio.ByteBuffer
-      .wrap(byteArray)
-      .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-      .getInt
-  }
-
-  def byteArrayToString(byteArray: Array[Byte]): String = {
-    new String(byteArray, "UTF8")
-  }
 
   def intToByteArray(int: Int): Array[Byte] = {
     List[Byte](
@@ -73,25 +24,9 @@ object NativeMessaging extends LazyLogging {
     (value & 0xFF).toByte
   }
 
-  def readNativeMessage(in: InputStream): Option[String] = {
-    // read the length of the message
-    val message = readToByteArray(in, 4)
-      .map(byteArrayToInt)
-      // read the actual message based on its length
-      .map(readToByteArray(in, _))
-      .flatten
-      .map(byteArrayToString)
-
-    // TODO: is it any use to sleep here?
-    // Thread.sleep(100)
-
-    message
-  }
-
   def writeNativeMessage(
-      out: OutputStream,
       heuristicsAction: HeuristicsAction
-  ): Future[Unit] = Future {
+  )(implicit out: OutputStream): Future[Unit] = Future {
     // encode the action in a json string
     val message = heuristicsAction.asJson.toString()
 

@@ -11,8 +11,9 @@
     </encoder>
   </appender>
 
-<appender name="MAIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender name="MAIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>main.log</file>
+    <!-- <immediateFlush>false</immediateFlush> -->
     <append>true</append>
     <encoder>
       <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -36,6 +37,7 @@
 
   <appender name="DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>debug.log</file>
+    <!-- <immediateFlush>false</immediateFlush> -->
     <append>true</append>
     <encoder>
       <pattern>%date [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -54,10 +56,8 @@
     </rollingPolicy>
   </appender>
 
-
-
-  <appender name="StatisticsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>statistics.csv</file>
+  <appender name="HeuristicsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>heuristics/heuristics.csv</file>
     <append>true</append>
     <encoder>
       <pattern>%date;%msg%n</pattern>
@@ -70,14 +70,34 @@
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>statistics.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <fileNamePattern>heuristics/heuristics.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
+  <appender name="StatisticsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>statistics/statistics.csv</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date;%msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker != null &amp;&amp; marker.contains("CSV")</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>statistics/statistics.%d{yyyy-MM-dd}.csv</fileNamePattern>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
     </rollingPolicy>
   </appender>
 
   <appender name="TabEventsCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>tab_events.csv</file>
+    <file>events/tab_events.csv</file>
     <append>true</append>
     <encoder>
       <pattern>%date;%msg%n</pattern>
@@ -90,26 +110,73 @@
       <OnMatch>NEUTRAL</OnMatch>
     </filter>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>tab_events.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <fileNamePattern>events/tab_events.%d{yyyy-MM-dd}.csv</fileNamePattern>
       <maxHistory>30</maxHistory>
       <totalSizeCap>1GB</totalSizeCap>
     </rollingPolicy>
   </appender>
 
-  <root level="debug">
+  <appender name="TabSwitchesCSV" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>switches/tab_switches.csv</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%date;%msg%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>marker != null &amp;&amp; marker.contains("CSV")</expression>
+      </evaluator>
+      <OnMismatch>DENY</OnMismatch>
+      <OnMatch>NEUTRAL</OnMatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>switches/tab_switches.%d{yyyy-MM-dd}.csv</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
+  <appender name="AsyncMain" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>8192</queueSize>
+    <neverBlock>true</neverBlock>
     <appender-ref ref="MAIN" />
+  </appender>
+
+  <appender name="AsyncDebug" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>8192</queueSize>
+    <neverBlock>true</neverBlock>
     <appender-ref ref="DEBUG" />
+  </appender>
+
+  <root level="debug">
+    <appender-ref ref="AsyncMain" />
+    <appender-ref ref="AsyncDebug" />
     <appender-ref ref="STDERR" />
   </root>
 
-  <logger name="heuristics.HeuristicsEngine" level="debug" />
+  <logger name="heuristics.HeuristicsActor" level="info">
+    <appender-ref ref="HeuristicsCSV" />
+  </logger>
 
-  <logger name="statistics.StatisticsEngine" level="debug">
+  <logger name="messaging.NativeMessaging" level="info" />
+
+  <logger name="persistence.Persistence" level="info" />
+
+  <logger name="statistics.StatisticsActor" level="info">
     <appender-ref ref="StatisticsCSV" />
   </logger>
 
-  <logger name="tabstate.TabState" level="info">
+  <logger name="tabstate.CurrentTabsActor" level="info" />
+  <logger name="tabstate.TabStateActor" level="info">
     <appender-ref ref="TabEventsCSV" />
   </logger>
+
+  <logger name="tabswitches.SwitchGraphActor" level="info" />
+  <logger name="tabswitches.SwitchMapActor" level="info">
+    <appender-ref ref="TabSwitchesCSV" />
+  </logger>
+  <logger name="tabswitches.Watset" level="info" />
+
+  <logger name="util.Utils" level="info" />
 
 </configuration>

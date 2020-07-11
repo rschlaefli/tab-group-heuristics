@@ -1,12 +1,10 @@
 package learning
 
-import scala.concurrent.Future
-
-// THIS IS CRITICAL FOR FUTURES!
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Success
+import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Random
+import scala.util.Success
 
 object FuturesPromises extends App {
 

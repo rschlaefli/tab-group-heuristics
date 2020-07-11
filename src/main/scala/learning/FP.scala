@@ -1,7 +1,7 @@
 package course
 
-import scala.util.Try
 import scala.util.Success
+import scala.util.Try
 
 object FP extends App {
   // function traits

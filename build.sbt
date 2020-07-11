@@ -1,12 +1,21 @@
 import Dependencies._
 
-ThisBuild / version := "0.2.0"
-ThisBuild / scalaVersion := "2.13.2"
-ThisBuild / organization := "ch.uzh.rschlaefli"
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
+inThisBuild(
+  List(
+    scalaVersion := "2.13.2",
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision,
+    scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.3.1-RC3"
+  )
+)
 
 lazy val tabs = (project in file("."))
   .settings(
     name := "tabs",
+    version := "0.3.1",
+    organization := "ch.uzh.rschlaefli",
     maintainer := "rolandschlaefli@gmail.com",
     packageSummary := "Automated Tab Organization",
     packageDescription := """Heuristics backend for the Automated Tab Organization WebExtension""",
@@ -21,7 +30,8 @@ lazy val tabs = (project in file("."))
     //   </RegistryKey>
     // </Component>,
     libraryDependencies ++= runtimeDependencies,
-    libraryDependencies ++= testingDependencies
+    libraryDependencies ++= testingDependencies,
+    scalacOptions += "-Wunused"
   )
 
 // ensure that only the main entrypoint is bundled into the package

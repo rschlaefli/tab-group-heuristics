@@ -12,12 +12,15 @@ import akka.actor.Timers
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import communitydetection.CommunityDetectorParameters
+import communitydetection.SiMapParams
 import groupnaming.BasicKeywords
 import heuristics.TabGroup
 import io.circe.syntax._
 import messaging.NativeMessaging
 import org.slf4j.MarkerFactory
 import statistics.StatisticsActor
+import tabswitches.GraphGenerationParams
 import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
@@ -66,15 +69,18 @@ class HeuristicsActor
       curatedGroupIndex = curatedIndex
     }
 
-    case ComputeHeuristics => {
+    case ComputeHeuristics(heuristicsParams, algoParams, graphParams) => {
       implicit val timeout = Timeout(20 seconds)
 
       log.debug("Starting heuristics computation")
 
       val tabGroupHashIndex = computeHashIndex(curatedGroups)
 
-      (tabSwitches ? TabSwitchActor.ComputeGroups)
-        .mapTo[HeuristicsActor.TabSwitchHeuristicsResults]
+      (tabSwitches ? TabSwitchActor.ComputeGroups(
+        heuristicsParams.algorithm,
+        algoParams,
+        graphParams
+      )).mapTo[HeuristicsActor.TabSwitchHeuristicsResults]
         .foreach {
           case HeuristicsActor.TabSwitchHeuristicsResults(_, newTabGroups) => {
 
@@ -90,7 +96,7 @@ class HeuristicsActor
                     computeSuggestionOverlap(group, tabGroupHashIndex)
 
                   val similarGroups = overlap
-                    .filter(_._2 >= 0.2d)
+                    .filter(_._2 >= heuristicsParams.minOverlap)
                     .toList
                     .sortBy(_._2)
 
@@ -232,8 +238,13 @@ class HeuristicsActor
 }
 
 object HeuristicsActor extends LazyLogging {
-  case object ComputeHeuristics
   case object QueryTabGroups
+
+  case class ComputeHeuristics(
+      heuristicsParams: HeuristicsParameters = HeuristicsParameters(),
+      algoParams: CommunityDetectorParameters = SiMapParams(),
+      graphParams: GraphGenerationParams = GraphGenerationParams()
+  )
 
   case class CurrentTabGroups(
       groupIndex: Map[Int, Int],

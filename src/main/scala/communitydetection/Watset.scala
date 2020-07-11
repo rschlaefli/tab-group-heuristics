@@ -7,9 +7,6 @@ import org.nlpub.watset.graph._
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 
-case class WatsetParams(expansion: Int = 2, powerCoefficient: Double = 2)
-    extends CommunityDetectorParameters
-
 object Watset
 // extends App
     extends LazyLogging

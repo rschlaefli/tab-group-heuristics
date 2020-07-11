@@ -11,6 +11,9 @@ import akka.actor.Props
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import communitydetection.CommunityDetectorParameters
+import communitydetection.SiMapParams
+import communitydetection.WatsetParams
 import heuristics.HeuristicsAction
 import heuristics.HeuristicsActor
 import main.MainActor
@@ -47,9 +50,29 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
   override def receive: Actor.Receive = {
 
-    case RefreshGroupsEvent(algorithm, parameters) => {
-      log.info(s"Refreshing groups using $algorithm with $parameters")
-      heuristics ! HeuristicsActor.ComputeHeuristics
+    case RefreshGroupsEvent(
+        heuristicsParams,
+        graphGenerationParams,
+        groupingParams
+        ) => {
+
+      val groupingParamsDecoded: CommunityDetectorParameters =
+        heuristicsParams.algorithm match {
+          case "simap" =>
+            groupingParams.as[SiMapParams].getOrElse(SiMapParams())
+          case "watset" =>
+            groupingParams.as[WatsetParams].getOrElse(WatsetParams())
+        }
+
+      log.info(
+        s"Refreshing groups, $heuristicsParams, $graphGenerationParams, $groupingParamsDecoded"
+      )
+
+      heuristics ! HeuristicsActor.ComputeHeuristics(
+        heuristicsParams,
+        groupingParamsDecoded,
+        graphGenerationParams
+      )
     }
 
     case PauseEvent => {

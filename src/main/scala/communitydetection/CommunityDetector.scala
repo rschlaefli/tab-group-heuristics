@@ -5,29 +5,7 @@ import scala.collection.JavaConverters._
 import com.typesafe.scalalogging.LazyLogging
 import org.jgrapht.alg.scoring.PageRank
 import persistence.Persistence
-import tabswitches.SwitchGraphActor
-import tabswitches.SwitchMapActor
 import tabswitches.TabMeta
-import tabswitches.TabSwitchMeta
-
-trait CommunityDetectorParameters {
-
-  /**
-    * The maximum number of groups to return
-    */
-  def maxGroups: Int = 10
-
-  /**
-    * Remove groups with less nodes
-    */
-  def minGroupSize: Int = 3
-
-  /**
-    * Remove groups with more nodes
-    */
-  def maxGroupSize: Int = 10
-
-}
 
 trait CommunityDetector[S, T <: CommunityDetectorParameters]
     extends LazyLogging {
@@ -67,21 +45,21 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
     tabGroups
   }
 
-  def loadTestGraph: TabSwitchGraph = {
+  // def loadTestGraph: TabSwitchGraph = {
 
-    var tabSwitchMap: Map[String, TabSwitchMeta] = null
-    var tabSwitchGraph: TabSwitchGraph = null
+  //   var tabSwitchMap: Map[String, TabSwitchMeta] = null
+  //   var tabSwitchGraph: TabSwitchGraph = null
 
-    SwitchMapActor.restoreTabSwitchMap map {
-      case Right(restoredMap) => {
-        tabSwitchMap = restoredMap.toMap
-        tabSwitchGraph = SwitchGraphActor.processSwitchMap(tabSwitchMap)
-      }
-      case _ =>
-    }
+  //   SwitchMapActor.restoreTabSwitchMap map {
+  //     case Right(restoredMap) => {
+  //       tabSwitchMap = restoredMap.toMap
+  //       tabSwitchGraph = SwitchGraphActor.processSwitchMap(tabSwitchMap)
+  //     }
+  //     case _ =>
+  //   }
 
-    tabSwitchGraph
-  }
+  //   tabSwitchGraph
+  // }
 
   /**
     * Prepare the tab switch graph for analysis with the algorithm

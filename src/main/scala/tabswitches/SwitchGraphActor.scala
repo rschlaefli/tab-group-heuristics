@@ -16,25 +16,6 @@ import org.jgrapht.graph.SimpleWeightedGraph
 import org.joda.time.DateTime
 import persistence.Persistence
 
-case class GraphGenerationParams(
-    /**
-      * Ignore edges with a lower weight
-      */
-    minWeight: Double = 2,
-    /**
-      * Forgetting factor
-      */
-    expireAfter: Duration = 14 days,
-    /**
-      * Factor to punish switches on the same origin
-      */
-    sameOriginFactor: Double = 0.3,
-    /**
-      * Factor to punish similar URLs
-      */
-    urlSimilarityFactor: Double = 0.5
-)
-
 class SwitchGraphActor extends Actor with ActorLogging {
 
   import SwitchGraphActor._
@@ -43,7 +24,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
 
   override def receive: Actor.Receive = {
 
-    case ComputeGraph => {
+    case ComputeGraph(params) => {
       implicit val timeout = Timeout(2 seconds)
       val switchMap = context.actorSelection(
         "/user/Main/Heuristics/TabSwitches/TabSwitchMap"
@@ -56,7 +37,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
               s"Constructing tab switch graph from switch map with ${tabSwitchMap.size} entries"
             )
 
-            val tabSwitchGraph = processSwitchMap(tabSwitchMap)
+            val tabSwitchGraph = processSwitchMap(tabSwitchMap, params)
 
             log.debug(
               s"Contructed tab switch graph with ${tabSwitchGraph.vertexSet().size()}" +
@@ -89,14 +70,14 @@ object SwitchGraphActor extends LazyLogging {
 
   import TabSwitchActor.TabSwitchGraph
 
-  case object ComputeGraph
+  case class ComputeGraph(params: GraphGenerationParams)
 
   case class CurrentSwitchMap(switchMap: Map[String, TabSwitchMeta])
   case class ExportGraph(graph: TabSwitchGraph)
 
   def processSwitchMap(
       tabSwitchMap: Map[String, TabSwitchMeta],
-      params: GraphGenerationParams = GraphGenerationParams()
+      params: GraphGenerationParams
   ): TabSwitchGraph = {
 
     val tabGraph =
@@ -105,7 +86,7 @@ object SwitchGraphActor extends LazyLogging {
       )
 
     val expirationFrontier =
-      DateTime.now().getMillis() - params.expireAfter.toMillis
+      DateTime.now().getMillis() - (params.expireAfter days).toMillis
 
     tabSwitchMap.values
       .filter(switchData =>

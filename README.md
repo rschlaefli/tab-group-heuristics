@@ -11,7 +11,8 @@ For feature requests, bug reports, and feedback of any kind, please refer to the
 
 ## Requirements
 
-- Java 1.8
+- JDK 1.8 or 11
+  - https://adoptopenjdk.net/
 - Scala SBT
 
 ## Development

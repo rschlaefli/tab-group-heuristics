@@ -7,7 +7,7 @@
             <RegistryValue Type="string" Value="[INSTALLDIR]manifest-firefox-win.json" />
         </RegistryKey>
     </Component>
-    <Component Win64="yes" Id="RegistryEntries64" Guid="18392396-dae0-42dc-b112-9c431d315da4" Win64="yes">
+    <Component Win64="yes" Id="RegistryEntries64" Guid="18392396-dae0-42dc-b112-9c431d315da4">
         <RegistryKey Id="ChromeManifestLocation64" Root="HKLM" Key="SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs" Action="createAndRemoveOnUninstall">
             <RegistryValue Type="string" Value="[INSTALLDIR]manifest-chrome-win.json" />
         </RegistryKey>
@@ -15,8 +15,7 @@
             <RegistryValue Type="string" Value="[INSTALLDIR]manifest-firefox-win.json" />
         </RegistryKey>
     </Component>
-</DirectoryRef>
-<Feature Id="RegistryEntries" Title="Registry Entries" Description="Registry Entries for Native Messaging" Level="1" Absent="disallow">
+</DirectoryRef><Feature Id="RegistryEntries" Title="Registry Entries" Description="Registry Entries for Native Messaging" Level="1" Absent="disallow">
     <ComponentRef Id="RegistryEntries" />
     <ComponentRef Id="RegistryEntries64" />
 </Feature>

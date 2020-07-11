@@ -1,0 +1,7 @@
+{
+  "name": "tabs",
+  "description": "Host for Automated Tab Organization",
+  "path": "C:\\Program Files\\tabs\\bin\\tabs.bat",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://jgcfdfeaeoogamdkkfbdnfhkohibdjkd/"]
+}

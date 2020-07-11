@@ -1,0 +1,546 @@
+<Wix xmlns:util="http://schemas.microsoft.com/wix/UtilExtension" xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="25695a01-bd23-4155-a430-6ef8be4babfa" Name="Automated Tab Organization" Language="1033" Version="0.3.2" Manufacturer="Roland Schlaefli &lt;rolandschlaefli@gmail.com&gt;" UpgradeCode="9b2f86fa-aa0d-4b12-ac73-6831f4628329">
+    <Package Platform="x64" Description="Heuristics backend for the Automated Tab Organization WebExtension" Comments="TODO - we need comments." Manufacturer="Roland Schlaefli &lt;rolandschlaefli@gmail.com&gt;" InstallScope="perMachine" InstallerVersion="200" Compressed="yes" />
+    <Media Id="1" Cabinet="_tabs3552126xx.cab" EmbedCab="yes" />
+
+    <!-- Define the directories we use -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="tabs">
+          <Component Win64="yes" Id="_ApplicationProgramsFolderRemove689092593" Guid="eab10b8d-6776-4479-8d93-fda4934389fd">
+            <RemoveFolder Id="ApplicationProgramsFolderRemove" On="uninstall" />
+            <RegistryValue Root="HKCU" Key="Software\Roland Schlaefli &lt;rolandschlaefli@gmail.com&gt;\tabs" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramFiles64Folder" Name="PFiles">
+        <Directory Id="INSTALLDIR" Name="tabs">
+          <Directory Id="_lib107141xxx" Name="lib"></Directory> <!-- -->
+          <Directory Id="_bin97543xxxx" Name="bin"></Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+    <!-- Now define the components -->
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_ch_uzh_rschlaefli_tabs_0_3_2_jar112699695" Guid="81d83a00-22e1-4bb4-81ef-deca40ac77cc">
+        <File Id="fl__lib_ch_uzh_rschlaefli_tabs_0_3_2_jar112699695" Name="ch.uzh.rschlaefli.tabs-0.3.2.jar" DiskId="1" Source="lib\ch.uzh.rschlaefli.tabs-0.3.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_simap_jar135472233" Guid="20713394-b52c-4cbe-8915-f672ac60cfd5">
+        <File Id="fl__lib_simap_jar135472233" Name="simap.jar" DiskId="1" Source="lib\simap.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_watset_jar144873416" Guid="69362762-91e4-466b-9582-557f30b20a9a">
+        <File Id="fl__lib_watset_jar144873416" Name="watset.jar" DiskId="1" Source="lib\watset.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_scala_lang_scala_library_2_13_2_jar590712787" Guid="1e991aba-5d68-4a1c-baaf-069d5b35a3e7">
+        <File Id="fl__lib_org_scala_lang_scala_library_2_13_2_jar590712787" Name="org.scala-lang.scala-library-2.13.2.jar" DiskId="1" Source="lib\org.scala-lang.scala-library-2.13.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_scalaz_scalaz_core_2_13_7_3_1_jar203781531" Guid="15078b51-144d-4b1f-9750-d499b6dae368">
+        <File Id="fl__lib_org_scalaz_scalaz_core_2_13_7_3_1_jar203781531" Name="org.scalaz.scalaz-core_2.13-7.3.1.jar" DiskId="1" Source="lib\org.scalaz.scalaz-core_2.13-7.3.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_scalactic_scalactic_2_13_3_2_0_jar106848319" Guid="63d8a1ab-6a36-4279-8812-d0443095cc52">
+        <File Id="fl__lib_org_scalactic_scalactic_2_13_3_2_0_jar106848319" Name="org.scalactic.scalactic_2.13-3.2.0.jar" DiskId="1" Source="lib\org.scalactic.scalactic_2.13-3.2.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_ch_qos_logback_logback_classic_1_2_3_jar203962478" Guid="8aea4a5b-1f84-4b8f-b9b4-a31ff535da1d">
+        <File Id="fl__lib_ch_qos_logback_logback_classic_1_2_3_jar203962478" Name="ch.qos.logback.logback-classic-1.2.3.jar" DiskId="1" Source="lib\ch.qos.logback.logback-classic-1.2.3.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_b_com_typesafe_scala_logging_scala_logging_2_13_3_9_2_jar903693651" Guid="a58bdcb2-27f8-48d0-b3ff-79a831c0011b">
+        <File Id="fl__b_com_typesafe_scala_logging_scala_logging_2_13_3_9_2_jar903693651" Name="com.typesafe.scala-logging.scala-logging_2.13-3.9.2.jar" DiskId="1" Source="lib\com.typesafe.scala-logging.scala-logging_2.13-3.9.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_codehaus_janino_janino_3_1_2_jar818439470" Guid="9e68afea-65ec-406f-90f3-20651829d141">
+        <File Id="fl__lib_org_codehaus_janino_janino_3_1_2_jar818439470" Name="org.codehaus.janino.janino-3.1.2.jar" DiskId="1" Source="lib\org.codehaus.janino.janino-3.1.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_core_2_4_0_jar322195316" Guid="d02b5aaa-8476-4bd4-9a6f-76172f27ad05">
+        <File Id="fl__lib_com_github_haifengl_smile_core_2_4_0_jar322195316" Name="com.github.haifengl.smile-core-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-core-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_scala_2_13_2_4_0_jar138239122" Guid="a01ff652-35e8-4baa-b004-2864ee9b5525">
+        <File Id="fl__lib_com_github_haifengl_smile_scala_2_13_2_4_0_jar138239122" Name="com.github.haifengl.smile-scala_2.13-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-scala_2.13-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_nscala_time_nscala_time_2_13_2_24_0_jar314076447" Guid="be180417-c832-40f7-8da6-f6f946def948">
+        <File Id="fl__lib_com_github_nscala_time_nscala_time_2_13_2_24_0_jar314076447" Name="com.github.nscala-time.nscala-time_2.13-2.24.0.jar" DiskId="1" Source="lib\com.github.nscala-time.nscala-time_2.13-2.24.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_mpkorstanje_simmetrics_core_4_1_1_jar256780404" Guid="00e5d587-107a-4ae0-8864-496fbba6c3a8">
+        <File Id="fl__lib_com_github_mpkorstanje_simmetrics_core_4_1_1_jar256780404" Name="com.github.mpkorstanje.simmetrics-core-4.1.1.jar" DiskId="1" Source="lib\com.github.mpkorstanje.simmetrics-core-4.1.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_io_circe_circe_core_2_13_0_13_0_jar146179148" Guid="cd40ab56-3397-4310-9f86-86b4569484b1">
+        <File Id="fl__lib_io_circe_circe_core_2_13_0_13_0_jar146179148" Name="io.circe.circe-core_2.13-0.13.0.jar" DiskId="1" Source="lib\io.circe.circe-core_2.13-0.13.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_io_circe_circe_generic_2_13_0_13_0_jar107452047" Guid="24257402-a59a-4a23-8019-e6ccfcb16544">
+        <File Id="fl__lib_io_circe_circe_generic_2_13_0_13_0_jar107452047" Name="io.circe.circe-generic_2.13-0.13.0.jar" DiskId="1" Source="lib\io.circe.circe-generic_2.13-0.13.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_io_circe_circe_parser_2_13_0_13_0_jar187486304" Guid="6d46d1a2-e74d-457b-a2ac-bc0acb3199cb">
+        <File Id="fl__lib_io_circe_circe_parser_2_13_0_13_0_jar187486304" Name="io.circe.circe-parser_2.13-0.13.0.jar" DiskId="1" Source="lib\io.circe.circe-parser_2.13-0.13.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_jgrapht_jgrapht_core_1_5_0_jar127243021" Guid="54f1b33b-a58d-4652-903d-461356ce5b4b">
+        <File Id="fl__lib_org_jgrapht_jgrapht_core_1_5_0_jar127243021" Name="org.jgrapht.jgrapht-core-1.5.0.jar" DiskId="1" Source="lib\org.jgrapht.jgrapht-core-1.5.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_jgrapht_jgrapht_ext_1_5_0_jar911296116" Guid="15b1efe1-0009-4daa-9d52-919487e026af">
+        <File Id="fl__lib_org_jgrapht_jgrapht_ext_1_5_0_jar911296116" Name="org.jgrapht.jgrapht-ext-1.5.0.jar" DiskId="1" Source="lib\org.jgrapht.jgrapht-ext-1.5.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_jgrapht_jgrapht_io_1_5_0_jar116881588" Guid="6c211367-c3ca-4dbf-9c9d-0b21e269e7e8">
+        <File Id="fl__lib_org_jgrapht_jgrapht_io_1_5_0_jar116881588" Name="org.jgrapht.jgrapht-io-1.5.0.jar" DiskId="1" Source="lib\org.jgrapht.jgrapht-io-1.5.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_jgrapht_jgrapht_opt_1_5_0_jar583020642" Guid="e8967f84-7fd6-4c93-bba3-064fd4aaeefb">
+        <File Id="fl__lib_org_jgrapht_jgrapht_opt_1_5_0_jar583020642" Name="org.jgrapht.jgrapht-opt-1.5.0.jar" DiskId="1" Source="lib\org.jgrapht.jgrapht-opt-1.5.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_akka_akka_actor_2_13_2_6_6_jar142312112" Guid="474eea1c-b05a-4dec-8aa4-c340636b6af4">
+        <File Id="fl__lib_com_typesafe_akka_akka_actor_2_13_2_6_6_jar142312112" Name="com.typesafe.akka.akka-actor_2.13-2.6.6.jar" DiskId="1" Source="lib\com.typesafe.akka.akka-actor_2.13-2.6.6.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_akka_akka_testkit_2_13_2_6_6_jar195850280" Guid="2a9d933c-2b49-4500-8b6e-9bf2c90c620b">
+        <File Id="fl__lib_com_typesafe_akka_akka_testkit_2_13_2_6_6_jar195850280" Name="com.typesafe.akka.akka-testkit_2.13-2.6.6.jar" DiskId="1" Source="lib\com.typesafe.akka.akka-testkit_2.13-2.6.6.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_akka_akka_stream_2_13_2_6_6_jar193688539" Guid="bdc3b481-683d-4dbe-96f6-b639b78d21ce">
+        <File Id="fl__lib_com_typesafe_akka_akka_stream_2_13_2_6_6_jar193688539" Name="com.typesafe.akka.akka-stream_2.13-2.6.6.jar" DiskId="1" Source="lib\com.typesafe.akka.akka-stream_2.13-2.6.6.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_akka_akka_stream_testkit_2_13_2_6_6_jar159920316" Guid="ba84e758-8d24-4a31-a428-1a50137e788a">
+        <File Id="fl__lib_com_typesafe_akka_akka_stream_testkit_2_13_2_6_6_jar159920316" Name="com.typesafe.akka.akka-stream-testkit_2.13-2.6.6.jar" DiskId="1" Source="lib\com.typesafe.akka.akka-stream-testkit_2.13-2.6.6.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_akka_akka_slf4j_2_13_2_6_6_jar874778453" Guid="1c5bd66d-e699-4b8a-84c4-6a62a7d922d1">
+        <File Id="fl__lib_com_typesafe_akka_akka_slf4j_2_13_2_6_6_jar874778453" Name="com.typesafe.akka.akka-slf4j_2.13-2.6.6.jar" DiskId="1" Source="lib\com.typesafe.akka.akka-slf4j_2.13-2.6.6.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_scala_lang_scala_reflect_2_13_2_jar134400235" Guid="7d111b24-5491-4347-a27c-f2abfd73ce49">
+        <File Id="fl__lib_org_scala_lang_scala_reflect_2_13_2_jar134400235" Name="org.scala-lang.scala-reflect-2.13.2.jar" DiskId="1" Source="lib\org.scala-lang.scala-reflect-2.13.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_ch_qos_logback_logback_core_1_2_3_jar156832362" Guid="77d8d1f1-bf7c-44d8-88ad-517913c5f1c2">
+        <File Id="fl__lib_ch_qos_logback_logback_core_1_2_3_jar156832362" Name="ch.qos.logback.logback-core-1.2.3.jar" DiskId="1" Source="lib\ch.qos.logback.logback-core-1.2.3.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_slf4j_slf4j_api_1_7_30_jar650562502" Guid="a7ba7a32-b996-48bd-aefd-6a59fa3b31b9">
+        <File Id="fl__lib_org_slf4j_slf4j_api_1_7_30_jar650562502" Name="org.slf4j.slf4j-api-1.7.30.jar" DiskId="1" Source="lib\org.slf4j.slf4j-api-1.7.30.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_codehaus_janino_commons_compiler_3_1_2_jar147717791" Guid="5c4955c4-879d-426e-b723-aca458255e30">
+        <File Id="fl__lib_org_codehaus_janino_commons_compiler_3_1_2_jar147717791" Name="org.codehaus.janino.commons-compiler-3.1.2.jar" DiskId="1" Source="lib\org.codehaus.janino.commons-compiler-3.1.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_data_2_4_0_jar151465222" Guid="bfe948ad-68bb-4655-8441-abebcc084c75">
+        <File Id="fl__lib_com_github_haifengl_smile_data_2_4_0_jar151465222" Name="com.github.haifengl.smile-data-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-data-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_math_2_4_0_jar146347017" Guid="34662d88-7624-4be5-b668-1ec7f416857a">
+        <File Id="fl__lib_com_github_haifengl_smile_math_2_4_0_jar146347017" Name="com.github.haifengl.smile-math-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-math-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_graph_2_4_0_jar205778321" Guid="6a2ebf6b-472c-42cd-89da-288eec39a356">
+        <File Id="fl__lib_com_github_haifengl_smile_graph_2_4_0_jar205778321" Name="com.github.haifengl.smile-graph-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-graph-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_netlib_2_4_0_jar77351523x" Guid="c3cb4630-ef49-4a9f-ac27-701ecb5dfb8f">
+        <File Id="fl__lib_com_github_haifengl_smile_netlib_2_4_0_jar77351523x" Name="com.github.haifengl.smile-netlib-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-netlib-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_io_2_4_0_jar518741253" Guid="bdd3f16f-552d-4ab7-82f5-b3dde731924b">
+        <File Id="fl__lib_com_github_haifengl_smile_io_2_4_0_jar518741253" Name="com.github.haifengl.smile-io-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-io-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_interpolation_2_4_0_jar998918179" Guid="657a4daa-7bd9-4a8e-967e-8f410ab11b86">
+        <File Id="fl__lib_com_github_haifengl_smile_interpolation_2_4_0_jar998918179" Name="com.github.haifengl.smile-interpolation-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-interpolation-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_nlp_2_4_0_jar556591537" Guid="36ca3693-2c32-4cdf-92c5-e00ddf3281d5">
+        <File Id="fl__lib_com_github_haifengl_smile_nlp_2_4_0_jar556591537" Name="com.github.haifengl.smile-nlp-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-nlp-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_plot_2_4_0_jar164836203" Guid="75779a82-3917-4b83-8143-599275a3d16a">
+        <File Id="fl__lib_com_github_haifengl_smile_plot_2_4_0_jar164836203" Name="com.github.haifengl.smile-plot-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-plot-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_haifengl_smile_json_2_13_2_4_0_jar871380460" Guid="ed9a78f2-d38b-4ecc-b288-bf0a815ce15c">
+        <File Id="fl__lib_com_github_haifengl_smile_json_2_13_2_4_0_jar871380460" Name="com.github.haifengl.smile-json_2.13-2.4.0.jar" DiskId="1" Source="lib\com.github.haifengl.smile-json_2.13-2.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_scala_lang_modules_scala_xml_2_13_1_3_0_jar113062446" Guid="5c3fb1ee-e06a-470d-83ec-ec09a6f67934">
+        <File Id="fl__lib_org_scala_lang_modules_scala_xml_2_13_1_3_0_jar113062446" Name="org.scala-lang.modules.scala-xml_2.13-1.3.0.jar" DiskId="1" Source="lib\org.scala-lang.modules.scala-xml_2.13-1.3.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_thoughtworks_xstream_xstream_1_4_12_jar124290467" Guid="e348bf1b-9a77-417c-aed3-aab679361b0f">
+        <File Id="fl__lib_com_thoughtworks_xstream_xstream_1_4_12_jar124290467" Name="com.thoughtworks.xstream.xstream-1.4.12.jar" DiskId="1" Source="lib\com.thoughtworks.xstream.xstream-1.4.12.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_joda_time_joda_time_2_10_6_jar195457599" Guid="140bfaa1-bb12-4d4b-b01c-7855dcaa0009">
+        <File Id="fl__lib_joda_time_joda_time_2_10_6_jar195457599" Name="joda-time.joda-time-2.10.6.jar" DiskId="1" Source="lib\joda-time.joda-time-2.10.6.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_joda_joda_convert_2_2_1_jar258571367" Guid="4810f3e6-0192-48ec-9015-5d588dc4df26">
+        <File Id="fl__lib_org_joda_joda_convert_2_2_1_jar258571367" Name="org.joda.joda-convert-2.2.1.jar" DiskId="1" Source="lib\org.joda.joda-convert-2.2.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_google_guava_guava_19_0_jar176981278" Guid="f5e37df6-ce59-46c0-93c6-7dd1d860ea7a">
+        <File Id="fl__lib_com_google_guava_guava_19_0_jar176981278" Name="com.google.guava.guava-19.0.jar" DiskId="1" Source="lib\com.google.guava.guava-19.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_commons_codec_commons_codec_1_10_jar326227860" Guid="22ff0bff-fc6b-4739-9973-d1e07d22f8ca">
+        <File Id="fl__lib_commons_codec_commons_codec_1_10_jar326227860" Name="commons-codec.commons-codec-1.10.jar" DiskId="1" Source="lib\commons-codec.commons-codec-1.10.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_io_circe_circe_numbers_2_13_0_13_0_jar185153127" Guid="b0b86289-9c7e-4a75-bba5-215a0d06ca0c">
+        <File Id="fl__lib_io_circe_circe_numbers_2_13_0_13_0_jar185153127" Name="io.circe.circe-numbers_2.13-0.13.0.jar" DiskId="1" Source="lib\io.circe.circe-numbers_2.13-0.13.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_typelevel_cats_core_2_13_2_1_0_jar146091293" Guid="a8c3e5ea-22f1-445f-8672-8d2765c368a3">
+        <File Id="fl__lib_org_typelevel_cats_core_2_13_2_1_0_jar146091293" Name="org.typelevel.cats-core_2.13-2.1.0.jar" DiskId="1" Source="lib\org.typelevel.cats-core_2.13-2.1.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_chuusai_shapeless_2_13_2_3_3_jar89369042x" Guid="0e188dd6-3659-4373-878a-150d5ec1275c">
+        <File Id="fl__lib_com_chuusai_shapeless_2_13_2_3_3_jar89369042x" Name="com.chuusai.shapeless_2.13-2.3.3.jar" DiskId="1" Source="lib\com.chuusai.shapeless_2.13-2.3.3.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_io_circe_circe_jawn_2_13_0_13_0_jar437184426" Guid="97ada305-fc6a-4b01-a9a2-09332a23d798">
+        <File Id="fl__lib_io_circe_circe_jawn_2_13_0_13_0_jar437184426" Name="io.circe.circe-jawn_2.13-0.13.0.jar" DiskId="1" Source="lib\io.circe.circe-jawn_2.13-0.13.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_jheaps_jheaps_0_13_jar203324819" Guid="7ac28102-d705-40fb-9b5d-d9ca54d5d11b">
+        <File Id="fl__lib_org_jheaps_jheaps_0_13_jar203324819" Name="org.jheaps.jheaps-0.13.jar" DiskId="1" Source="lib\org.jheaps.jheaps-0.13.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_vlsi_mxgraph_jgraphx_4_0_5_jar638256040" Guid="3bad61ed-0c3b-48c4-bf5a-898caaeed3c7">
+        <File Id="fl__lib_com_github_vlsi_mxgraph_jgraphx_4_0_5_jar638256040" Name="com.github.vlsi.mxgraph.jgraphx-4.0.5.jar" DiskId="1" Source="lib\com.github.vlsi.mxgraph.jgraphx-4.0.5.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_antlr_antlr4_runtime_4_8_1_jar69542569x" Guid="edb9f47b-0426-4ce7-b711-dd774245e309">
+        <File Id="fl__lib_org_antlr_antlr4_runtime_4_8_1_jar69542569x" Name="org.antlr.antlr4-runtime-4.8-1.jar" DiskId="1" Source="lib\org.antlr.antlr4-runtime-4.8-1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_apache_commons_commons_text_1_8_jar984625119" Guid="224ab67e-91ac-4293-9678-a6fb0318a329">
+        <File Id="fl__lib_org_apache_commons_commons_text_1_8_jar984625119" Name="org.apache.commons.commons-text-1.8.jar" DiskId="1" Source="lib\org.apache.commons.commons-text-1.8.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_it_unimi_dsi_fastutil_8_3_1_jar156771387" Guid="b91b358d-2e5d-4ccc-b220-6e6a7ebf16c0">
+        <File Id="fl__lib_it_unimi_dsi_fastutil_8_3_1_jar156771387" Name="it.unimi.dsi.fastutil-8.3.1.jar" DiskId="1" Source="lib\it.unimi.dsi.fastutil-8.3.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_config_1_4_0_jar190952942" Guid="ac6e1eac-dd4c-421e-a6c3-b891f3fa7e6a">
+        <File Id="fl__lib_com_typesafe_config_1_4_0_jar190952942" Name="com.typesafe.config-1.4.0.jar" DiskId="1" Source="lib\com.typesafe.config-1.4.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_org_scala_lang_modules_scala_java8_compat_2_13_0_9_0_jar193722625" Guid="0348dd08-6967-4d05-b189-f1566956d9c9">
+        <File Id="fl__org_scala_lang_modules_scala_java8_compat_2_13_0_9_0_jar193722625" Name="org.scala-lang.modules.scala-java8-compat_2.13-0.9.0.jar" DiskId="1" Source="lib\org.scala-lang.modules.scala-java8-compat_2.13-0.9.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_akka_akka_protobuf_v3_2_13_2_6_6_jar145235800" Guid="4c6abb2d-9229-4a84-ba89-95587dc03cf3">
+        <File Id="fl__lib_com_typesafe_akka_akka_protobuf_v3_2_13_2_6_6_jar145235800" Name="com.typesafe.akka.akka-protobuf-v3_2.13-2.6.6.jar" DiskId="1" Source="lib\com.typesafe.akka.akka-protobuf-v3_2.13-2.6.6.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_reactivestreams_reactive_streams_1_0_3_jar192433057" Guid="c88a06c0-b858-47ee-a0d6-a7bcfa5dd1ca">
+        <File Id="fl__lib_org_reactivestreams_reactive_streams_1_0_3_jar192433057" Name="org.reactivestreams.reactive-streams-1.0.3.jar" DiskId="1" Source="lib\org.reactivestreams.reactive-streams-1.0.3.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_typesafe_ssl_config_core_2_13_0_4_1_jar211505197" Guid="82ba6c7c-8498-41cf-b213-e312c3584f4e">
+        <File Id="fl__lib_com_typesafe_ssl_config_core_2_13_0_4_1_jar211505197" Name="com.typesafe.ssl-config-core_2.13-0.4.1.jar" DiskId="1" Source="lib\com.typesafe.ssl-config-core_2.13-0.4.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_il_netlib_netlib_native_system_win_x86_64_1_1_natives_jar110072591" Guid="94fb45fe-17cf-4087-9bde-ffd79b641e0c">
+        <File Id="fl__il_netlib_netlib_native_system_win_x86_64_1_1_natives_jar110072591" Name="com.github.fommil.netlib.netlib-native_system-win-x86_64-1.1-natives.jar" DiskId="1" Source="lib\com.github.fommil.netlib.netlib-native_system-win-x86_64-1.1-natives.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_il_netlib_netlib_native_system_osx_x86_64_1_1_natives_jar885242982" Guid="c8333645-5ca1-4f06-bf34-63bf21404ab7">
+        <File Id="fl__il_netlib_netlib_native_system_osx_x86_64_1_1_natives_jar885242982" Name="com.github.fommil.netlib.netlib-native_system-osx-x86_64-1.1-natives.jar" DiskId="1" Source="lib\com.github.fommil.netlib.netlib-native_system-osx-x86_64-1.1-natives.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_netlib_netlib_native_system_linux_x86_64_1_1_natives_jar122663366" Guid="cd72086a-1aaf-4100-84ea-93a45c6fbbde">
+        <File Id="fl__netlib_netlib_native_system_linux_x86_64_1_1_natives_jar122663366" Name="com.github.fommil.netlib.netlib-native_system-linux-x86_64-1.1-natives.jar" DiskId="1" Source="lib\com.github.fommil.netlib.netlib-native_system-linux-x86_64-1.1-natives.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_l_netlib_netlib_native_system_linux_armhf_1_1_natives_jar182491462" Guid="088e3ba6-f655-404b-8988-53baac55c770">
+        <File Id="fl__l_netlib_netlib_native_system_linux_armhf_1_1_natives_jar182491462" Name="com.github.fommil.netlib.netlib-native_system-linux-armhf-1.1-natives.jar" DiskId="1" Source="lib\com.github.fommil.netlib.netlib-native_system-linux-armhf-1.1-natives.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_fommil_netlib_native_system_java_1_1_jar122402889" Guid="c85d72da-e8f8-4582-8614-52fdc801e4fa">
+        <File Id="fl__lib_com_github_fommil_netlib_native_system_java_1_1_jar122402889" Name="com.github.fommil.netlib.native_system-java-1.1.jar" DiskId="1" Source="lib\com.github.fommil.netlib.native_system-java-1.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_fommil_netlib_core_1_1_2_jar160310507" Guid="c1654c4a-2aa8-4c97-b643-3b7a71f54a13">
+        <File Id="fl__lib_com_github_fommil_netlib_core_1_1_2_jar160310507" Name="com.github.fommil.netlib.core-1.1.2.jar" DiskId="1" Source="lib\com.github.fommil.netlib.core-1.1.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_github_fommil_jniloader_1_1_jar803011678" Guid="57683d11-95e0-4ae6-90ea-05aa5738c75c">
+        <File Id="fl__lib_com_github_fommil_jniloader_1_1_jar803011678" Name="com.github.fommil.jniloader-1.1.jar" DiskId="1" Source="lib\com.github.fommil.jniloader-1.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_net_sourceforge_f2j_arpack_combined_all_0_1_jar141428016" Guid="c739d19b-e964-45ff-838c-00fcde5c258f">
+        <File Id="fl__lib_net_sourceforge_f2j_arpack_combined_all_0_1_jar141428016" Name="net.sourceforge.f2j.arpack_combined_all-0.1.jar" DiskId="1" Source="lib\net.sourceforge.f2j.arpack_combined_all-0.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_epam_parso_2_0_11_jar128082244" Guid="3316ea24-6503-42e0-a240-03237a1a7551">
+        <File Id="fl__lib_com_epam_parso_2_0_11_jar128082244" Name="com.epam.parso-2.0.11.jar" DiskId="1" Source="lib\com.epam.parso-2.0.11.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_apache_commons_commons_csv_1_8_jar706653526" Guid="9d3eb659-636c-4068-90e1-c99f67c83281">
+        <File Id="fl__lib_org_apache_commons_commons_csv_1_8_jar706653526" Name="org.apache.commons.commons-csv-1.8.jar" DiskId="1" Source="lib\org.apache.commons.commons-csv-1.8.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_swinglabs_swingx_1_6_1_jar368317396" Guid="7767cef7-8a3a-4651-bbbb-5ae030b3c9d2">
+        <File Id="fl__lib_org_swinglabs_swingx_1_6_1_jar368317396" Name="org.swinglabs.swingx-1.6.1.jar" DiskId="1" Source="lib\org.swinglabs.swingx-1.6.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_xmlpull_xmlpull_1_1_3_1_jar691886308" Guid="ed4dbd55-f4f2-40a7-b401-f9d9a674d245">
+        <File Id="fl__lib_xmlpull_xmlpull_1_1_3_1_jar691886308" Name="xmlpull.xmlpull-1.1.3.1.jar" DiskId="1" Source="lib\xmlpull.xmlpull-1.1.3.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_xpp3_xpp3_min_1_1_4c_jar112872468" Guid="4b39d672-d133-482a-a5a6-39f0f3d0194c">
+        <File Id="fl__lib_xpp3_xpp3_min_1_1_4c_jar112872468" Name="xpp3.xpp3_min-1.1.4c.jar" DiskId="1" Source="lib\xpp3.xpp3_min-1.1.4c.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_typelevel_cats_macros_2_13_2_1_0_jar127689636" Guid="9f9d0f3d-f4bb-45ef-b5c9-8fc67af68887">
+        <File Id="fl__lib_org_typelevel_cats_macros_2_13_2_1_0_jar127689636" Name="org.typelevel.cats-macros_2.13-2.1.0.jar" DiskId="1" Source="lib\org.typelevel.cats-macros_2.13-2.1.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_typelevel_cats_kernel_2_13_2_1_0_jar498204993" Guid="b5e921ac-7d67-475f-b650-1f02e32f0b37">
+        <File Id="fl__lib_org_typelevel_cats_kernel_2_13_2_1_0_jar498204993" Name="org.typelevel.cats-kernel_2.13-2.1.0.jar" DiskId="1" Source="lib\org.typelevel.cats-kernel_2.13-2.1.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_typelevel_jawn_parser_2_13_1_0_0_jar174242830" Guid="1fb7b2ef-d40b-4fc7-b89a-eb3d4c31e09b">
+        <File Id="fl__lib_org_typelevel_jawn_parser_2_13_1_0_0_jar174242830" Name="org.typelevel.jawn-parser_2.13-1.0.0.jar" DiskId="1" Source="lib\org.typelevel.jawn-parser_2.13-1.0.0.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_apache_commons_commons_lang3_3_9_jar567393644" Guid="5116519b-062f-47a7-85ef-454ee6ae9cc9">
+        <File Id="fl__lib_org_apache_commons_commons_lang3_3_9_jar567393644" Name="org.apache.commons.commons-lang3-3.9.jar" DiskId="1" Source="lib\org.apache.commons.commons-lang3-3.9.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_cala_lang_modules_scala_parser_combinators_2_13_1_1_2_jar55901191x" Guid="5548361c-5125-416d-acac-018cd3e0aa8d">
+        <File Id="fl__cala_lang_modules_scala_parser_combinators_2_13_1_1_2_jar55901191x" Name="org.scala-lang.modules.scala-parser-combinators_2.13-1.1.2.jar" DiskId="1" Source="lib\org.scala-lang.modules.scala-parser-combinators_2.13-1.1.2.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_com_jhlabs_filters_2_0_235_jar206066454" Guid="8fe12313-a60b-4460-80e1-59d7b7f4c100">
+        <File Id="fl__lib_com_jhlabs_filters_2_0_235_jar206066454" Name="com.jhlabs.filters-2.0.235.jar" DiskId="1" Source="lib\com.jhlabs.filters-2.0.235.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_lib107141xxx">
+      <Component Win64="yes" Id="_lib_org_swinglabs_swing_worker_1_1_jar114014348" Guid="5edd912d-b1b3-4b8e-89d7-a466ec9bb805">
+        <File Id="fl__lib_org_swinglabs_swing_worker_1_1_jar114014348" Name="org.swinglabs.swing-worker-1.1.jar" DiskId="1" Source="lib\org.swinglabs.swing-worker-1.1.jar"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_bin97543xxxx">
+      <Component Win64="yes" Id="_bin_tabs891491206" Guid="c7b07427-29c7-41ab-8d96-e026d5333656">
+        <File Id="fl__bin_tabs891491206" Name="tabs" DiskId="1" Source="bin\tabs"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="_bin97543xxxx">
+      <Component Win64="yes" Id="_bin_tabs_bat19380819x" Guid="9fdb101c-92d4-4caf-aa2f-431d3ed06c20">
+        <File Id="fl__bin_tabs_bat19380819x" Name="tabs.bat" DiskId="1" Source="bin\tabs.bat"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Win64="yes" Id="_manifest_chrome_win_json255906289" Guid="eab8fa78-8c53-4778-97ab-f84e8b9b66d5">
+        <File Id="fl__manifest_chrome_win_json255906289" Name="manifest-chrome-win.json" DiskId="1" Source="manifest-chrome-win.json"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Win64="yes" Id="_manifest_firefox_win_json891208716" Guid="9ca893da-bdee-41c0-9930-ce8ed09c94b5">
+        <File Id="fl__manifest_firefox_win_json891208716" Name="manifest-firefox-win.json" DiskId="1" Source="manifest-firefox-win.json"></File>
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Win64="yes" Id="RegistryEntries64" Guid="18392396-dae0-42dc-b112-9c431d315da4">
+        <RegistryKey Id="ChromeManifestLocation64" Root="HKLM" Key="SOFTWARE\Google\Chrome\NativeMessagingHosts\tabs" Action="createAndRemoveOnUninstall">
+          <RegistryValue Type="string" Value="[INSTALLDIR]manifest-chrome-win.json" />
+        </RegistryKey>
+        <RegistryKey Id="FirefoxManifestLocation64" Root="HKLM" Key="SOFTWARE\Mozilla\NativeMessagingHosts\tabs" Action="createAndRemoveOnUninstall">
+          <RegistryValue Type="string" Value="[INSTALLDIR]manifest-firefox-win.json" />
+        </RegistryKey>
+      </Component>
+    </DirectoryRef>
+    <!-- Now define the features! -->
+    <Feature Id="Complete" Title="Automated Tab Organization" Description="Heuristics backend for the Automated Tab Organization WebExtension" Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR">
+      <!-- Manually added uninstall feautre -->
+      <Feature Id="Uninstall" Title="Uninstall" Description="Uninstall ApplicationFolder" Level="1" Absent="allow">
+        <ComponentRef Id="_ApplicationProgramsFolderRemove689092593" />
+      </Feature>
+      <Feature Id="_tabs_core179321555" Title="tabs" Description="All core files." Level="1" Absent="disallow">
+        <ComponentRef Id="_lib_ch_uzh_rschlaefli_tabs_0_3_2_jar112699695" />
+        <ComponentRef Id="_lib_simap_jar135472233" />
+        <ComponentRef Id="_lib_watset_jar144873416" />
+        <ComponentRef Id="_lib_org_scala_lang_scala_library_2_13_2_jar590712787" />
+        <ComponentRef Id="_lib_org_scalaz_scalaz_core_2_13_7_3_1_jar203781531" />
+        <ComponentRef Id="_lib_org_scalactic_scalactic_2_13_3_2_0_jar106848319" />
+        <ComponentRef Id="_lib_ch_qos_logback_logback_classic_1_2_3_jar203962478" />
+        <ComponentRef Id="_b_com_typesafe_scala_logging_scala_logging_2_13_3_9_2_jar903693651" />
+        <ComponentRef Id="_lib_org_codehaus_janino_janino_3_1_2_jar818439470" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_core_2_4_0_jar322195316" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_scala_2_13_2_4_0_jar138239122" />
+        <ComponentRef Id="_lib_com_github_nscala_time_nscala_time_2_13_2_24_0_jar314076447" />
+        <ComponentRef Id="_lib_com_github_mpkorstanje_simmetrics_core_4_1_1_jar256780404" />
+        <ComponentRef Id="_lib_io_circe_circe_core_2_13_0_13_0_jar146179148" />
+        <ComponentRef Id="_lib_io_circe_circe_generic_2_13_0_13_0_jar107452047" />
+        <ComponentRef Id="_lib_io_circe_circe_parser_2_13_0_13_0_jar187486304" />
+        <ComponentRef Id="_lib_org_jgrapht_jgrapht_core_1_5_0_jar127243021" />
+        <ComponentRef Id="_lib_org_jgrapht_jgrapht_ext_1_5_0_jar911296116" />
+        <ComponentRef Id="_lib_org_jgrapht_jgrapht_io_1_5_0_jar116881588" />
+        <ComponentRef Id="_lib_org_jgrapht_jgrapht_opt_1_5_0_jar583020642" />
+        <ComponentRef Id="_lib_com_typesafe_akka_akka_actor_2_13_2_6_6_jar142312112" />
+        <ComponentRef Id="_lib_com_typesafe_akka_akka_testkit_2_13_2_6_6_jar195850280" />
+        <ComponentRef Id="_lib_com_typesafe_akka_akka_stream_2_13_2_6_6_jar193688539" />
+        <ComponentRef Id="_lib_com_typesafe_akka_akka_stream_testkit_2_13_2_6_6_jar159920316" />
+        <ComponentRef Id="_lib_com_typesafe_akka_akka_slf4j_2_13_2_6_6_jar874778453" />
+        <ComponentRef Id="_lib_org_scala_lang_scala_reflect_2_13_2_jar134400235" />
+        <ComponentRef Id="_lib_ch_qos_logback_logback_core_1_2_3_jar156832362" />
+        <ComponentRef Id="_lib_org_slf4j_slf4j_api_1_7_30_jar650562502" />
+        <ComponentRef Id="_lib_org_codehaus_janino_commons_compiler_3_1_2_jar147717791" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_data_2_4_0_jar151465222" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_math_2_4_0_jar146347017" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_graph_2_4_0_jar205778321" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_netlib_2_4_0_jar77351523x" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_io_2_4_0_jar518741253" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_interpolation_2_4_0_jar998918179" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_nlp_2_4_0_jar556591537" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_plot_2_4_0_jar164836203" />
+        <ComponentRef Id="_lib_com_github_haifengl_smile_json_2_13_2_4_0_jar871380460" />
+        <ComponentRef Id="_lib_org_scala_lang_modules_scala_xml_2_13_1_3_0_jar113062446" />
+        <ComponentRef Id="_lib_com_thoughtworks_xstream_xstream_1_4_12_jar124290467" />
+        <ComponentRef Id="_lib_joda_time_joda_time_2_10_6_jar195457599" />
+        <ComponentRef Id="_lib_org_joda_joda_convert_2_2_1_jar258571367" />
+        <ComponentRef Id="_lib_com_google_guava_guava_19_0_jar176981278" />
+        <ComponentRef Id="_lib_commons_codec_commons_codec_1_10_jar326227860" />
+        <ComponentRef Id="_lib_io_circe_circe_numbers_2_13_0_13_0_jar185153127" />
+        <ComponentRef Id="_lib_org_typelevel_cats_core_2_13_2_1_0_jar146091293" />
+        <ComponentRef Id="_lib_com_chuusai_shapeless_2_13_2_3_3_jar89369042x" />
+        <ComponentRef Id="_lib_io_circe_circe_jawn_2_13_0_13_0_jar437184426" />
+        <ComponentRef Id="_lib_org_jheaps_jheaps_0_13_jar203324819" />
+        <ComponentRef Id="_lib_com_github_vlsi_mxgraph_jgraphx_4_0_5_jar638256040" />
+        <ComponentRef Id="_lib_org_antlr_antlr4_runtime_4_8_1_jar69542569x" />
+        <ComponentRef Id="_lib_org_apache_commons_commons_text_1_8_jar984625119" />
+        <ComponentRef Id="_lib_it_unimi_dsi_fastutil_8_3_1_jar156771387" />
+        <ComponentRef Id="_lib_com_typesafe_config_1_4_0_jar190952942" />
+        <ComponentRef Id="_org_scala_lang_modules_scala_java8_compat_2_13_0_9_0_jar193722625" />
+        <ComponentRef Id="_lib_com_typesafe_akka_akka_protobuf_v3_2_13_2_6_6_jar145235800" />
+        <ComponentRef Id="_lib_org_reactivestreams_reactive_streams_1_0_3_jar192433057" />
+        <ComponentRef Id="_lib_com_typesafe_ssl_config_core_2_13_0_4_1_jar211505197" />
+        <ComponentRef Id="_il_netlib_netlib_native_system_win_x86_64_1_1_natives_jar110072591" />
+        <ComponentRef Id="_il_netlib_netlib_native_system_osx_x86_64_1_1_natives_jar885242982" />
+        <ComponentRef Id="_netlib_netlib_native_system_linux_x86_64_1_1_natives_jar122663366" />
+        <ComponentRef Id="_l_netlib_netlib_native_system_linux_armhf_1_1_natives_jar182491462" />
+        <ComponentRef Id="_lib_com_github_fommil_netlib_native_system_java_1_1_jar122402889" />
+        <ComponentRef Id="_lib_com_github_fommil_netlib_core_1_1_2_jar160310507" />
+        <ComponentRef Id="_lib_com_github_fommil_jniloader_1_1_jar803011678" />
+        <ComponentRef Id="_lib_net_sourceforge_f2j_arpack_combined_all_0_1_jar141428016" />
+        <ComponentRef Id="_lib_com_epam_parso_2_0_11_jar128082244" />
+        <ComponentRef Id="_lib_org_apache_commons_commons_csv_1_8_jar706653526" />
+        <ComponentRef Id="_lib_org_swinglabs_swingx_1_6_1_jar368317396" />
+        <ComponentRef Id="_lib_xmlpull_xmlpull_1_1_3_1_jar691886308" />
+        <ComponentRef Id="_lib_xpp3_xpp3_min_1_1_4c_jar112872468" />
+        <ComponentRef Id="_lib_org_typelevel_cats_macros_2_13_2_1_0_jar127689636" />
+        <ComponentRef Id="_lib_org_typelevel_cats_kernel_2_13_2_1_0_jar498204993" />
+        <ComponentRef Id="_lib_org_typelevel_jawn_parser_2_13_1_0_0_jar174242830" />
+        <ComponentRef Id="_lib_org_apache_commons_commons_lang3_3_9_jar567393644" />
+        <ComponentRef Id="_cala_lang_modules_scala_parser_combinators_2_13_1_1_2_jar55901191x" />
+        <ComponentRef Id="_lib_com_jhlabs_filters_2_0_235_jar206066454" />
+        <ComponentRef Id="_lib_org_swinglabs_swing_worker_1_1_jar114014348" />
+        <ComponentRef Id="_bin_tabs891491206" />
+        <ComponentRef Id="_bin_tabs_bat19380819x" />
+        <ComponentRef Id="_manifest_chrome_win_json255906289" />
+        <ComponentRef Id="_manifest_firefox_win_json891208716" />
+      </Feature>
+
+      <Feature Id="RegistryEntries" Title="Registry Entries" Description="Registry Entries for Native Messaging" Level="1" Absent="disallow">
+        <ComponentRef Id="RegistryEntries64" />
+      </Feature>
+    </Feature>
+    <MajorUpgrade AllowDowngrades="no" Schedule="afterInstallInitialize" DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
+    <UIRef Id="WixUI_FeatureTree" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+
+
+  </Product>
+</Wix>

@@ -11,7 +11,8 @@ For feature requests, bug reports, and feedback of any kind, please refer to the
 
 ## Requirements
 
-- Java 1.8
+- JDK 1.8 or 11
+  - https://adoptopenjdk.net/
 - Scala SBT
 
 ## Development
@@ -31,3 +32,14 @@ Create a package for Linux:
 Create a package for MacOS:
 
 > `./_build-osx.sh`
+
+### Windows Deployment
+
+1. Generate a new `tabs.wxs` configuration using `sbt windows:wixFile`
+2. Replace `<Component` with `<Component Win64="yes"` (Whole Word!)
+3. Replace `<Package` with `<Package Platform="x64"` (Whole Word!)
+4. Replace `ProgramFilesFolder` with `ProgramFiles64Folder`
+5. Remove unnecessary components and featurs (shortcut, path)
+6. Add custom component for registry entries from `winpkg.wxs`
+7. Move the updated `tabs.wxs` to `target/windows/package.wxs`
+8. Package the binary using `sbt windows:packageBin`

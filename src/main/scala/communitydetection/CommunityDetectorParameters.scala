@@ -5,16 +5,15 @@ trait CommunityDetectorParameters {
   /**
     * The maximum number of groups to return
     */
-  def maxGroups: Int = 10
+  def maxGroups: Int
 
   /**
     * Remove groups with less nodes
     */
-  def minGroupSize: Int = 3
+  def minGroupSize: Int
 
   /**
     * Remove groups with more nodes
     */
-  def maxGroupSize: Int = 10
-
+  def maxGroupSize: Int
 }

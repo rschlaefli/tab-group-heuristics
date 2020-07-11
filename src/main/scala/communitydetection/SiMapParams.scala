@@ -26,7 +26,19 @@ case class SiMapParams(
     /**
       * Process only the largest connected component
       */
-    largestCC: Boolean = false
+    largestCC: Boolean = false,
+    /**
+      * The maximum number of groups to return
+      */
+    maxGroups: Int = 10,
+    /**
+      * Remove groups with less nodes
+      */
+    minGroupSize: Int = 3,
+    /**
+      * Remove groups with more nodes
+      */
+    maxGroupSize: Int = 10
 ) extends CommunityDetectorParameters {
 
   def asCPMapParameters =

@@ -7,7 +7,20 @@ import org.jgrapht.alg.clique.BronKerboschCliqueFinder
 import tabswitches.TabMeta
 import tabswitches.TabSwitchActor
 
-case class BronKerboschParams() extends CommunityDetectorParameters
+case class BronKerboschParams(
+    /**
+      * The maximum number of groups to return
+      */
+    maxGroups: Int = 10,
+    /**
+      * Remove groups with less nodes
+      */
+    minGroupSize: Int = 3,
+    /**
+      * Remove groups with more nodes
+      */
+    maxGroupSize: Int = 10
+) extends CommunityDetectorParameters
 
 object BronKerbosch
 // extends App

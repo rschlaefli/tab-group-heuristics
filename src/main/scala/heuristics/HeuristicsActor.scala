@@ -72,7 +72,7 @@ class HeuristicsActor
     case ComputeHeuristics(heuristicsParams, algoParams, graphParams) => {
       implicit val timeout = Timeout(20 seconds)
 
-      log.debug("Starting heuristics computation")
+      log.info("Starting heuristics computation")
 
       val tabGroupHashIndex = computeHashIndex(curatedGroups)
 

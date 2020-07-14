@@ -1,12 +1,12 @@
 package persistence
 
+import java.io.File
 import java.io.PrintWriter
 
 import scala.util.Try
 
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.Json
-import java.io.File
 
 object Persistence extends LazyLogging {
 

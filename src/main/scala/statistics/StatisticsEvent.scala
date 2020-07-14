@@ -1,8 +1,9 @@
 package statistics
 
 import java.time.Instant
-import tabstate.Tab
+
 import statistics.StatisticsActor.SuggestionInteraction
+import tabstate.Tab
 
 sealed trait StatisticsEvent {
   def timestamp: Long = Instant.now.getEpochSecond()

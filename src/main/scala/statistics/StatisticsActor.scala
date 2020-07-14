@@ -133,10 +133,10 @@ class StatisticsActor
             .toArray
 
           val openTabHashes = currentTabs
-            .map(_.hashCode())
+            .map(_.hash)
             .toSet
           val clusterTabHashes = tabGroups
-            .flatMap(_.tabs.map(_.hashCode()))
+            .flatMap(_.tabs.map(_.hash))
             .toSet
 
           // compute the number of tabs that is currently open and not in any group

@@ -34,23 +34,6 @@ case class StatisticsMeasurement(
     this.discardedTabs
   )
 
-  def asTuple = (
-    this.currentlyOpenTabs,
-    this.openTabsUngrouped,
-    this.openTabsGrouped,
-    this.averageTabAge,
-    this.averageTabStaleDuration,
-    this.switchesWithinGroups,
-    this.switchesBetweenGroups,
-    this.switchesFromGroups,
-    this.switchesToGroups,
-    this.switchesOutsideGroups,
-    this.acceptedGroups,
-    this.acceptedTabs,
-    this.discardedGroups,
-    this.discardedTabs
-  )
-
   def +(other: StatisticsMeasurement) = {
     StatisticsMeasurement(
       currentlyOpenTabs =

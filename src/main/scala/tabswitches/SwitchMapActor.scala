@@ -81,6 +81,12 @@ class SwitchMapActor
         case None        => None
       }
 
+    case ResetTabSwitch(switchIdentifier) =>
+      tabSwitches.updateWith(switchIdentifier) {
+        case Some(value) => Some(value.reset)
+        case None        => None
+      }
+
     case message => log.debug(s"Received message $message")
   }
 }
@@ -93,6 +99,7 @@ object SwitchMapActor {
 
   case class ProcessTabSwitch(prevTab: Tab, newTab: Tab)
   case class DiscardTabSwitch(switchIdenfitier: String)
+  case class ResetTabSwitch(switchIdenfitier: String)
 
   def restoreTabSwitchMap = {
     Persistence

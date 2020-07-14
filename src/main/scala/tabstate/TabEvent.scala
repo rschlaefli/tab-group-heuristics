@@ -42,15 +42,22 @@ object SuggestedTabAcceptEvent {
     deriveDecoder
 }
 
-case class SuggestedGroupDiscardEvent(groupHash: String) extends TabEvent
+case class SuggestedGroupDiscardEvent(
+    groupHash: String,
+    reason: Option[String],
+    rating: Option[Int]
+) extends TabEvent
 object SuggestedGroupDiscardEvent {
   implicit val suggestedGroupDiscardEventDecoder
       : Decoder[SuggestedGroupDiscardEvent] =
     deriveDecoder
 }
 
-case class SuggestedTabDiscardEvent(groupHash: String, tabHash: String)
-    extends TabEvent
+case class SuggestedTabDiscardEvent(
+    groupHash: String,
+    tabHash: String,
+    reason: Option[String]
+) extends TabEvent
 object SuggestedTabDiscardEvent {
   implicit val suggestedTabDiscardEventDecoder
       : Decoder[SuggestedTabDiscardEvent] =

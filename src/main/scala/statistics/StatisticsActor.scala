@@ -84,12 +84,12 @@ class StatisticsActor
     case PersistState => persistUsageStatistics(usageStatistics)
 
     case tabSwitch: TabSwitch => {
-      log.info("Pushing tab switch to queue")
+      log.debug("Pushing tab switch to queue")
       tabSwitchQueue.enqueue(tabSwitch)
     }
 
     case suggestionInteraction: SuggestionInteraction => {
-      log.info("Pushing suggestion interaction to queue")
+      log.debug("Pushing suggestion interaction to queue")
       suggestionInteractionsQueue.enqueue(suggestionInteraction)
     }
 
@@ -120,7 +120,7 @@ class StatisticsActor
 
       results foreach {
         case (currentTabs, tabGroups, groupIndex) => {
-          log.info(s"Current tabs $currentTabs")
+          log.debug(s"Current tabs $currentTabs")
 
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
           val currentTabsAge = currentTabs

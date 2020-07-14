@@ -31,13 +31,11 @@ class MainActor extends Actor with ActorLogging with Timers {
     timers.startTimerWithFixedDelay("backup", PersistState, 1 minute)
   }
 
-  override def receive: Actor.Receive = {
+  override def postStop(): Unit = {
+    self ! MainActor.StopProcessing
+  }
 
-    case QueryCurrentState => {
-      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
-      Thread.sleep(300)
-      NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
-    }
+  override def receive: Actor.Receive = {
 
     case PersistState => {
       context.actorSelection("/user/Main/Heuristics/TabSwitches/TabSwitchMap") ! SwitchMapActor.PersistState
@@ -60,6 +58,7 @@ class MainActor extends Actor with ActorLogging with Timers {
 
     case Main.StreamFail(ex) =>
       log.warning(s"Stream failed with $ex")
+      context.stop(self)
 
     case StartProcessing => {
       log.info(s"Starting processing ${context.children}")
@@ -76,7 +75,13 @@ class MainActor extends Actor with ActorLogging with Timers {
         HeuristicsAction.HEURISTICS_STATUS("RUNNING")
       )
 
-      timers.startSingleTimer("initial-state", QueryCurrentState, 5 seconds)
+      context.system.scheduler.scheduleOnce(5 seconds) {
+        NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
+      }(context.system.dispatcher)
+
+      context.system.scheduler.scheduleOnce(5.5 seconds) {
+        NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
+      }(context.system.dispatcher)
     }
 
     case StopProcessing => {

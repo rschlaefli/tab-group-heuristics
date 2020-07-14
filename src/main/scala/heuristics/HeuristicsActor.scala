@@ -54,7 +54,7 @@ class HeuristicsActor
 
     timers.startTimerAtFixedRate(
       "heuristics",
-      ComputeHeuristics,
+      ComputeHeuristics(),
       5 minutes
     )
   }

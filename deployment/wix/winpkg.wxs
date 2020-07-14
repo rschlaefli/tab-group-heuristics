@@ -8,6 +8,5 @@
         </RegistryKey>
     </Component>
 </DirectoryRef><Feature Id="RegistryEntries" Title="Registry Entries" Description="Registry Entries for Native Messaging" Level="1" Absent="disallow">
-    <ComponentRef Id="RegistryEntries" />
     <ComponentRef Id="RegistryEntries64" />
 </Feature>

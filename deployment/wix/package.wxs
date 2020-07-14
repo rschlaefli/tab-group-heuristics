@@ -532,7 +532,6 @@
         <ComponentRef Id="_manifest_firefox_win_json891208716" />
       </Feature>
       <Feature Id="RegistryEntries" Title="Registry Entries" Description="Registry Entries for Native Messaging" Level="1" Absent="disallow">
-        <ComponentRef Id="RegistryEntries" />
         <ComponentRef Id="RegistryEntries64" />
       </Feature>
     </Feature>

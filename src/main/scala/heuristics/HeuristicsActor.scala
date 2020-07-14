@@ -218,22 +218,23 @@ class HeuristicsActor
 
     case DiscardSuggestedTab(groupHash, tabHash, reason) => {
 
-      val relatedGroups = for {
-        curatedGroup <- curatedGroups.find(_.id == groupHash)
-        additionalGroup <- tabGroups.find(_.id == groupHash)
-      } yield (curatedGroup, additionalGroup)
+      tabGroups.find(_.id == groupHash).foreach {
 
-      relatedGroups.foreach {
-        case (curatedGroup, additionalGroup) => {
-          val targetTab = additionalGroup.tabs.find(_.hash == tabHash)
+        case (suggestedGroup) => {
+
+          val targetTab = suggestedGroup.tabs.find(_.hash == tabHash)
 
           statistics ! StatisticsActor.DiscardSuggestedTab(groupHash)
 
-          val combinations = computeHashCombinations(
-            curatedGroup.tabs.map(_.hash) ++ additionalGroup.tabs.map(_.hash)
-          )
+          val hashes = curatedGroups.find(_.id == groupHash) match {
+            case Some(curatedGroup) =>
+              curatedGroup.tabs.map(_.hash) ++ suggestedGroup.tabs.map(_.hash)
 
-          combinations
+            case None =>
+              suggestedGroup.tabs.map(_.hash)
+          }
+
+          computeHashCombinations(hashes)
             .filter(_.contains(tabHash))
             .foreach(switchIdentifier =>
               switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
@@ -244,7 +245,7 @@ class HeuristicsActor
             Seq(
               "DISCARD_TAB",
               groupHash,
-              additionalGroup.name,
+              suggestedGroup.name,
               tabHash,
               targetTab.map(_.title).getOrElse("NONE")
             ).mkString(";")

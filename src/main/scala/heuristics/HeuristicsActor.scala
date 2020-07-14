@@ -126,8 +126,12 @@ class HeuristicsActor
         }
     }
 
-    case QueryTabGroups =>
-      sender() ! HeuristicsActor.CurrentTabGroups(tabGroupIndex, tabGroups)
+    case QueryTabGroups => {
+      // merge curated and automated tab groups
+      val allGroups = tabGroups ++ curatedGroups
+      val fullIndex = tabGroupIndex ++ curatedGroupIndex
+      sender() ! HeuristicsActor.CurrentTabGroups(fullIndex, allGroups)
+    }
 
     case AcceptSuggestion(groupHash) => {
       tabGroups.find(_.id == groupHash).foreach {

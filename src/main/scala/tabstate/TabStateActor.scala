@@ -40,10 +40,12 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
     log.info("Starting to process tab events")
 
     // query the webextension for the list of current tabs
-    NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
+    context.system.scheduler.scheduleWithFixedDelay(15 seconds, 5 minutes) {
+      () => NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_TABS)
+    }(context.system.dispatcher)
 
     // query the webextension for the list of current tab groups repeatedly
-    context.system.scheduler.scheduleWithFixedDelay(30 seconds, 30 seconds) {
+    context.system.scheduler.scheduleWithFixedDelay(30 seconds, 2 minutes) {
       () => NativeMessaging.writeNativeMessage(HeuristicsAction.QUERY_GROUPS)
     }(context.system.dispatcher)
   }
@@ -148,8 +150,8 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       tabSwitches ! TabSwitchActor.TabSwitch(prevTab, tab)
     }
 
-    case SuggestedGroupDiscardEvent(groupHash) =>
-      heuristics ! HeuristicsActor.DiscardSuggestion(groupHash)
+    case SuggestedGroupDiscardEvent(groupHash, reason, rating) =>
+      heuristics ! HeuristicsActor.DiscardSuggestion(groupHash, reason, rating)
 
     case SuggestedGroupAcceptEvent(groupHash) =>
       heuristics ! HeuristicsActor.AcceptSuggestion(groupHash)
@@ -161,8 +163,12 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
         targetGroup
       )
 
-    case SuggestedTabDiscardEvent(groupHash, tabHash) =>
-      heuristics ! HeuristicsActor.DiscardSuggestedTab(groupHash, tabHash)
+    case SuggestedTabDiscardEvent(groupHash, tabHash, reason) =>
+      heuristics ! HeuristicsActor.DiscardSuggestedTab(
+        groupHash,
+        tabHash,
+        reason
+      )
 
     case message =>
       log.info(s"Received unknown TabEvent $message")

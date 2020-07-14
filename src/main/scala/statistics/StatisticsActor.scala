@@ -49,14 +49,10 @@ class StatisticsActor
   // usage statistics
   var usageStatistics = UsageStatistics()
 
-  // initialize a data structure for aggregating data across windows
-  val aggregationWindows: mutable.Map[Long, List[DataPoint]] = mutable.Map()
-
-  // initialize a queue where tab switches will be pushed for aggregation
-  val tabSwitchQueue = mutable.Queue[TabSwitch]()
-
-  // initialize a queue where suggestion interactions will be pushed for aggregation
-  val suggestionInteractionsQueue = mutable.Queue[SuggestionInteraction]()
+  // initialize data structures for aggregating data across windows
+  val aggregationWindows: mutable.Map[Long, List[StatisticsMeasurement]] =
+    mutable.Map()
+  val eventQueue = mutable.Queue[StatisticsEvent]()
 
   override def preStart: Unit = {
     log.info("Starting to collect statistics")
@@ -83,20 +79,20 @@ class StatisticsActor
 
     case PersistState => persistUsageStatistics(usageStatistics)
 
-    case tabSwitch: TabSwitch => {
+    case RequestInteraction => {
+      NativeMessaging.writeNativeMessage(HeuristicsAction.REQUEST_INTERACTION)
+      usageStatistics = usageStatistics.logActionRequest()
+      self ! PersistState
+    }
+
+    case TabSwitch(fromTab, toTab) => {
       log.debug("Pushing tab switch to queue")
-      tabSwitchQueue.enqueue(tabSwitch)
+      eventQueue.enqueue(TabSwitchEvent(fromTab, toTab))
     }
 
     case suggestionInteraction: SuggestionInteraction => {
       log.debug("Pushing suggestion interaction to queue")
-      suggestionInteractionsQueue.enqueue(suggestionInteraction)
-    }
-
-    case RequestInteraction => {
-      NativeMessaging.writeNativeMessage(HeuristicsAction.REQUEST_INTERACTION)
-      usageStatistics = usageStatistics.logActionRequest()
-      persistUsageStatistics(usageStatistics)
+      eventQueue.enqueue(SuggestionInteractionEvent(suggestionInteraction))
     }
 
     case AggregateWindows => {
@@ -133,10 +129,10 @@ class StatisticsActor
             .toArray
 
           val openTabHashes = currentTabs
-            .map(_.hashCode())
+            .map(_.hash)
             .toSet
           val clusterTabHashes = tabGroups
-            .flatMap(_.tabs.map(_.hashCode()))
+            .flatMap(_.tabs.map(_.hash))
             .toSet
 
           // compute the number of tabs that is currently open and not in any group
@@ -144,78 +140,64 @@ class StatisticsActor
           val openTabsGrouped = openTabHashes.intersect(clusterTabHashes).size
           val openTabsUngrouped = openTabHashes.size - openTabsGrouped
 
-          // prepare a new data point
-          val dataPoint = new DataPoint(
-            openTabHashes.size,
-            openTabsUngrouped,
-            openTabsGrouped,
-            mean(currentTabsAge),
-            mean(currentTabsStaleness)
-          )
-
           // process the tab switch queue
-          log.debug(
-            s"Elements in tab switch queue: ${tabSwitchQueue.size}"
-          )
+          log.debug(s"Elements in queue: ${eventQueue}")
 
-          val switchStatistics =
-            SwitchStatistics.fromTuple(
-              tabSwitchQueue
-                .dequeueAll(_ => true)
-                .map {
-                  case TabSwitch(prevTab, newTab) => {
-                    val isPrevTabClustered =
-                      clusterTabHashes.contains(prevTab.hashCode())
-                    val isNewTabClustered =
-                      clusterTabHashes.contains(newTab.hashCode())
+          val measurement = eventQueue
+            .dequeueAll(_ => true)
+            .map {
+              case TabSwitchEvent(prevTab, newTab) => {
+                val isPrevTabClustered =
+                  clusterTabHashes.contains(prevTab.hash)
+                val isNewTabClustered =
+                  clusterTabHashes.contains(newTab.hash)
 
-                    (isPrevTabClustered, isNewTabClustered) match {
-                      case (true, true) => {
-                        if (groupIndex(prevTab.hashCode())
-                              == groupIndex(newTab.hashCode())) {
-                          SwitchStatistics.SwitchWithinGroup
-                        } else {
-                          SwitchStatistics.SwitchBetweenGroups
-                        }
-                      }
-                      case (true, false)  => SwitchStatistics.SwitchFromGroup
-                      case (false, true)  => SwitchStatistics.SwitchToGroup
-                      case (false, false) => SwitchStatistics.SwitchOutside
+                (isPrevTabClustered, isNewTabClustered) match {
+                  case (true, true) => {
+                    if (groupIndex(prevTab.hashCode())
+                          == groupIndex(newTab.hashCode())) {
+                      StatisticsMeasurement(switchesWithinGroups = 1)
+                    } else {
+                      StatisticsMeasurement(switchesBetweenGroups = 1)
                     }
                   }
+                  case (true, false) =>
+                    StatisticsMeasurement(switchesFromGroups = 1)
+                  case (false, true) =>
+                    StatisticsMeasurement(switchesToGroups = 1)
+                  case (false, false) =>
+                    StatisticsMeasurement(switchesOutsideGroups = 1)
                 }
-                .foldLeft(0, 0, 0, 0, 0) {
-                  case (acc, switch) => acc |+| switch.value
-                }
-            )
-
-          log.debug(
-            s"Tab switch queue aggregated to ${switchStatistics}"
-          )
-
-          dataPoint.updateSwitchStatistics(switchStatistics)
-
-          val interactionStatistics = InteractionStatistics.fromTuple(
-            suggestionInteractionsQueue
-              .dequeueAll(_ => true)
-              .flatMap {
-                case AcceptSuggestedGroup(_) =>
-                  Some(InteractionStatistics.AcceptedGroup)
-                case AcceptSuggestedTab(_) =>
-                  Some(InteractionStatistics.AcceptedTab)
-                case DiscardSuggestedGroup(_) =>
-                  Some(InteractionStatistics.DiscardedGroup)
-                case DiscardSuggestedTab(_) =>
-                  Some(InteractionStatistics.DiscardedTab)
-                case _ => None
               }
-              .foldLeft(0, 0, 0, 0) { case (acc, stat) => acc |+| stat.value }
-          )
-          dataPoint.updateSuggestionInteractionStatistics(interactionStatistics)
+              case SuggestionInteractionEvent(event) =>
+                event match {
+                  case AcceptSuggestedGroup(_) =>
+                    StatisticsMeasurement(acceptedGroups = 1)
+                  case AcceptSuggestedTab(_) =>
+                    StatisticsMeasurement(acceptedTabs = 1)
+                  case DiscardSuggestedGroup(_, _, _) =>
+                    // TODO: incorporate reason and rating
+                    StatisticsMeasurement(discardedGroups = 1)
+                  case DiscardSuggestedTab(_) =>
+                    StatisticsMeasurement(discardedTabs = 1)
+                  case _ => StatisticsMeasurement()
+                }
+            }
+            .foldLeft(
+              StatisticsMeasurement(
+                currentlyOpenTabs = openTabHashes.size,
+                openTabsUngrouped = openTabsUngrouped,
+                openTabsGrouped = openTabsGrouped,
+                averageTabAge = mean(currentTabsAge),
+                averageTabStaleDuration = mean(currentTabsStaleness)
+              )
+            ) {
+              case (acc, stat) => acc + stat
+            }
 
           // log the number of interactions in usage statistics
           usageStatistics = usageStatistics
-            .logInteractions(interactionStatistics.count)
+            .logInteractions(measurement.interactionCount)
 
           // increment the active minutes in the usage statistics
           usageStatistics = usageStatistics
@@ -235,7 +217,7 @@ class StatisticsActor
 
           // push the values into a window
           aggregationWindows.updateWith(minuteBlock) {
-            _.map(_.appended(dataPoint)).orElse(Some(List(dataPoint)))
+            _.map(_.appended(measurement)).orElse(Some(List(measurement)))
           }
 
           log.debug(
@@ -244,15 +226,15 @@ class StatisticsActor
 
           // expire windows that are older than 5min (or similar)
           // and log the aggregate statistics for the previous window
-          aggregationWindows.filterInPlace((window, dataPoints) => {
+          aggregationWindows.filterInPlace((window, measurements) => {
             val isWindowExpired = window < minuteBlock
 
             log.debug(
-              s"Filtering window $window with data: ${dataPoints}, expired: ${isWindowExpired}"
+              s"Filtering window $window with data: ${measurements}, expired: ${isWindowExpired}"
             )
 
             if (isWindowExpired) {
-              val statistics = computeAggregateStatistics(dataPoints)
+              val statistics = computeAggregateStatistics(measurements)
               log.debug(s"Aggregated window $window: ${statistics}")
               logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
             }
@@ -266,8 +248,8 @@ class StatisticsActor
 
     case AggregateNow => {
       aggregationWindows.foreach {
-        case (window, dataPoints) => {
-          val statistics = computeAggregateStatistics(dataPoints)
+        case (window, measurements) => {
+          val statistics = computeAggregateStatistics(measurements)
           log.debug(s"Aggregated window $window: ${statistics}")
           logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
         }
@@ -288,8 +270,11 @@ object StatisticsActor extends LazyLogging {
   case class TabSwitch(fromTab: Tab, toTab: Tab)
 
   sealed class SuggestionInteraction
-  case class DiscardSuggestedGroup(groupHash: String)
-      extends SuggestionInteraction
+  case class DiscardSuggestedGroup(
+      groupHash: String,
+      reason: Option[String],
+      rating: Option[Int]
+  ) extends SuggestionInteraction
   case class DiscardSuggestedTab(groupHash: String)
       extends SuggestionInteraction
   case class AcceptSuggestedGroup(groupHash: String)
@@ -297,13 +282,11 @@ object StatisticsActor extends LazyLogging {
   case class AcceptSuggestedTab(groupHash: String) extends SuggestionInteraction
 
   def computeAggregateStatistics(
-      dataPoints: List[DataPoint]
+      measurements: List[StatisticsMeasurement]
   ): StatisticsOutput = {
-    val output = dataPoints.foldLeft(new StatisticsData()) {
-      case (acc, dataPoint) => acc.withDataPoint(dataPoint)
-    }
+    val output = StatisticsOutput(measurements)
     logger.debug(s"Combined data into a single object ${output.toString()}")
-    output.aggregated
+    output
   }
 
   def persistUsageStatistics(usageStatistics: UsageStatistics) = {

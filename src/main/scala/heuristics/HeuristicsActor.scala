@@ -177,15 +177,26 @@ class HeuristicsActor
       }
     }
 
-    case DiscardSuggestion(groupHash) => {
+    case DiscardSuggestion(groupHash, reason, rating) => {
       tabGroups.find(_.id == groupHash).foreach {
         case targetGroup => {
-          statistics ! StatisticsActor.DiscardSuggestedGroup(groupHash)
+          statistics ! StatisticsActor
+            .DiscardSuggestedGroup(groupHash, reason, rating)
 
-          computeHashCombinations(targetGroup.tabs.map(_.hash)).foreach(
-            switchIdentifier =>
+          val switchIdentifiers =
+            computeHashCombinations(targetGroup.tabs.map(_.hash))
+
+          // if the group was discarded as a wrong grouping, discard the switches
+          // otherwise, reset the count of all switches to zero
+          if (reason.contains("WRONG")) {
+            switchIdentifiers.foreach(switchIdentifier =>
               switchMap ! SwitchMapActor.DiscardTabSwitch(switchIdentifier)
-          )
+            )
+          } else {
+            switchIdentifiers.foreach(switchIdentifier =>
+              switchMap ! SwitchMapActor.ResetTabSwitch(switchIdentifier)
+            )
+          }
 
           logger.info(
             logToCsv,
@@ -196,14 +207,16 @@ class HeuristicsActor
               targetGroup.tabs.size,
               targetGroup.tabs
                 .map(tab => s"${tab.hash}/${tab.title}")
-                .mkString("_")
+                .mkString("_"),
+              reason,
+              rating
             ).mkString(";")
           )
         }
       }
     }
 
-    case DiscardSuggestedTab(groupHash, tabHash) => {
+    case DiscardSuggestedTab(groupHash, tabHash, reason) => {
 
       val relatedGroups = for {
         curatedGroup <- curatedGroups.find(_.id == groupHash)
@@ -270,8 +283,16 @@ object HeuristicsActor extends LazyLogging {
       tabHash: String,
       targetGroup: String
   )
-  case class DiscardSuggestion(groupHash: String)
-  case class DiscardSuggestedTab(groupHash: String, tabHash: String)
+  case class DiscardSuggestion(
+      groupHash: String,
+      reason: Option[String],
+      rating: Option[Int]
+  )
+  case class DiscardSuggestedTab(
+      groupHash: String,
+      tabHash: String,
+      reason: Option[String]
+  )
 
   def computeHashCombinations(hashes: Set[String]): List[String] = {
     hashes.toSeq

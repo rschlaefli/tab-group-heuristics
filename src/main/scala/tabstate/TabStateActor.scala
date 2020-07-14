@@ -150,8 +150,8 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       tabSwitches ! TabSwitchActor.TabSwitch(prevTab, tab)
     }
 
-    case SuggestedGroupDiscardEvent(groupHash) =>
-      heuristics ! HeuristicsActor.DiscardSuggestion(groupHash)
+    case SuggestedGroupDiscardEvent(groupHash, reason, rating) =>
+      heuristics ! HeuristicsActor.DiscardSuggestion(groupHash, reason, rating)
 
     case SuggestedGroupAcceptEvent(groupHash) =>
       heuristics ! HeuristicsActor.AcceptSuggestion(groupHash)
@@ -163,8 +163,12 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
         targetGroup
       )
 
-    case SuggestedTabDiscardEvent(groupHash, tabHash) =>
-      heuristics ! HeuristicsActor.DiscardSuggestedTab(groupHash, tabHash)
+    case SuggestedTabDiscardEvent(groupHash, tabHash, reason) =>
+      heuristics ! HeuristicsActor.DiscardSuggestedTab(
+        groupHash,
+        tabHash,
+        reason
+      )
 
     case message =>
       log.info(s"Received unknown TabEvent $message")

@@ -175,7 +175,8 @@ class StatisticsActor
                     StatisticsMeasurement(acceptedGroups = 1)
                   case AcceptSuggestedTab(_) =>
                     StatisticsMeasurement(acceptedTabs = 1)
-                  case DiscardSuggestedGroup(_) =>
+                  case DiscardSuggestedGroup(_, _, _) =>
+                    // TODO: incorporate reason and rating
                     StatisticsMeasurement(discardedGroups = 1)
                   case DiscardSuggestedTab(_) =>
                     StatisticsMeasurement(discardedTabs = 1)
@@ -269,8 +270,11 @@ object StatisticsActor extends LazyLogging {
   case class TabSwitch(fromTab: Tab, toTab: Tab)
 
   sealed class SuggestionInteraction
-  case class DiscardSuggestedGroup(groupHash: String)
-      extends SuggestionInteraction
+  case class DiscardSuggestedGroup(
+      groupHash: String,
+      reason: Option[String],
+      rating: Option[Int]
+  ) extends SuggestionInteraction
   case class DiscardSuggestedTab(groupHash: String)
       extends SuggestionInteraction
   case class AcceptSuggestedGroup(groupHash: String)

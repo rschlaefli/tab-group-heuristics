@@ -20,6 +20,7 @@ import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
 import messaging.NativeMessaging
 import tabstate.TabEvent
+import java.nio.ByteOrder
 
 object Main extends App with LazyLogging {
 
@@ -45,7 +46,7 @@ object Main extends App with LazyLogging {
     case Failure(ex) => {
       NativeMessaging
         .writeNativeMessage(
-          HeuristicsAction.HEURISTICS_STATUS("MISSING_IO")
+          HeuristicsAction.HEURISTICS_STATUS("FAILED")
         )
 
       // if the IO channel is unavailable, log an error and exit the program
@@ -65,7 +66,7 @@ object Main extends App with LazyLogging {
         "> Unable to bind to the socket (there might be another instance running). Exiting..."
       )
       NativeMessaging.writeNativeMessage(
-        HeuristicsAction.HEURISTICS_STATUS("ALREADY_RUNNING")
+        HeuristicsAction.HEURISTICS_STATUS("FAILED")
       )
       System.exit(0)
     }
@@ -79,8 +80,24 @@ object Main extends App with LazyLogging {
   // the chunksize has to be high as we can get big json payloads from the extension (e.g., for tab groups)
   val source = StreamConverters
     .fromInputStream(() => stdin, 65536)
-    .map(_.drop(4).utf8String)
-    .map(TabEvent.decodeEventFromMessage)
+    .map(msg => {
+      val length = msg
+        .take(4)
+        .toByteBuffer
+        .order(ByteOrder.LITTLE_ENDIAN)
+        .getInt()
+
+      if (length <= 0) {
+        NativeMessaging.writeNativeMessage(
+          HeuristicsAction.HEURISTICS_STATUS("STOPPED")
+        )
+        System.exit(0)
+      }
+
+      val content = msg.drop(4).utf8String
+
+      TabEvent.decodeEventFromMessage(content)
+    })
     .filter(_.isDefined)
     .map(_.get)
 

@@ -24,6 +24,18 @@ object RefreshGroupsEvent {
     deriveDecoder
 }
 
+case class CuratedGroupCloseEvent() extends TabEvent
+object CuratedGroupCloseEvent {
+  implicit val curatedGroupCloseEventDecoder: Decoder[CuratedGroupCloseEvent] =
+    deriveDecoder
+}
+
+case class CuratedGroupOpenEvent(focusMode: Boolean) extends TabEvent
+object CuratedGroupOpenEvent {
+  implicit val curatedGroupOpenEventDecoder: Decoder[CuratedGroupOpenEvent] =
+    deriveDecoder
+}
+
 case class SuggestedGroupAcceptEvent(groupHash: String) extends TabEvent
 object SuggestedGroupAcceptEvent {
   implicit val suggestedGroupAcceptEventDecoder
@@ -207,6 +219,16 @@ object TabEvent extends LazyLogging {
       case "ACCEPT_TAB" =>
         extractDecoderResult(
           cursor.get[SuggestedTabAcceptEvent]("payload")
+        )
+
+      case "OPEN_GROUP" =>
+        extractDecoderResult(
+          cursor.get[CuratedGroupOpenEvent]("payload")
+        )
+
+      case "CLOSE_GROUP" =>
+        extractDecoderResult(
+          cursor.get[CuratedGroupCloseEvent]("payload")
         )
 
       case _ => {

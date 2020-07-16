@@ -130,7 +130,12 @@ class HeuristicsActor
       // merge curated and automated tab groups
       val allGroups = tabGroups ++ curatedGroups
       val fullIndex = tabGroupIndex ++ curatedGroupIndex
-      sender() ! HeuristicsActor.CurrentTabGroups(fullIndex, allGroups)
+      sender() ! HeuristicsActor.CurrentTabGroups(
+        fullIndex,
+        allGroups,
+        tabGroups,
+        curatedGroups
+      )
     }
 
     case AcceptSuggestion(groupHash) => {
@@ -271,7 +276,9 @@ object HeuristicsActor extends LazyLogging {
 
   case class CurrentTabGroups(
       groupIndex: Map[Int, Int],
-      tabGroups: List[TabGroup]
+      tabGroups: List[TabGroup],
+      curatedGroups: List[TabGroup],
+      suggestedGroups: List[TabGroup]
   )
   case class UpdateCuratedGroups(tabGroups: List[TabGroup])
   case class TabSwitchHeuristicsResults(

@@ -114,6 +114,14 @@ class StatisticsActor
       eventQueue.enqueue(SuggestionInteractionEvent(suggestionInteraction))
     }
 
+    case curatedGroupOpen: CuratedGroupOpenEvent => {
+      eventQueue.enqueue(curatedGroupOpen)
+    }
+
+    case curatedGroupClose: CuratedGroupCloseEvent => {
+      eventQueue.enqueue(curatedGroupClose)
+    }
+
     case AggregateWindows => {
       // derive the current window for aggregation
       val currentTimestamp = Instant.now.getEpochSecond()
@@ -130,11 +138,16 @@ class StatisticsActor
 
       val results = for {
         CurrentTabsActor.CurrentTabs(tabs) <- currentTabsQuery
-        HeuristicsActor.CurrentTabGroups(groupIndex, groups) <- tabGroupsQuery
-      } yield (tabs, groups, groupIndex)
+        HeuristicsActor.CurrentTabGroups(
+          groupIndex,
+          groups,
+          curatedGroups,
+          _
+        ) <- tabGroupsQuery
+      } yield (tabs, groups, groupIndex, curatedGroups)
 
       results foreach {
-        case (currentTabs, tabGroups, groupIndex @ _) => {
+        case (currentTabs, tabGroups, groupIndex @ _, curatedGroups) => {
           log.debug(s"Current tabs $currentTabs")
 
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
@@ -237,7 +250,8 @@ class StatisticsActor
                 openTabsUngrouped = openTabsUngrouped,
                 openTabsGrouped = openTabsGrouped,
                 averageTabAge = mean(currentTabsAge),
-                averageTabStaleDuration = mean(currentTabsStaleness)
+                averageTabStaleDuration = mean(currentTabsStaleness),
+                curatedGroups = curatedGroups.size
               )
             ) {
               case (acc, stat) => acc + stat

@@ -14,3 +14,6 @@ case class TabSwitchEvent(fromTab: Tab, toTab: Tab, switchTime: Int)
 
 case class SuggestionInteractionEvent(event: SuggestionInteraction)
     extends StatisticsEvent
+
+case class CuratedGroupOpenEvent(focusMode: Boolean) extends StatisticsEvent
+case class CuratedGroupCloseEvent() extends StatisticsEvent

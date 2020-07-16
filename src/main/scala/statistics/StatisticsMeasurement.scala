@@ -21,7 +21,8 @@ case class StatisticsMeasurement(
     discardedWrong: Int = 0,
     discardedOther: Int = 0,
     switchTime: Seq[Int] = Seq(),
-    shortSwitches: Double = 0
+    shortSwitches: Double = 0,
+    curatedGroups: Int = 0
 ) {
 
   def asSeq = Seq(

@@ -21,7 +21,8 @@ case class StatisticsOutput(
     discardedWrong: Int,
     discardedOther: Int,
     switchTime: Double,
-    shortSwitches: Int
+    shortSwitches: Int,
+    avgCuratedGroups: Double
 ) {
   def asCsv: String =
     Seq(
@@ -43,7 +44,8 @@ case class StatisticsOutput(
       discardedWrong,
       discardedOther,
       switchTime,
-      shortSwitches
+      shortSwitches,
+      avgCuratedGroups
     ).mkString(";")
 
 }
@@ -69,7 +71,8 @@ object StatisticsOutput {
       discardedWrong: List[Double],
       discardedOther: List[Double],
       switchTime: List[Double],
-      shortSwitches: List[Double]
+      shortSwitches: List[Double],
+      curatedGroups: List[Double]
     ) = measurements.map(_.asSeq).transpose
 
     StatisticsOutput(
@@ -91,7 +94,8 @@ object StatisticsOutput {
       discardedWrong.map(_.intValue).sum,
       discardedOther.map(_.intValue).sum,
       round(mean(switchTime.map(_.intValue).toArray), 2),
-      shortSwitches.map(_.intValue).sum
+      shortSwitches.map(_.intValue).sum,
+      round(mean(curatedGroups.map(_.intValue()).toArray), 2)
     )
 
   }

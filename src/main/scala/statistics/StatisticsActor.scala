@@ -175,9 +175,26 @@ class StatisticsActor
                     StatisticsMeasurement(acceptedGroups = 1)
                   case AcceptSuggestedTab(_) =>
                     StatisticsMeasurement(acceptedTabs = 1)
-                  case DiscardSuggestedGroup(_, _, _) =>
-                    // TODO: incorporate reason and rating
-                    StatisticsMeasurement(discardedGroups = 1)
+                  case DiscardSuggestedGroup(_, reason, rating)
+                      if reason == "WRONG" => {
+                    StatisticsMeasurement(
+                      discardedGroups = 1,
+                      discardedWrong = 1,
+                      discardedRating = rating
+                        .map(rating => Seq(rating.doubleValue()))
+                        .getOrElse(Seq())
+                    )
+                  }
+
+                  case DiscardSuggestedGroup(_, reason, rating) => {
+                    StatisticsMeasurement(
+                      discardedGroups = 1,
+                      discardedOther = 1,
+                      discardedRating = rating
+                        .map(rating => Seq(rating.doubleValue()))
+                        .getOrElse(Seq())
+                    )
+                  }
                   case DiscardSuggestedTab(_) =>
                     StatisticsMeasurement(discardedTabs = 1)
                   case _ => StatisticsMeasurement()

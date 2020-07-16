@@ -16,7 +16,10 @@ case class StatisticsOutput(
     discardedGroups: Int,
     discardedTabs: Int,
     tabAge: Double,
-    tabStaleness: Double
+    tabStaleness: Double,
+    discardedRating: Double,
+    discardedWrong: Int,
+    discardedOther: Int
 ) {
   def asCsv: String =
     Seq(
@@ -33,7 +36,10 @@ case class StatisticsOutput(
       discardedGroups,
       discardedTabs,
       tabAge,
-      tabStaleness
+      tabStaleness,
+      discardedRating,
+      discardedWrong,
+      discardedOther
     ).mkString(";")
 
 }
@@ -54,7 +60,10 @@ object StatisticsOutput {
       acceptedGroups: List[Double],
       acceptedTabs: List[Double],
       discardedGroups: List[Double],
-      discardedTabs: List[Double]
+      discardedTabs: List[Double],
+      discardedRating: List[Double],
+      discardedWrong: List[Double],
+      discardedOther: List[Double]
     ) = measurements.map(_.asSeq).transpose
 
     StatisticsOutput(
@@ -71,7 +80,10 @@ object StatisticsOutput {
       discardedGroups.map(_.intValue()).sum,
       discardedTabs.map(_.intValue()).sum,
       round(mean(averageTabAge.toArray), 2),
-      round(mean(averageTabStaleDuration.toArray), 2)
+      round(mean(averageTabStaleDuration.toArray), 2),
+      round(mean(discardedRating.toArray), 2),
+      discardedWrong.map(_.intValue).sum,
+      discardedOther.map(_.intValue).sum
     )
 
   }

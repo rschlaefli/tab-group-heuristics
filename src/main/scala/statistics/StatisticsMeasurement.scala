@@ -22,7 +22,10 @@ case class StatisticsMeasurement(
     discardedOther: Int = 0,
     switchTime: Seq[Int] = Seq(),
     shortSwitches: Double = 0,
-    curatedGroups: Int = 0
+    curatedGroups: Int = 0,
+    curatedGroupsOpened: Int = 0,
+    curatedGroupsClosed: Int = 0,
+    focusModeUsed: Int = 0
 ) {
 
   def asSeq = Seq(
@@ -44,7 +47,10 @@ case class StatisticsMeasurement(
     this.discardedWrong,
     this.discardedOther,
     mean(this.switchTime.toArray),
-    this.shortSwitches
+    this.shortSwitches,
+    this.curatedGroupsOpened,
+    this.curatedGroupsClosed,
+    this.focusModeUsed
   )
 
   def +(other: StatisticsMeasurement) = {
@@ -86,7 +92,13 @@ case class StatisticsMeasurement(
       switchTime =
         this.switchTime ++ other.switchTime,
       shortSwitches =
-        this.shortSwitches + other.shortSwitches
+        this.shortSwitches + other.shortSwitches,
+      curatedGroupsOpened =
+        this.curatedGroupsOpened + other.curatedGroupsOpened,
+      curatedGroupsClosed =
+        this.curatedGroupsClosed + other.curatedGroupsClosed,
+      focusModeUsed =
+        this.focusModeUsed + other.focusModeUsed
     )
   }
 

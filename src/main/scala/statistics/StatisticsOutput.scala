@@ -22,7 +22,10 @@ case class StatisticsOutput(
     discardedOther: Int,
     switchTime: Double,
     shortSwitches: Int,
-    avgCuratedGroups: Double
+    avgCuratedGroups: Double,
+    curatedGroupsOpened: Int,
+    curatedGroupsClosed: Int,
+    focusModeUsed: Int
 ) {
   def asCsv: String =
     Seq(
@@ -45,57 +48,42 @@ case class StatisticsOutput(
       discardedOther,
       switchTime,
       shortSwitches,
-      avgCuratedGroups
+      avgCuratedGroups,
+      curatedGroupsOpened,
+      curatedGroupsClosed,
+      focusModeUsed
     ).mkString(";")
 
 }
 
 object StatisticsOutput {
   def apply(measurements: List[StatisticsMeasurement]): StatisticsOutput = {
-    val List(
-      currentlyOpenTabs: List[Double],
-      openTabsUngrouped: List[Double],
-      openTabsGrouped: List[Double],
-      averageTabAge: List[Double],
-      averageTabStaleDuration: List[Double],
-      switchesWithinGroups: List[Double],
-      switchesBetweenGroups: List[Double],
-      switchesFromGroups: List[Double],
-      switchesToGroups: List[Double],
-      switchesOutsideGroups: List[Double],
-      acceptedGroups: List[Double],
-      acceptedTabs: List[Double],
-      discardedGroups: List[Double],
-      discardedTabs: List[Double],
-      discardedRating: List[Double],
-      discardedWrong: List[Double],
-      discardedOther: List[Double],
-      switchTime: List[Double],
-      shortSwitches: List[Double],
-      curatedGroups: List[Double]
-    ) = measurements.map(_.asSeq).transpose
+    val transposed = measurements.map(_.asSeq).transpose
 
     StatisticsOutput(
-      round(mean(currentlyOpenTabs.map(_.intValue()).toArray), 2),
-      round(mean(openTabsGrouped.map(_.intValue()).toArray), 2),
-      round(mean(openTabsUngrouped.map(_.intValue()).toArray), 2),
-      switchesWithinGroups.map(_.intValue()).sum,
-      switchesBetweenGroups.map(_.intValue()).sum,
-      switchesFromGroups.map(_.intValue()).sum,
-      switchesToGroups.map(_.intValue()).sum,
-      switchesOutsideGroups.map(_.intValue()).sum,
-      acceptedGroups.map(_.intValue()).sum,
-      acceptedTabs.map(_.intValue()).sum,
-      discardedGroups.map(_.intValue()).sum,
-      discardedTabs.map(_.intValue()).sum,
-      round(mean(averageTabAge.toArray), 2),
-      round(mean(averageTabStaleDuration.toArray), 2),
-      round(mean(discardedRating.toArray), 2),
-      discardedWrong.map(_.intValue).sum,
-      discardedOther.map(_.intValue).sum,
-      round(mean(switchTime.map(_.intValue).toArray), 2),
-      shortSwitches.map(_.intValue).sum,
-      round(mean(curatedGroups.map(_.intValue()).toArray), 2)
+      round(mean(transposed(0).map(_.intValue()).toArray), 2),
+      round(mean(transposed(1).map(_.intValue()).toArray), 2),
+      round(mean(transposed(2).map(_.intValue()).toArray), 2),
+      transposed(3).map(_.intValue()).sum,
+      transposed(4).map(_.intValue()).sum,
+      transposed(5).map(_.intValue()).sum,
+      transposed(6).map(_.intValue()).sum,
+      transposed(7).map(_.intValue()).sum,
+      transposed(8).map(_.intValue()).sum,
+      transposed(9).map(_.intValue()).sum,
+      transposed(10).map(_.intValue()).sum,
+      transposed(11).map(_.intValue()).sum,
+      round(mean(transposed(12).toArray), 2),
+      round(mean(transposed(13).toArray), 2),
+      round(mean(transposed(14).toArray), 2),
+      transposed(15).map(_.intValue).sum,
+      transposed(16).map(_.intValue).sum,
+      round(mean(transposed(17).map(_.intValue).toArray), 2),
+      transposed(18).map(_.intValue).sum,
+      round(mean(transposed(19).map(_.intValue()).toArray), 2),
+      transposed(20).map(_.intValue).sum,
+      transposed(21).map(_.intValue).sum,
+      transposed(22).map(_.intValue).sum
     )
 
   }

@@ -213,6 +213,7 @@ class StatisticsActor
                   )
                 }
               }
+
               case SuggestionInteractionEvent(event) =>
                 event match {
                   case AcceptSuggestedGroup(_) =>
@@ -243,6 +244,16 @@ class StatisticsActor
                     StatisticsMeasurement(discardedTabs = 1)
                   case _ => StatisticsMeasurement()
                 }
+
+              case CuratedGroupOpenEvent(focusMode) =>
+                StatisticsMeasurement(
+                  curatedGroupsOpened = 1,
+                  focusModeUsed = if (focusMode) 1 else 0
+                )
+
+              case CuratedGroupCloseEvent() =>
+                StatisticsMeasurement(curatedGroupsClosed = 1)
+
             }
             .foldLeft(
               StatisticsMeasurement(

@@ -22,7 +22,6 @@ import org.slf4j.MarkerFactory
 import tabstate.CurrentTabsActor
 import tabstate.Tab
 import tabswitches.TabSwitchActor
-import statistics.StatisticsEvent
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
@@ -172,11 +171,11 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
         reason
       )
 
-    // case CuratedGroupOpenEvent(focusMode) =>
-    //   statistics ! StatisticsEvent.CuratedGroupOpenEvent(focusMode)
+    case CuratedGroupOpenEvent(focusMode) =>
+      statistics ! StatisticsEvent.CuratedGroupOpenEvent(focusMode)
 
-    // case CuratedGroupCloseEvent =>
-    //   statistics ! StatisticsEvent.CuratedGroupCloseEvent()
+    case CuratedGroupCloseEvent =>
+      statistics ! StatisticsEvent.CuratedGroupCloseEvent()
 
     case message =>
       log.info(s"Received unknown TabEvent $message")

@@ -40,8 +40,8 @@ case class StatisticsMeasurement(
     this.discardedGroups,
     this.discardedTabs,
     mean(this.discardedRating.toArray),
-    discardedWrong,
-    discardedOther,
+    this.discardedWrong,
+    this.discardedOther,
     mean(this.switchTime.toArray),
     this.shortSwitches
   )

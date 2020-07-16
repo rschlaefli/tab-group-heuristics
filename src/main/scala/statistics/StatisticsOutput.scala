@@ -90,7 +90,7 @@ object StatisticsOutput {
       round(mean(discardedRating.toArray), 2),
       discardedWrong.map(_.intValue).sum,
       discardedOther.map(_.intValue).sum,
-      mean(switchTime.map(_.intValue).toArray),
+      round(mean(switchTime.map(_.intValue).toArray), 2),
       shortSwitches.map(_.intValue).sum
     )
 

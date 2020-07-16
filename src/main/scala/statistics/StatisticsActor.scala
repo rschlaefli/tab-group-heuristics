@@ -175,7 +175,7 @@ class StatisticsActor
                     StatisticsMeasurement(acceptedGroups = 1)
                   case AcceptSuggestedTab(_) =>
                     StatisticsMeasurement(acceptedTabs = 1)
-                  case DiscardSuggestedGroup(_, reason, rating)
+                  case DiscardSuggestedGroup(_, Some(reason), rating)
                       if reason == "WRONG" => {
                     StatisticsMeasurement(
                       discardedGroups = 1,
@@ -186,7 +186,7 @@ class StatisticsActor
                     )
                   }
 
-                  case DiscardSuggestedGroup(_, reason, rating) => {
+                  case DiscardSuggestedGroup(_, _, rating) => {
                     StatisticsMeasurement(
                       discardedGroups = 1,
                       discardedOther = 1,

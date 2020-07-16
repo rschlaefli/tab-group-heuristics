@@ -19,7 +19,9 @@ case class StatisticsMeasurement(
     discardedTabs: Int = 0,
     discardedRating: Seq[Double] = Seq(),
     discardedWrong: Int = 0,
-    discardedOther: Int = 0
+    discardedOther: Int = 0,
+    switchTime: Seq[Int] = Seq(),
+    shortSwitches: Double = 0
 ) {
 
   def asSeq = Seq(
@@ -39,7 +41,9 @@ case class StatisticsMeasurement(
     this.discardedTabs,
     mean(this.discardedRating.toArray),
     discardedWrong,
-    discardedOther
+    discardedOther,
+    mean(this.switchTime.toArray),
+    this.shortSwitches
   )
 
   def +(other: StatisticsMeasurement) = {
@@ -77,7 +81,11 @@ case class StatisticsMeasurement(
       discardedWrong =
         this.discardedWrong + other.discardedWrong,
       discardedOther =
-        this.discardedOther + other.discardedOther
+        this.discardedOther + other.discardedOther,
+      switchTime =
+        this.switchTime ++ other.switchTime,
+      shortSwitches =
+        this.shortSwitches + other.shortSwitches
     )
   }
 

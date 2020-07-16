@@ -19,7 +19,9 @@ case class StatisticsOutput(
     tabStaleness: Double,
     discardedRating: Double,
     discardedWrong: Int,
-    discardedOther: Int
+    discardedOther: Int,
+    switchTime: Double,
+    shortSwitches: Int
 ) {
   def asCsv: String =
     Seq(
@@ -39,7 +41,9 @@ case class StatisticsOutput(
       tabStaleness,
       discardedRating,
       discardedWrong,
-      discardedOther
+      discardedOther,
+      switchTime,
+      shortSwitches
     ).mkString(";")
 
 }
@@ -63,7 +67,9 @@ object StatisticsOutput {
       discardedTabs: List[Double],
       discardedRating: List[Double],
       discardedWrong: List[Double],
-      discardedOther: List[Double]
+      discardedOther: List[Double],
+      switchTime: List[Double],
+      shortSwitches: List[Double]
     ) = measurements.map(_.asSeq).transpose
 
     StatisticsOutput(
@@ -83,7 +89,9 @@ object StatisticsOutput {
       round(mean(averageTabStaleDuration.toArray), 2),
       round(mean(discardedRating.toArray), 2),
       discardedWrong.map(_.intValue).sum,
-      discardedOther.map(_.intValue).sum
+      discardedOther.map(_.intValue).sum,
+      mean(switchTime.map(_.intValue).toArray),
+      shortSwitches.map(_.intValue).sum
     )
 
   }

@@ -46,6 +46,9 @@ class StatisticsActor
   val currentTabsActor =
     context.actorSelection("/user/Main/TabState/CurrentTabs")
 
+  // timestamp of the last tab switch
+  var prevSwitchTs: Long = -1
+
   // usage statistics
   var usageStatistics = UsageStatistics()
 
@@ -87,7 +90,23 @@ class StatisticsActor
 
     case TabSwitch(fromTab, toTab) => {
       log.debug("Pushing tab switch to queue")
-      eventQueue.enqueue(TabSwitchEvent(fromTab, toTab))
+
+      val currentTs = java.time.Instant.now().getEpochSecond()
+      val switchTime =
+        if (prevSwitchTs > -1) {
+          currentTs - prevSwitchTs intValue
+        } else -1
+
+      eventQueue.enqueue(
+        TabSwitchEvent(
+          fromTab,
+          toTab,
+          switchTime
+        )
+      )
+
+      // set the switch timestamp
+      prevSwitchTs = currentTs
     }
 
     case suggestionInteraction: SuggestionInteraction => {
@@ -115,7 +134,7 @@ class StatisticsActor
       } yield (tabs, groups, groupIndex)
 
       results foreach {
-        case (currentTabs, tabGroups, groupIndex) => {
+        case (currentTabs, tabGroups, groupIndex @ _) => {
           log.debug(s"Current tabs $currentTabs")
 
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
@@ -146,27 +165,39 @@ class StatisticsActor
           val measurement = eventQueue
             .dequeueAll(_ => true)
             .map {
-              case TabSwitchEvent(prevTab, newTab) => {
+              case TabSwitchEvent(prevTab, newTab, prevTime) => {
                 val isPrevTabClustered =
                   clusterTabHashes.contains(prevTab.hash)
                 val isNewTabClustered =
                   clusterTabHashes.contains(newTab.hash)
 
-                (isPrevTabClustered, isNewTabClustered) match {
-                  case (true, true) => {
-                    if (groupIndex(prevTab.hashCode())
-                          == groupIndex(newTab.hashCode())) {
-                      StatisticsMeasurement(switchesWithinGroups = 1)
-                    } else {
-                      StatisticsMeasurement(switchesBetweenGroups = 1)
+                val switchMeasurement =
+                  (isPrevTabClustered, isNewTabClustered) match {
+                    case (true, true) => {
+                      if (groupIndex(prevTab.hashCode())
+                            == groupIndex(newTab.hashCode())) {
+                        StatisticsMeasurement(switchesWithinGroups = 1)
+                      } else {
+                        StatisticsMeasurement(switchesBetweenGroups = 1)
+                      }
                     }
+                    case (true, false) =>
+                      StatisticsMeasurement(switchesFromGroups = 1)
+                    case (false, true) =>
+                      StatisticsMeasurement(switchesToGroups = 1)
+                    case (false, false) =>
+                      StatisticsMeasurement(switchesOutsideGroups = 1)
                   }
-                  case (true, false) =>
-                    StatisticsMeasurement(switchesFromGroups = 1)
-                  case (false, true) =>
-                    StatisticsMeasurement(switchesToGroups = 1)
-                  case (false, false) =>
-                    StatisticsMeasurement(switchesOutsideGroups = 1)
+
+                if (prevTime < 5) {
+                  switchMeasurement + StatisticsMeasurement(
+                    switchTime = Seq(prevTime),
+                    shortSwitches = 1
+                  )
+                } else {
+                  switchMeasurement + StatisticsMeasurement(
+                    switchTime = Seq(prevTime)
+                  )
                 }
               }
               case SuggestionInteractionEvent(event) =>

@@ -14,7 +14,7 @@ inThisBuild(
 lazy val tabs = (project in file("."))
   .settings(
     name := "tabs",
-    version := "0.3.8",
+    version := "0.3.10",
     organization := "ch.uzh.rschlaefli",
     maintainer := "Roland Schlaefli <rolandschlaefli@gmail.com>",
     packageSummary := "Automated Tab Organization",

@@ -22,6 +22,7 @@ import org.slf4j.MarkerFactory
 import tabstate.CurrentTabsActor
 import tabstate.Tab
 import tabswitches.TabSwitchActor
+import statistics.StatisticsActor
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
@@ -34,6 +35,7 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
 
   val currentTabs = context.actorOf(Props[CurrentTabsActor], "CurrentTabs")
   val heuristics = context.actorSelection("/user/Main/Heuristics")
+  val statistics = context.actorSelection("/user/Main/Statistics")
   val tabSwitches = context.actorSelection("/user/Main/Heuristics/TabSwitches")
 
   override def preStart(): Unit = {
@@ -169,6 +171,12 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
         tabHash,
         reason
       )
+
+    case CuratedGroupOpenEvent(focusMode) =>
+      statistics ! StatisticsActor.CuratedGroupOpened(focusMode)
+
+    case CuratedGroupCloseEvent =>
+      statistics ! StatisticsActor.CuratedGroupClosed
 
     case message =>
       log.info(s"Received unknown TabEvent $message")

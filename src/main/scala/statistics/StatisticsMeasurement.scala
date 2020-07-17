@@ -1,5 +1,7 @@
 package statistics
 
+import smile.math.MathEx._
+
 case class StatisticsMeasurement(
     currentlyOpenTabs: Int = 0,
     openTabsUngrouped: Int = 0,
@@ -14,7 +16,16 @@ case class StatisticsMeasurement(
     acceptedGroups: Int = 0,
     acceptedTabs: Int = 0,
     discardedGroups: Int = 0,
-    discardedTabs: Int = 0
+    discardedTabs: Int = 0,
+    discardedRating: Seq[Double] = Seq(),
+    discardedWrong: Int = 0,
+    discardedOther: Int = 0,
+    switchTime: Seq[Int] = Seq(),
+    shortSwitches: Double = 0,
+    curatedGroups: Int = 0,
+    curatedGroupsOpened: Int = 0,
+    curatedGroupsClosed: Int = 0,
+    focusModeUsed: Int = 0
 ) {
 
   def asSeq = Seq(
@@ -31,7 +42,15 @@ case class StatisticsMeasurement(
     this.acceptedGroups,
     this.acceptedTabs,
     this.discardedGroups,
-    this.discardedTabs
+    this.discardedTabs,
+    mean(this.discardedRating.toArray),
+    this.discardedWrong,
+    this.discardedOther,
+    mean(this.switchTime.toArray),
+    this.shortSwitches,
+    this.curatedGroupsOpened,
+    this.curatedGroupsClosed,
+    this.focusModeUsed
   )
 
   def +(other: StatisticsMeasurement) = {
@@ -63,7 +82,23 @@ case class StatisticsMeasurement(
       discardedGroups =
         this.discardedGroups + other.discardedGroups,
       discardedTabs =
-        this.discardedTabs + other.discardedTabs
+        this.discardedTabs + other.discardedTabs,
+      discardedRating =
+        this.discardedRating ++ other.discardedRating,
+      discardedWrong =
+        this.discardedWrong + other.discardedWrong,
+      discardedOther =
+        this.discardedOther + other.discardedOther,
+      switchTime =
+        this.switchTime ++ other.switchTime,
+      shortSwitches =
+        this.shortSwitches + other.shortSwitches,
+      curatedGroupsOpened =
+        this.curatedGroupsOpened + other.curatedGroupsOpened,
+      curatedGroupsClosed =
+        this.curatedGroupsClosed + other.curatedGroupsClosed,
+      focusModeUsed =
+        this.focusModeUsed + other.focusModeUsed
     )
   }
 

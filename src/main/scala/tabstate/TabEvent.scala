@@ -24,11 +24,7 @@ object RefreshGroupsEvent {
     deriveDecoder
 }
 
-case class CuratedGroupCloseEvent() extends TabEvent
-object CuratedGroupCloseEvent {
-  implicit val curatedGroupCloseEventDecoder: Decoder[CuratedGroupCloseEvent] =
-    deriveDecoder
-}
+case object CuratedGroupCloseEvent extends TabEvent
 
 case class CuratedGroupOpenEvent(focusMode: Boolean) extends TabEvent
 object CuratedGroupOpenEvent {
@@ -227,9 +223,7 @@ object TabEvent extends LazyLogging {
         )
 
       case "CLOSE_GROUP" =>
-        extractDecoderResult(
-          cursor.get[CuratedGroupCloseEvent]("payload")
-        )
+        Some(CuratedGroupCloseEvent)
 
       case _ => {
         logger.warn(s"> Unknown tab event received: $action ($message)")

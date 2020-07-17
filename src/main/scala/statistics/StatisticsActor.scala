@@ -114,12 +114,12 @@ class StatisticsActor
       eventQueue.enqueue(SuggestionInteractionEvent(suggestionInteraction))
     }
 
-    case curatedGroupOpen: CuratedGroupOpenEvent => {
-      eventQueue.enqueue(curatedGroupOpen)
+    case CuratedGroupOpened(focusMode) => {
+      eventQueue.enqueue(CuratedGroupOpenEvent(focusMode))
     }
 
-    case curatedGroupClose: CuratedGroupCloseEvent => {
-      eventQueue.enqueue(curatedGroupClose)
+    case CuratedGroupClosed => {
+      eventQueue.enqueue(CuratedGroupCloseEvent())
     }
 
     case AggregateWindows => {
@@ -353,6 +353,9 @@ object StatisticsActor extends LazyLogging {
   case class AcceptSuggestedGroup(groupHash: String)
       extends SuggestionInteraction
   case class AcceptSuggestedTab(groupHash: String) extends SuggestionInteraction
+
+  case class CuratedGroupOpened(focusMode: Boolean)
+  case object CuratedGroupClosed
 
   def computeAggregateStatistics(
       measurements: List[StatisticsMeasurement]

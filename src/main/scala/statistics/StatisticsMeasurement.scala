@@ -30,8 +30,8 @@ case class StatisticsMeasurement(
 
   def asSeq = Seq(
     this.currentlyOpenTabs,
-    this.openTabsUngrouped,
     this.openTabsGrouped,
+    this.openTabsUngrouped,
     this.averageTabAge,
     this.averageTabStaleDuration,
     this.switchesWithinGroups,
@@ -48,6 +48,7 @@ case class StatisticsMeasurement(
     this.discardedOther,
     mean(this.switchTime.toArray),
     this.shortSwitches,
+    this.curatedGroups,
     this.curatedGroupsOpened,
     this.curatedGroupsClosed,
     this.focusModeUsed

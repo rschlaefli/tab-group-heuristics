@@ -79,6 +79,10 @@ class TabStateActor extends Actor with ActorLogging with LazyLogging {
       )
     }
 
+    case StopEvent => {
+      context.system.terminate()
+    }
+
     case PauseEvent => {
       log.info("Pausing processing")
       context.parent ! MainActor.StopProcessing

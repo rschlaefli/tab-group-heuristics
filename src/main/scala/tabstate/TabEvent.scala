@@ -11,6 +11,7 @@ import tabswitches.GraphGenerationParams
 
 sealed class TabEvent
 
+case object StopEvent extends TabEvent
 case object PauseEvent extends TabEvent
 case object ResumeEvent extends TabEvent
 
@@ -224,6 +225,10 @@ object TabEvent extends LazyLogging {
 
       case "CLOSE_GROUP" =>
         Some(CuratedGroupCloseEvent)
+
+      case "STOP" => {
+        Some(StopEvent)
+      }
 
       case _ => {
         logger.warn(s"> Unknown tab event received: $action ($message)")

@@ -66,8 +66,9 @@ object Main extends App with LazyLogging {
         "> Unable to bind to the socket (there might be another instance running). Exiting..."
       )
       NativeMessaging.writeNativeMessage(
-        HeuristicsAction.HEURISTICS_STATUS("FAILED")
+        HeuristicsAction.HEURISTICS_STATUS("ALREADY_RUNNING")
       )
+      Thread.sleep(3000)
       System.exit(0)
     }
   }

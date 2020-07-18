@@ -153,12 +153,20 @@ class StatisticsActor
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
           val currentTabsAge = currentTabs
             .flatMap(_.createdAt)
-            .map(creationTs => (currentEpochTs - creationTs) / 60d)
-            .toArray
+            .map(creationTs => {
+              val t = (currentEpochTs - creationTs) / 60
+              Age(t.intValue())
+            })
+            .toSeq
+            .fold(Age())(_ + _)
           val currentTabsStaleness = currentTabs
             .flatMap(_.lastAccessed)
-            .map(accessTs => (currentEpochTs - accessTs) / 60d)
-            .toArray
+            .map(accessTs => {
+              val t = (currentEpochTs - accessTs) / 60
+              Age(t.intValue())
+            })
+            .toSeq
+            .fold(Age())(_ + _)
 
           val openTabHashes = currentTabs
             .map(_.hash)
@@ -189,80 +197,73 @@ class StatisticsActor
                     case (true, true) => {
                       if (groupIndex(prevTab.hashCode())
                             == groupIndex(newTab.hashCode())) {
-                        StatisticsMeasurement(switchesWithinGroups = 1)
+                        StatisticsMeasurement(numSwitchesWithinGroups = 1)
                       } else {
-                        StatisticsMeasurement(switchesBetweenGroups = 1)
+                        StatisticsMeasurement(numSwitchesBetweenGroups = 1)
                       }
                     }
                     case (true, false) =>
-                      StatisticsMeasurement(switchesFromGroups = 1)
+                      StatisticsMeasurement(numSwitchesFromGroups = 1)
                     case (false, true) =>
-                      StatisticsMeasurement(switchesToGroups = 1)
+                      StatisticsMeasurement(numSwitchesToGroups = 1)
                     case (false, false) =>
-                      StatisticsMeasurement(switchesOutsideGroups = 1)
+                      StatisticsMeasurement(numSwitchesUngrouped = 1)
                   }
 
-                if (prevTime < 5) {
-                  switchMeasurement + StatisticsMeasurement(
-                    switchTime = Seq(prevTime),
-                    shortSwitches = 1
-                  )
-                } else {
-                  switchMeasurement + StatisticsMeasurement(
-                    switchTime = Seq(prevTime)
-                  )
-                }
+                val switchTime = Age(prevTime)
+
+                switchMeasurement + StatisticsMeasurement(
+                  binSwitchTime = Seq(switchTime)
+                )
               }
 
               case SuggestionInteractionEvent(event) =>
                 event match {
                   case AcceptSuggestedGroup(_) =>
-                    StatisticsMeasurement(acceptedGroups = 1)
+                    StatisticsMeasurement(numAcceptedGroups = 1)
                   case AcceptSuggestedTab(_) =>
-                    StatisticsMeasurement(acceptedTabs = 1)
+                    StatisticsMeasurement(numAcceptedTabs = 1)
                   case DiscardSuggestedGroup(_, Some(reason), rating)
                       if reason == "WRONG" => {
                     StatisticsMeasurement(
-                      discardedGroups = 1,
-                      discardedWrong = 1,
-                      discardedRating = rating
-                        .map(rating => Seq(rating.doubleValue()))
-                        .getOrElse(Seq())
+                      numDiscardedGroups = 1,
+                      numDiscardedWrong = 1,
+                      binDiscardedRatings =
+                        Seq(rating.map(Rating(_)).getOrElse(Rating()))
                     )
                   }
 
                   case DiscardSuggestedGroup(_, _, rating) => {
                     StatisticsMeasurement(
-                      discardedGroups = 1,
-                      discardedOther = 1,
-                      discardedRating = rating
-                        .map(rating => Seq(rating.doubleValue()))
-                        .getOrElse(Seq())
+                      numDiscardedGroups = 1,
+                      numDiscardedOther = 1,
+                      binDiscardedRatings =
+                        Seq(rating.map(Rating(_)).getOrElse(Rating()))
                     )
                   }
                   case DiscardSuggestedTab(_) =>
-                    StatisticsMeasurement(discardedTabs = 1)
+                    StatisticsMeasurement(numDiscardedTabs = 1)
                   case _ => StatisticsMeasurement()
                 }
 
               case CuratedGroupOpenEvent(focusMode) =>
                 StatisticsMeasurement(
-                  curatedGroupsOpened = 1,
-                  focusModeUsed = if (focusMode) 1 else 0
+                  numCuratedGroupsOpened = 1,
+                  numFocusModeUsed = if (focusMode) 1 else 0
                 )
 
               case CuratedGroupCloseEvent() =>
-                StatisticsMeasurement(curatedGroupsClosed = 1)
+                StatisticsMeasurement(numCuratedGroupsClosed = 1)
 
             }
             .foldLeft(
               StatisticsMeasurement(
-                currentlyOpenTabs = openTabHashes.size,
-                openTabsUngrouped = openTabsUngrouped,
-                openTabsGrouped = openTabsGrouped,
-                averageTabAge = mean(currentTabsAge),
-                averageTabStaleDuration = mean(currentTabsStaleness),
-                curatedGroups = curatedGroups.size
+                numOpenTabs = openTabHashes.size,
+                numOpenTabsGrouped = openTabsGrouped,
+                numOpenTabsUngrouped = openTabsUngrouped,
+                numCuratedGroups = curatedGroups.size,
+                binTabAge = currentTabsAge,
+                binTabStaleness = currentTabsStaleness
               )
             ) {
               case (acc, stat) => acc + stat

@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.ServerSocket
+import java.nio.ByteOrder
 
 import scala.util.Failure
 import scala.util.Success
@@ -20,7 +21,6 @@ import com.typesafe.scalalogging.LazyLogging
 import heuristics.HeuristicsAction
 import messaging.NativeMessaging
 import tabstate.TabEvent
-import java.nio.ByteOrder
 
 object Main extends App with LazyLogging {
 

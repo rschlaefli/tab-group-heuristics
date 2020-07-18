@@ -19,10 +19,10 @@ import heuristics.HeuristicsActor
 import main.MainActor
 import messaging._
 import org.slf4j.MarkerFactory
+import statistics.StatisticsActor
 import tabstate.CurrentTabsActor
 import tabstate.Tab
 import tabswitches.TabSwitchActor
-import statistics.StatisticsActor
 
 class TabStateActor extends Actor with ActorLogging with LazyLogging {
 

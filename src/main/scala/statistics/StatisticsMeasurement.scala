@@ -9,6 +9,7 @@ case class StatisticsMeasurement(
     numSwitchesFromGroups: Int = 0,
     numSwitchesToGroups: Int = 0,
     numSwitchesUngrouped: Int = 0,
+    numSuggestedGroups: Int = 0,
     numCuratedGroups: Int = 0,
     numCuratedGroupsOpened: Int = 0,
     numCuratedGroupsClosed: Int = 0,
@@ -46,6 +47,7 @@ case class StatisticsMeasurement(
       numSwitchesUngrouped =
         this.numSwitchesUngrouped + other.numSwitchesUngrouped,
       numCuratedGroups = this.numCuratedGroups + other.numCuratedGroups,
+      numSuggestedGroups = this.numSuggestedGroups + other.numSuggestedGroups,
       numCuratedGroupsOpened =
         this.numCuratedGroupsOpened + other.numCuratedGroupsOpened,
       numCuratedGroupsClosed =
@@ -75,6 +77,7 @@ case class StatisticsMeasurement(
       numSwitchesFromGroups,
       numSwitchesToGroups,
       numSwitchesUngrouped,
+      numSuggestedGroups,
       numCuratedGroups,
       numCuratedGroupsOpened,
       numCuratedGroupsClosed,

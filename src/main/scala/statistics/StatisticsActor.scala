@@ -136,12 +136,18 @@ class StatisticsActor
           groupIndex,
           groups,
           curatedGroups,
-          _
+          suggestedGroups
         ) <- tabGroupsQuery
-      } yield (tabs, groups, groupIndex, curatedGroups)
+      } yield (tabs, groups, groupIndex, curatedGroups, suggestedGroups)
 
       results foreach {
-        case (currentTabs, tabGroups, groupIndex @ _, curatedGroups) => {
+        case (
+            currentTabs,
+            tabGroups,
+            groupIndex @ _,
+            curatedGroups,
+            suggestedGroups
+            ) => {
           log.debug(s"Current tabs $currentTabs")
 
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
@@ -257,6 +263,7 @@ class StatisticsActor
                 numOpenTabs = openTabHashes.size,
                 numOpenTabsGrouped = openTabsGrouped,
                 numOpenTabsUngrouped = openTabsUngrouped,
+                numSuggestedGroups = suggestedGroups.size,
                 numCuratedGroups = curatedGroups.size,
                 binTabAge = currentTabsAge,
                 binTabStaleness = currentTabsStaleness

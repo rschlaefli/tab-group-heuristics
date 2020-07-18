@@ -187,8 +187,12 @@ class StatisticsActor
                 val switchMeasurement =
                   (isPrevTabClustered, isNewTabClustered) match {
                     case (true, true) => {
-                      if (groupIndex(prevTab.hashCode())
-                            == groupIndex(newTab.hashCode())) {
+                      if (groupIndex
+                            .get(prevTab.hashCode())
+                            .getOrElse(0)
+                            == groupIndex
+                              .get(newTab.hashCode())
+                              .getOrElse(1)) {
                         StatisticsMeasurement(numSwitchesWithinGroups = 1)
                       } else {
                         StatisticsMeasurement(numSwitchesBetweenGroups = 1)

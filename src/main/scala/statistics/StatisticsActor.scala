@@ -1,7 +1,6 @@
 package statistics
 
 import java.io.BufferedOutputStream
-import java.time.Instant
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -21,7 +20,6 @@ import messaging.NativeMessaging
 import org.slf4j.MarkerFactory
 import persistence.Persistence
 import scalaz._
-import smile.math.MathEx._
 import statistics._
 import tabstate.CurrentTabsActor
 import tabstate.Tab
@@ -37,7 +35,7 @@ class StatisticsActor
   import StatisticsActor._
 
   val logToCsv = MarkerFactory.getMarker("CSV")
-  val aggregateInterval = 20
+  val aggregateInterval = 30
 
   implicit val out = new BufferedOutputStream(System.out)
   implicit val executionContext = context.dispatcher
@@ -53,8 +51,6 @@ class StatisticsActor
   var usageStatistics = UsageStatistics()
 
   // initialize data structures for aggregating data across windows
-  val aggregationWindows: mutable.Map[Long, List[StatisticsMeasurement]] =
-    mutable.Map()
   val eventQueue = mutable.Queue[StatisticsEvent]()
 
   override def preStart: Unit = {
@@ -76,11 +72,16 @@ class StatisticsActor
     log.debug(s"Restored usage data $usageJson")
   }
 
-  override def postStop: Unit = self ! PersistState
+  override def postStop: Unit = {
+    self ! PersistState
+    self ! AggregateWindows
+  }
 
   override def receive: Actor.Receive = {
 
-    case PersistState => persistUsageStatistics(usageStatistics)
+    case PersistState => {
+      persistUsageStatistics(usageStatistics)
+    }
 
     case RequestInteraction => {
       NativeMessaging.writeNativeMessage(HeuristicsAction.REQUEST_INTERACTION)
@@ -123,13 +124,6 @@ class StatisticsActor
     }
 
     case AggregateWindows => {
-      // derive the current window for aggregation
-      val currentTimestamp = Instant.now.getEpochSecond()
-      val minuteBlock = (currentTimestamp / 60).toLong
-      log.debug(
-        s"Current timestamp: ${currentTimestamp}, " +
-          s"assigned block: $minuteBlock, currentMap: ${aggregationWindows.size}"
-      )
 
       // query the current tabs and tab groups from the other actors
       implicit val timeout = Timeout(1 second)
@@ -157,7 +151,6 @@ class StatisticsActor
               val t = (currentEpochTs - creationTs) / 60
               Age(t.intValue())
             })
-            .toSeq
             .fold(Age())(_ + _)
           val currentTabsStaleness = currentTabs
             .flatMap(_.lastAccessed)
@@ -165,7 +158,6 @@ class StatisticsActor
               val t = (currentEpochTs - accessTs) / 60
               Age(t.intValue())
             })
-            .toSeq
             .fold(Age())(_ + _)
 
           val openTabHashes = currentTabs
@@ -289,45 +281,12 @@ class StatisticsActor
             }
           }
 
-          // push the values into a window
-          aggregationWindows.updateWith(minuteBlock) {
-            _.map(_.appended(measurement)).orElse(Some(List(measurement)))
-          }
+          log.debug(s"Aggregated statistics: ${measurement}")
+          logger.info(logToCsv, measurement.asCsv)
 
-          log.debug(
-            s"Updated aggregation windows to new state: $aggregationWindows"
-          )
-
-          // expire windows that are older than 5min (or similar)
-          // and log the aggregate statistics for the previous window
-          aggregationWindows.filterInPlace((window, measurements) => {
-            val isWindowExpired = window < minuteBlock
-
-            log.debug(
-              s"Filtering window $window with data: ${measurements}, expired: ${isWindowExpired}"
-            )
-
-            if (isWindowExpired) {
-              val statistics = computeAggregateStatistics(measurements)
-              log.debug(s"Aggregated window $window: ${statistics}")
-              logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
-            }
-
-            !isWindowExpired
-          })
         }
       }
 
-    }
-
-    case AggregateNow => {
-      aggregationWindows.foreach {
-        case (window, measurements) => {
-          val statistics = computeAggregateStatistics(measurements)
-          log.debug(s"Aggregated window $window: ${statistics}")
-          logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
-        }
-      }
     }
 
     case message => log.info(s"Received unknown message ${message.toString}")
@@ -357,14 +316,6 @@ object StatisticsActor extends LazyLogging {
 
   case class CuratedGroupOpened(focusMode: Boolean)
   case object CuratedGroupClosed
-
-  def computeAggregateStatistics(
-      measurements: List[StatisticsMeasurement]
-  ): StatisticsOutput = {
-    val output = StatisticsOutput(measurements)
-    logger.debug(s"Combined data into a single object ${output.toString()}")
-    output
-  }
 
   def persistUsageStatistics(usageStatistics: UsageStatistics) = {
     val timestamp = java.time.LocalDate.now().toString()

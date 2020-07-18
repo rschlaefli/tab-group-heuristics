@@ -1,76 +1,5 @@
 package statistics
 
-case class Age(
-    lte1: Int = 0,
-    lte2: Int = 0,
-    lte5: Int = 0,
-    lte10: Int = 0,
-    lte30: Int = 0,
-    lte60: Int = 0,
-    gt60: Int = 0
-) {
-
-  def apply(num: Int): Age = num match {
-    case num if num <= 1  => Age(lte1 = 1)
-    case num if num <= 2  => Age(lte2 = 1)
-    case num if num <= 5  => Age(lte5 = 1)
-    case num if num <= 10 => Age(lte10 = 1)
-    case num if num <= 30 => Age(lte30 = 1)
-    case num if num <= 60 => Age(lte60 = 1)
-    case _                => Age(gt60 = 1)
-  }
-
-  def +(other: Age) = Age(
-    this.lte1 + other.lte1,
-    this.lte2 + other.lte2,
-    this.lte5 + other.lte5,
-    this.lte10 + other.lte10,
-    this.lte30 + other.lte30,
-    this.lte60 + other.lte60,
-    this.gt60 + other.gt60
-  )
-
-  def asCsv =
-    Seq(
-      this.lte1,
-      this.lte2,
-      this.lte5,
-      this.lte10,
-      this.lte30,
-      this.lte60,
-      this.gt60
-    ).mkString(";")
-}
-
-case class Rating(
-    is1: Int = 0,
-    is2: Int = 0,
-    is3: Int = 0,
-    is4: Int = 0,
-    is5: Int = 0
-) {
-
-  def apply(num: Int): Rating = num match {
-    case num if num == 1 => Rating(is1 = 1)
-    case num if num == 2 => Rating(is2 = 1)
-    case num if num == 3 => Rating(is3 = 1)
-    case num if num == 4 => Rating(is4 = 1)
-    case num if num == 5 => Rating(is5 = 1)
-    case _               => Rating()
-  }
-
-  def +(other: Rating) = Rating(
-    this.is1 + other.is1,
-    this.is2 + other.is2,
-    this.is3 + other.is3,
-    this.is4 + other.is4,
-    this.is5 + other.is5
-  )
-
-  def asCsv =
-    Seq(this.is1, this.is2, this.is3, this.is4, this.is5).mkString(";")
-}
-
 case class StatisticsMeasurement(
     numOpenTabs: Int = 0,
     numOpenTabsGrouped: Int = 0,
@@ -151,6 +80,32 @@ case class StatisticsMeasurement(
       this.binTabStaleness + other.binTabStaleness
     )
   }
+
+  def asCsv: String =
+    Seq(
+      numOpenTabs,
+      numOpenTabsGrouped,
+      numOpenTabsUngrouped,
+      numSwitchesBetweenGroups,
+      numSwitchesWithinGroups,
+      numSwitchesFromGroups,
+      numSwitchesToGroups,
+      numSwitchesUngrouped,
+      numCuratedGroups,
+      numCuratedGroupsOpened,
+      numCuratedGroupsClosed,
+      numFocusModeUsed,
+      numAcceptedGroups,
+      numAcceptedTabs,
+      numDiscardedGroups,
+      numDiscardedTabs,
+      numDiscardedWrong,
+      numDiscardedOther,
+      binDiscardedRatings.fold(Rating())(_ + _).asCsv,
+      binSwitchTime.fold(Age())(_ + _).asCsv,
+      binTabAge.asCsv,
+      binTabStaleness.asCsv
+    ).mkString(";")
 
   def interactionCount: Int =
     this.numAcceptedGroups + this.numAcceptedTabs + this.numDiscardedGroups + this.numDiscardedTabs

@@ -10,16 +10,6 @@ case class Age(
     gt60: Int = 0
 ) {
 
-  def apply(num: Int): Age = num match {
-    case num if num <= 1  => Age(lte1 = 1)
-    case num if num <= 2  => Age(lte2 = 1)
-    case num if num <= 5  => Age(lte5 = 1)
-    case num if num <= 10 => Age(lte10 = 1)
-    case num if num <= 30 => Age(lte30 = 1)
-    case num if num <= 60 => Age(lte60 = 1)
-    case _                => Age(gt60 = 1)
-  }
-
   def +(other: Age) = Age(
     this.lte1 + other.lte1,
     this.lte2 + other.lte2,
@@ -40,4 +30,16 @@ case class Age(
       this.lte60,
       this.gt60
     ).mkString(";")
+}
+
+object Age {
+  def apply(num: Int): Age = num match {
+    case num if num <= 1  => Age(lte1 = 1)
+    case num if num <= 2  => Age(lte2 = 1)
+    case num if num <= 5  => Age(lte5 = 1)
+    case num if num <= 10 => Age(lte10 = 1)
+    case num if num <= 30 => Age(lte30 = 1)
+    case num if num <= 60 => Age(lte60 = 1)
+    case _                => Age(gt60 = 1)
+  }
 }

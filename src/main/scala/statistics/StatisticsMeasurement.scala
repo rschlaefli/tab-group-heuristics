@@ -29,55 +29,39 @@ case class StatisticsMeasurement(
     binTabStaleness: Age = Age()
 ) {
 
-  def asSeq: Seq[Any] = Seq(
-    this.numOpenTabs,
-    this.numOpenTabsGrouped,
-    this.numOpenTabsUngrouped,
-    this.numSwitchesBetweenGroups,
-    this.numSwitchesWithinGroups,
-    this.numSwitchesFromGroups,
-    this.numSwitchesToGroups,
-    this.numSwitchesUngrouped,
-    this.numCuratedGroups,
-    this.numCuratedGroupsOpened,
-    this.numCuratedGroupsClosed,
-    this.numFocusModeUsed,
-    this.numAcceptedGroups,
-    this.numAcceptedTabs,
-    this.numDiscardedGroups,
-    this.numDiscardedTabs,
-    this.numDiscardedWrong,
-    this.numDiscardedOther,
-    this.binDiscardedRatings.fold(Rating())(_ + _),
-    this.binSwitchTime.fold(Age())(_ + _),
-    this.binTabAge,
-    this.binTabStaleness
-  )
-
   def +(other: StatisticsMeasurement) = {
     StatisticsMeasurement(
-      this.numOpenTabs + other.numOpenTabs,
-      this.numOpenTabsGrouped + other.numOpenTabsGrouped,
-      this.numOpenTabsUngrouped + other.numOpenTabsUngrouped,
-      this.numSwitchesBetweenGroups + other.numSwitchesBetweenGroups,
-      this.numSwitchesWithinGroups + other.numSwitchesWithinGroups,
-      this.numSwitchesFromGroups + other.numSwitchesFromGroups,
-      this.numSwitchesToGroups + other.numSwitchesToGroups,
-      this.numSwitchesUngrouped + other.numSwitchesUngrouped,
-      this.numCuratedGroups + other.numCuratedGroups,
-      this.numCuratedGroupsOpened + other.numCuratedGroupsOpened,
-      this.numCuratedGroupsClosed + other.numCuratedGroupsClosed,
-      this.numFocusModeUsed + other.numFocusModeUsed,
-      this.numAcceptedGroups + other.numAcceptedGroups,
-      this.numAcceptedTabs + other.numAcceptedTabs,
-      this.numDiscardedGroups + other.numDiscardedGroups,
-      this.numDiscardedTabs + other.numDiscardedTabs,
-      this.numDiscardedWrong + other.numDiscardedWrong,
-      this.numDiscardedOther + other.numDiscardedOther,
-      this.binDiscardedRatings ++ other.binDiscardedRatings,
-      this.binSwitchTime ++ other.binSwitchTime,
-      this.binTabAge + other.binTabAge,
-      this.binTabStaleness + other.binTabStaleness
+      numOpenTabs = this.numOpenTabs + other.numOpenTabs,
+      numOpenTabsGrouped = this.numOpenTabsGrouped + other.numOpenTabsGrouped,
+      numOpenTabsUngrouped =
+        this.numOpenTabsUngrouped + other.numOpenTabsUngrouped,
+      numSwitchesBetweenGroups =
+        this.numSwitchesBetweenGroups + other.numSwitchesBetweenGroups,
+      numSwitchesWithinGroups =
+        this.numSwitchesWithinGroups + other.numSwitchesWithinGroups,
+      numSwitchesFromGroups =
+        this.numSwitchesFromGroups + other.numSwitchesFromGroups,
+      numSwitchesToGroups =
+        this.numSwitchesToGroups + other.numSwitchesToGroups,
+      numSwitchesUngrouped =
+        this.numSwitchesUngrouped + other.numSwitchesUngrouped,
+      numCuratedGroups = this.numCuratedGroups + other.numCuratedGroups,
+      numCuratedGroupsOpened =
+        this.numCuratedGroupsOpened + other.numCuratedGroupsOpened,
+      numCuratedGroupsClosed =
+        this.numCuratedGroupsClosed + other.numCuratedGroupsClosed,
+      numFocusModeUsed = this.numFocusModeUsed + other.numFocusModeUsed,
+      numAcceptedGroups = this.numAcceptedGroups + other.numAcceptedGroups,
+      numAcceptedTabs = this.numAcceptedTabs + other.numAcceptedTabs,
+      numDiscardedGroups = this.numDiscardedGroups + other.numDiscardedGroups,
+      numDiscardedTabs = this.numDiscardedTabs + other.numDiscardedTabs,
+      numDiscardedWrong = this.numDiscardedWrong + other.numDiscardedWrong,
+      numDiscardedOther = this.numDiscardedOther + other.numDiscardedOther,
+      binDiscardedRatings =
+        this.binDiscardedRatings ++ other.binDiscardedRatings,
+      binSwitchTime = this.binSwitchTime ++ other.binSwitchTime,
+      binTabAge = this.binTabAge + other.binTabAge,
+      binTabStaleness = this.binTabStaleness + other.binTabStaleness
     )
   }
 

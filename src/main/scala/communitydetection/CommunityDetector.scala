@@ -122,7 +122,7 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
   ) = {
     Persistence.persistString(
       fileName,
-      tabGroups.map(_.toString()).appendedAll(params.toString()).mkString("\n")
+      tabGroups.map(_.toString()).appended(params.toString()).mkString("\n")
     )
   }
 

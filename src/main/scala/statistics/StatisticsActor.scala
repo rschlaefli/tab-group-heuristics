@@ -20,6 +20,7 @@ import messaging.NativeMessaging
 import org.slf4j.MarkerFactory
 import persistence.Persistence
 import scalaz._
+import smile.math.MathEx._
 import statistics._
 import tabstate.CurrentTabsActor
 import tabstate.Tab
@@ -148,6 +149,7 @@ class StatisticsActor
             curatedGroups,
             suggestedGroups
             ) => {
+
           log.debug(s"Current tabs $currentTabs")
 
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
@@ -177,6 +179,12 @@ class StatisticsActor
           // as well as the number of tabs that are not grouped
           val openTabsGrouped = openTabHashes.intersect(clusterTabHashes).size
           val openTabsUngrouped = openTabHashes.size - openTabsGrouped
+
+          // compute window statistics
+          val tabsInWindows = currentTabs.groupBy(_.windowId).values.map(_.size)
+          val numOpenWindows = tabsInWindows.size
+          val avgTabsPerWindow = mean(tabsInWindows.toArray)
+          val stdTabsPerWindow = sd(tabsInWindows.toArray)
 
           // process the tab switch queue
           log.debug(s"Elements in queue: ${eventQueue}")
@@ -226,14 +234,15 @@ class StatisticsActor
                   case AcceptSuggestedTab(_) =>
                     StatisticsMeasurement(numAcceptedTabs = 1)
                   case DiscardSuggestedGroup(_, Some(reason), rating)
-                      if reason == "WRONG" => {
+                      if reason == "WRONG" || reason == "NOT_USEFUL" =>
                     StatisticsMeasurement(
                       numDiscardedGroups = 1,
-                      numDiscardedWrong = 1,
+                      numDiscardedWrong = if (reason == "WRONG") 1 else 0,
+                      numDiscardedNotUseful =
+                        if (reason == "NOT_USEFUL") 1 else 0,
                       binDiscardedRatings =
                         Seq(rating.map(Rating(_)).getOrElse(Rating()))
                     )
-                  }
 
                   case DiscardSuggestedGroup(_, _, rating) => {
                     StatisticsMeasurement(
@@ -260,13 +269,16 @@ class StatisticsActor
             }
             .foldLeft(
               StatisticsMeasurement(
+                numOpenWindows = numOpenWindows,
                 numOpenTabs = openTabHashes.size,
                 numOpenTabsGrouped = openTabsGrouped,
                 numOpenTabsUngrouped = openTabsUngrouped,
                 numSuggestedGroups = suggestedGroups.size,
                 numCuratedGroups = curatedGroups.size,
                 binTabAge = currentTabsAge,
-                binTabStaleness = currentTabsStaleness
+                binTabStaleness = currentTabsStaleness,
+                avgTabsPerWindow = avgTabsPerWindow,
+                stdTabsPerWindow = stdTabsPerWindow
               )
             ) {
               case (acc, stat) => acc + stat

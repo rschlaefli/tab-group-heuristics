@@ -1,7 +1,6 @@
 package statistics
 
 import java.io.BufferedOutputStream
-import java.time.Instant
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -37,7 +36,7 @@ class StatisticsActor
   import StatisticsActor._
 
   val logToCsv = MarkerFactory.getMarker("CSV")
-  val aggregateInterval = 20
+  val aggregateInterval = 30
 
   implicit val out = new BufferedOutputStream(System.out)
   implicit val executionContext = context.dispatcher
@@ -53,8 +52,6 @@ class StatisticsActor
   var usageStatistics = UsageStatistics()
 
   // initialize data structures for aggregating data across windows
-  val aggregationWindows: mutable.Map[Long, List[StatisticsMeasurement]] =
-    mutable.Map()
   val eventQueue = mutable.Queue[StatisticsEvent]()
 
   override def preStart: Unit = {
@@ -76,11 +73,16 @@ class StatisticsActor
     log.debug(s"Restored usage data $usageJson")
   }
 
-  override def postStop: Unit = self ! PersistState
+  override def postStop: Unit = {
+    self ! PersistState
+    self ! AggregateWindows
+  }
 
   override def receive: Actor.Receive = {
 
-    case PersistState => persistUsageStatistics(usageStatistics)
+    case PersistState => {
+      persistUsageStatistics(usageStatistics)
+    }
 
     case RequestInteraction => {
       NativeMessaging.writeNativeMessage(HeuristicsAction.REQUEST_INTERACTION)
@@ -123,13 +125,6 @@ class StatisticsActor
     }
 
     case AggregateWindows => {
-      // derive the current window for aggregation
-      val currentTimestamp = Instant.now.getEpochSecond()
-      val minuteBlock = (currentTimestamp / 60).toLong
-      log.debug(
-        s"Current timestamp: ${currentTimestamp}, " +
-          s"assigned block: $minuteBlock, currentMap: ${aggregationWindows.size}"
-      )
 
       // query the current tabs and tab groups from the other actors
       implicit val timeout = Timeout(1 second)
@@ -142,23 +137,36 @@ class StatisticsActor
           groupIndex,
           groups,
           curatedGroups,
-          _
+          suggestedGroups
         ) <- tabGroupsQuery
-      } yield (tabs, groups, groupIndex, curatedGroups)
+      } yield (tabs, groups, groupIndex, curatedGroups, suggestedGroups)
 
       results foreach {
-        case (currentTabs, tabGroups, groupIndex @ _, curatedGroups) => {
+        case (
+            currentTabs,
+            tabGroups,
+            groupIndex @ _,
+            curatedGroups,
+            suggestedGroups
+            ) => {
+
           log.debug(s"Current tabs $currentTabs")
 
           val currentEpochTs = java.time.Instant.now().getEpochSecond()
           val currentTabsAge = currentTabs
             .flatMap(_.createdAt)
-            .map(creationTs => (currentEpochTs - creationTs) / 60d)
-            .toArray
+            .map(creationTs => {
+              val t = (currentEpochTs - creationTs) / 60
+              Age(t.intValue())
+            })
+            .fold(Age())(_ + _)
           val currentTabsStaleness = currentTabs
             .flatMap(_.lastAccessed)
-            .map(accessTs => (currentEpochTs - accessTs) / 60d)
-            .toArray
+            .map(accessTs => {
+              val t = (currentEpochTs - accessTs) / 60
+              Age(t.intValue())
+            })
+            .fold(Age())(_ + _)
 
           val openTabHashes = currentTabs
             .map(_.hash)
@@ -171,6 +179,15 @@ class StatisticsActor
           // as well as the number of tabs that are not grouped
           val openTabsGrouped = openTabHashes.intersect(clusterTabHashes).size
           val openTabsUngrouped = openTabHashes.size - openTabsGrouped
+
+          // compute window statistics
+          val tabsInWindows = currentTabs.groupBy(_.windowId).values.map(_.size)
+          val numOpenWindows = tabsInWindows.size
+          val avgTabsPerWindow =
+            if (tabsInWindows.size > 1) mean(tabsInWindows.toArray)
+            else tabsInWindows.sum
+          val stdTabsPerWindow =
+            if (tabsInWindows.size > 1) sd(tabsInWindows.toArray) else 0
 
           // process the tab switch queue
           log.debug(s"Elements in queue: ${eventQueue}")
@@ -187,82 +204,84 @@ class StatisticsActor
                 val switchMeasurement =
                   (isPrevTabClustered, isNewTabClustered) match {
                     case (true, true) => {
-                      if (groupIndex(prevTab.hashCode())
-                            == groupIndex(newTab.hashCode())) {
-                        StatisticsMeasurement(switchesWithinGroups = 1)
+                      if (groupIndex
+                            .get(prevTab.hashCode())
+                            .getOrElse(0)
+                            == groupIndex
+                              .get(newTab.hashCode())
+                              .getOrElse(1)) {
+                        StatisticsMeasurement(numSwitchesWithinGroups = 1)
                       } else {
-                        StatisticsMeasurement(switchesBetweenGroups = 1)
+                        StatisticsMeasurement(numSwitchesBetweenGroups = 1)
                       }
                     }
                     case (true, false) =>
-                      StatisticsMeasurement(switchesFromGroups = 1)
+                      StatisticsMeasurement(numSwitchesFromGroups = 1)
                     case (false, true) =>
-                      StatisticsMeasurement(switchesToGroups = 1)
+                      StatisticsMeasurement(numSwitchesToGroups = 1)
                     case (false, false) =>
-                      StatisticsMeasurement(switchesOutsideGroups = 1)
+                      StatisticsMeasurement(numSwitchesUngrouped = 1)
                   }
 
-                if (prevTime < 5) {
-                  switchMeasurement + StatisticsMeasurement(
-                    switchTime = Seq(prevTime),
-                    shortSwitches = 1
-                  )
-                } else {
-                  switchMeasurement + StatisticsMeasurement(
-                    switchTime = Seq(prevTime)
-                  )
-                }
+                val switchTime = Age(prevTime)
+
+                switchMeasurement + StatisticsMeasurement(
+                  binSwitchTime = Seq(switchTime)
+                )
               }
 
               case SuggestionInteractionEvent(event) =>
                 event match {
                   case AcceptSuggestedGroup(_) =>
-                    StatisticsMeasurement(acceptedGroups = 1)
+                    StatisticsMeasurement(numAcceptedGroups = 1)
                   case AcceptSuggestedTab(_) =>
-                    StatisticsMeasurement(acceptedTabs = 1)
+                    StatisticsMeasurement(numAcceptedTabs = 1)
                   case DiscardSuggestedGroup(_, Some(reason), rating)
-                      if reason == "WRONG" => {
+                      if reason == "WRONG" || reason == "NOT_USEFUL" =>
                     StatisticsMeasurement(
-                      discardedGroups = 1,
-                      discardedWrong = 1,
-                      discardedRating = rating
-                        .map(rating => Seq(rating.doubleValue()))
-                        .getOrElse(Seq())
+                      numDiscardedGroups = 1,
+                      numDiscardedWrong = if (reason == "WRONG") 1 else 0,
+                      numDiscardedNotUseful =
+                        if (reason == "NOT_USEFUL") 1 else 0,
+                      binDiscardedRatings =
+                        Seq(rating.map(Rating(_)).getOrElse(Rating()))
                     )
-                  }
 
                   case DiscardSuggestedGroup(_, _, rating) => {
                     StatisticsMeasurement(
-                      discardedGroups = 1,
-                      discardedOther = 1,
-                      discardedRating = rating
-                        .map(rating => Seq(rating.doubleValue()))
-                        .getOrElse(Seq())
+                      numDiscardedGroups = 1,
+                      numDiscardedOther = 1,
+                      binDiscardedRatings =
+                        Seq(rating.map(Rating(_)).getOrElse(Rating()))
                     )
                   }
                   case DiscardSuggestedTab(_) =>
-                    StatisticsMeasurement(discardedTabs = 1)
+                    StatisticsMeasurement(numDiscardedTabs = 1)
                   case _ => StatisticsMeasurement()
                 }
 
               case CuratedGroupOpenEvent(focusMode) =>
                 StatisticsMeasurement(
-                  curatedGroupsOpened = 1,
-                  focusModeUsed = if (focusMode) 1 else 0
+                  numCuratedGroupsOpened = 1,
+                  numFocusModeUsed = if (focusMode) 1 else 0
                 )
 
               case CuratedGroupCloseEvent() =>
-                StatisticsMeasurement(curatedGroupsClosed = 1)
+                StatisticsMeasurement(numCuratedGroupsClosed = 1)
 
             }
             .foldLeft(
               StatisticsMeasurement(
-                currentlyOpenTabs = openTabHashes.size,
-                openTabsUngrouped = openTabsUngrouped,
-                openTabsGrouped = openTabsGrouped,
-                averageTabAge = mean(currentTabsAge),
-                averageTabStaleDuration = mean(currentTabsStaleness),
-                curatedGroups = curatedGroups.size
+                numOpenWindows = numOpenWindows,
+                numOpenTabs = openTabHashes.size,
+                numOpenTabsGrouped = openTabsGrouped,
+                numOpenTabsUngrouped = openTabsUngrouped,
+                numSuggestedGroups = suggestedGroups.size,
+                numCuratedGroups = curatedGroups.size,
+                binTabAge = currentTabsAge,
+                binTabStaleness = currentTabsStaleness,
+                avgTabsPerWindow = avgTabsPerWindow,
+                stdTabsPerWindow = stdTabsPerWindow
               )
             ) {
               case (acc, stat) => acc + stat
@@ -288,45 +307,12 @@ class StatisticsActor
             }
           }
 
-          // push the values into a window
-          aggregationWindows.updateWith(minuteBlock) {
-            _.map(_.appended(measurement)).orElse(Some(List(measurement)))
-          }
+          log.debug(s"Aggregated statistics: ${measurement}")
+          logger.info(logToCsv, measurement.asCsv)
 
-          log.debug(
-            s"Updated aggregation windows to new state: $aggregationWindows"
-          )
-
-          // expire windows that are older than 5min (or similar)
-          // and log the aggregate statistics for the previous window
-          aggregationWindows.filterInPlace((window, measurements) => {
-            val isWindowExpired = window < minuteBlock
-
-            log.debug(
-              s"Filtering window $window with data: ${measurements}, expired: ${isWindowExpired}"
-            )
-
-            if (isWindowExpired) {
-              val statistics = computeAggregateStatistics(measurements)
-              log.debug(s"Aggregated window $window: ${statistics}")
-              logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
-            }
-
-            !isWindowExpired
-          })
         }
       }
 
-    }
-
-    case AggregateNow => {
-      aggregationWindows.foreach {
-        case (window, measurements) => {
-          val statistics = computeAggregateStatistics(measurements)
-          log.debug(s"Aggregated window $window: ${statistics}")
-          logger.info(logToCsv, Seq(window, statistics.asCsv).mkString(";"))
-        }
-      }
     }
 
     case message => log.info(s"Received unknown message ${message.toString}")
@@ -356,14 +342,6 @@ object StatisticsActor extends LazyLogging {
 
   case class CuratedGroupOpened(focusMode: Boolean)
   case object CuratedGroupClosed
-
-  def computeAggregateStatistics(
-      measurements: List[StatisticsMeasurement]
-  ): StatisticsOutput = {
-    val output = StatisticsOutput(measurements)
-    logger.debug(s"Combined data into a single object ${output.toString()}")
-    output
-  }
 
   def persistUsageStatistics(usageStatistics: UsageStatistics) = {
     val timestamp = java.time.LocalDate.now().toString()

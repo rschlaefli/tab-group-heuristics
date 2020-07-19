@@ -39,9 +39,9 @@ object AllThePatterns extends App {
 
   val matchLists = x match {
     // case List(1, 2, 3) :+ 42     => "infix pattern"
-    case List(1, _, _, _)        => "list with 4 items"
-    case List(1, _*)             => "list of arbitrary length"
-    case 1 :: List(_)            => "infix pattern"
+    case List(1, _, _, _) => "list with 4 items"
+    case List(1, _*)      => "list of arbitrary length"
+    case 1 :: List(_)     => "infix pattern"
     // case list: List[Int]         => "matching type"
     case List(1, _) | List(2, _) => "two options"
   }

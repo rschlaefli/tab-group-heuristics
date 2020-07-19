@@ -133,8 +133,8 @@ class HeuristicsActor
       sender() ! HeuristicsActor.CurrentTabGroups(
         fullIndex,
         allGroups,
-        tabGroups,
-        curatedGroups
+        curatedGroups,
+        tabGroups
       )
     }
 

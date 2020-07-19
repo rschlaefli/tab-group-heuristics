@@ -40,7 +40,7 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
   ): List[(Set[TabMeta], CliqueStatistics)] = {
     val tabGroups = apply(graph, params)
 
-    persist(persistTo, tabGroups)
+    persist(persistTo, tabGroups, params)
 
     tabGroups
   }
@@ -117,11 +117,12 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
     */
   def persist(
       fileName: String,
-      tabGroups: List[(Set[TabMeta], CliqueStatistics)]
+      tabGroups: List[(Set[TabMeta], CliqueStatistics)],
+      params: T
   ) = {
     Persistence.persistString(
       fileName,
-      tabGroups.map(_.toString()).mkString("\n")
+      tabGroups.map(_.toString()).appendedAll(params.toString()).mkString("\n")
     )
   }
 

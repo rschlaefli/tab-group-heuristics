@@ -23,16 +23,3 @@ object HeuristicsAction {
   def REQUEST_INTERACTION = HeuristicsAction("REQUEST_INTERACTION", Json.Null)
   def STALE_TABS(json: Json) = HeuristicsAction("STALE_TABS", json)
 }
-
-// case class QueryTabsAction() extends HeuristicsAction("QUERY_TABS", Json.Null)
-
-// object QueryTabsAction {
-//   implicit val encoder: Encoder[QueryTabsAction] = deriveEncoder
-// }
-
-// case class GroupUpdateAction(payload: Json)
-//     extends HeuristicsAction("UPDATE_GROUPS", payload)
-
-// object GroupUpdateAction {
-//   implicit val encoder: Encoder[GroupUpdateAction] = deriveEncoder
-// }

@@ -15,11 +15,11 @@ case class GraphGenerationParams(
     /**
       * Factor to punish switches on the same origin
       */
-    sameOriginFactor: Double = 0.3,
+    sameOriginFactor: Double = 0.4,
     /**
       * Factor to punish similar URLs
       */
-    urlSimilarityFactor: Double = 0.5
+    urlSimilarityFactor: Double = 0.6
 )
 
 object GraphGenerationParams {

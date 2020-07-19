@@ -1,6 +1,5 @@
 package learning
 
-
 trait MySet[A] extends (A => Boolean) {
   def apply(elem: A): Boolean =
     contains(elem)

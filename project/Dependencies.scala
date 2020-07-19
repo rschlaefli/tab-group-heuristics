@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
   val scalatestVersion = "3.2.0"
 
-  val scalaz = "org.scalaz" %% "scalaz-core" % "7.3.1"
+  val scalaz = "org.scalaz" %% "scalaz-core" % "7.3.2"
   val scalactic = "org.scalactic" %% "scalactic" % scalatestVersion
   val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
@@ -31,7 +31,7 @@ object Dependencies {
     "org.jgrapht" % "jgrapht-opt"
   ).map(_ % jgraphVersion)
 
-  val akkaVersion = "2.6.6"
+  val akkaVersion = "2.6.8"
   val akka = Seq(
     "com.typesafe.akka" %% "akka-actor",
     "com.typesafe.akka" %% "akka-testkit",

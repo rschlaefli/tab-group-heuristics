@@ -183,8 +183,11 @@ class StatisticsActor
           // compute window statistics
           val tabsInWindows = currentTabs.groupBy(_.windowId).values.map(_.size)
           val numOpenWindows = tabsInWindows.size
-          val avgTabsPerWindow = mean(tabsInWindows.toArray)
-          val stdTabsPerWindow = sd(tabsInWindows.toArray)
+          val avgTabsPerWindow =
+            if (tabsInWindows.size > 1) mean(tabsInWindows.toArray)
+            else tabsInWindows.sum
+          val stdTabsPerWindow =
+            if (tabsInWindows.size > 1) sd(tabsInWindows.toArray) else 0
 
           // process the tab switch queue
           log.debug(s"Elements in queue: ${eventQueue}")

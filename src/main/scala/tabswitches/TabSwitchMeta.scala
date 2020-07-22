@@ -20,7 +20,7 @@ case class TabSwitchMeta(
     wasDiscarded: Option[Boolean]
 ) {
   def discarded = this.copy(wasDiscarded = Some(true))
-  def reset = this.copy(count = 0)
+  def reset = if (count > 0) this.copy(count = 1) else this
 }
 
 object TabSwitchMeta {

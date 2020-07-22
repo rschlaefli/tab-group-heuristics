@@ -64,6 +64,11 @@ class TabSwitchActor extends Actor with ActorLogging {
           case TabSwitchActor.CurrentSwitchGraph(graph) => {
             val timestamp = java.time.LocalDateTime.now()
 
+            log.debug(
+              s"Received tab switch graph with ${graph.vertexSet().size()} " +
+                s"nodes, computing groups with $algorithm"
+            )
+
             val computedClusters = algorithm match {
               case "watset" => {
                 Watset(
@@ -94,6 +99,8 @@ class TabSwitchActor extends Actor with ActorLogging {
                 )
               }
             }
+
+            log.debug(s"Computed ${computedClusters.size} tab groups")
 
             val (clusterIndex, clusters) =
               buildClusterIndexWithStats(computedClusters)

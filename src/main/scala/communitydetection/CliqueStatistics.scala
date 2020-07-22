@@ -6,15 +6,15 @@ import tabswitches.TabMeta
 case class SummaryStatistics(min: Double, max: Double, mean: Double, sd: Double)
 
 case class CliqueStatistics(
-    averageWeight: Double = 0,
-    connectedness: Double = 0,
-    pageRank: Double = 0
+    averageWeight: Double = 0d,
+    connectedness: Double = 0d,
+    pageRank: Double = 0d
 ) {
 
   def score =
-    0.25 * averageWeight
-  +0.5 * connectedness
-  +0.25 * pageRank
+    0.4 * averageWeight
+  +0.3 * connectedness
+  +0.3 * pageRank
 
   def asSeq = Array(averageWeight, connectedness, pageRank)
 

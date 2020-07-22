@@ -24,10 +24,13 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
       .asScala
       .map(entry => (entry._1, entry._2.toDouble))
       .toMap
+    logger.debug(s"Computed pagerank for vertexes in graph $pageRank")
 
     val preparedGraph = prepareGraph(graph, pageRank, params)
+    logger.debug(s"Prepared graph for further processing")
 
     val tabGroups = computeGroups(preparedGraph, params)
+    logger.debug(s"Computed ${tabGroups.size} tab groups")
 
     processGroups(tabGroups, params)
 

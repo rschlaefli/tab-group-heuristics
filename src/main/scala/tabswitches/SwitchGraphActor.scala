@@ -41,7 +41,7 @@ class SwitchGraphActor extends Actor with ActorLogging {
 
             log.debug(
               s"Contructed tab switch graph with ${tabSwitchGraph.vertexSet().size()}" +
-                s"nodes and ${tabSwitchGraph.edgeSet().size()} edges"
+                s" nodes and ${tabSwitchGraph.edgeSet().size()} edges"
             )
 
             context.actorSelection(
@@ -85,31 +85,35 @@ object SwitchGraphActor extends LazyLogging {
         classOf[DefaultWeightedEdge]
       )
 
-    val expirationFrontier =
-      DateTime.now().getMillis() - (params.expireAfter days).toMillis
+    val now = DateTime.now().getMillis()
+    val expirationFrontier = now - (params.expireAfter days).toMillis
 
     tabSwitchMap.values
       .filter(switchData =>
-        switchData.lastUsed >= expirationFrontier
-          && switchData.count >= params.minWeight
-          && switchData.tab1.url != switchData.tab2.url
-        // simply ignore tab switches that were discarded
-          && !switchData.wasDiscarded.getOrElse(false)
+        switchData.tab1 != switchData.tab2 && switchData.count >= params.minWeight
       )
       .map((switchData: TabSwitchMeta) =>
+        // TODO: expiration decay
+        // TODO: discarded weighting optimization
         Try {
           tabGraph.addVertex(switchData.tab1)
           tabGraph.addVertex(switchData.tab2)
           tabGraph.addEdge(switchData.tab1, switchData.tab2)
 
+          // compute a decay factor depending on the recency of the switch
+          val switchAge = switchData.lastUsed - expirationFrontier
+          val decayFactor = if (switchAge > 0) 1.0 else 0.0
+
+          // compute a weighting factor depending on the similarity of tabs in the switch
           val weightingFactor =
             (switchData.sameOrigin, switchData.urlSimilarity) match {
-              case (Some(true), Some(urlSimilarity)) =>
-                (1 - params.sameOriginFactor) * (1 - params.urlSimilarityFactor * urlSimilarity)
-              case (Some(true), _) =>
-                1 - params.sameOriginFactor
+              // if the urls in the switch are too similar, ignore it completely
+              case (Some(true), Some(urlSimilarity)) if urlSimilarity > 0.9 =>
+                0
+              // if the urls are similar, reduce the weight of the switch
               case (_, Some(urlSimilarity)) =>
                 1 - params.urlSimilarityFactor * urlSimilarity
+              // a normal switch should be weighted normally
               case _ =>
                 1
             }
@@ -118,7 +122,10 @@ object SwitchGraphActor extends LazyLogging {
             .setEdgeWeight(
               switchData.tab1,
               switchData.tab2,
-              switchData.count * weightingFactor
+              // TODO: evaluate setting discarded edges to -1
+              // TODO: that would require filtering these edges before pagerank
+              if (switchData.wasDiscarded.getOrElse(false)) 0
+              else switchData.count * weightingFactor * decayFactor
             )
 
         }

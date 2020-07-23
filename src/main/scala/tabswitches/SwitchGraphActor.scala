@@ -13,7 +13,6 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.jgrapht.graph.DefaultWeightedEdge
 import org.jgrapht.graph.SimpleWeightedGraph
-import org.joda.time.DateTime
 import persistence.Persistence
 
 class SwitchGraphActor extends Actor with ActorLogging {

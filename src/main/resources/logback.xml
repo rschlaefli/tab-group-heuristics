@@ -154,6 +154,10 @@
     <appender-ref ref="STDERR" />
   </root>
 
+  <logger name="communitydetection.CommunityDetector" level="info" />
+  <logger name="communitydetection.SiMap" level="info" />
+  <logger name="communitydetection.Watset" level="info" />
+
   <logger name="heuristics.HeuristicsActor" level="info">
     <appender-ref ref="HeuristicsCSV" />
   </logger>
@@ -171,11 +175,11 @@
     <appender-ref ref="TabEventsCSV" />
   </logger>
 
+  <logger name="tabswitches.TabSwitchActor" level="info" />
   <logger name="tabswitches.SwitchGraphActor" level="info" />
   <logger name="tabswitches.SwitchMapActor" level="info">
     <appender-ref ref="TabSwitchesCSV" />
   </logger>
-  <logger name="tabswitches.Watset" level="info" />
 
   <logger name="util.Utils" level="info" />
 

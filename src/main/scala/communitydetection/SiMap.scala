@@ -39,8 +39,10 @@ object SiMap
         val target = graph.getEdgeTarget(edge)
         val weight = graph.getEdgeWeight(edge).toFloat
 
-        val enhancedSource = source.withPageRank(pageRank(source))
-        val enhancedTarget = target.withPageRank(pageRank(target))
+        val enhancedSource =
+          source.withPageRank(pageRank.get(source).getOrElse(0d))
+        val enhancedTarget =
+          target.withPageRank(pageRank.get(target).getOrElse(0d))
 
         (
           index.getOrElseUpdate(enhancedSource, index.size),
@@ -159,7 +161,7 @@ object SiMap
           CliqueStatistics(
             averageWeight = meanWeight,
             connectedness = computeConnectedness(groupGraph),
-            pageRank = median(tabGroup.flatMap(_.pageRank).toArray)
+            pageRank = mean(tabGroup.flatMap(_.pageRank).toArray)
           )
 
         Seq((tabGroup, stats))

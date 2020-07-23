@@ -24,10 +24,13 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
       .asScala
       .map(entry => (entry._1, entry._2.toDouble))
       .toMap
+    logger.debug(s"Computed pagerank for ${pageRank.size} vertexes in graph ")
 
     val preparedGraph = prepareGraph(graph, pageRank, params)
+    logger.debug(s"Prepared graph for further processing")
 
     val tabGroups = computeGroups(preparedGraph, params)
+    logger.debug(s"Computed ${tabGroups.size} tab groups")
 
     processGroups(tabGroups, params)
 
@@ -101,6 +104,8 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
           && group._1.size >= params.minGroupSize
       )
       .sortBy(_._2.score)
+
+    logger.debug(filteredGroups.map(_._2).mkString(","))
 
     val topK = filteredGroups.reverse.take(params.maxGroups)
 

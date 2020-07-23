@@ -17,11 +17,15 @@ case class TabGroup(
   }
 
   def withId(newId: String) = {
-    TabGroup(newId, name, tabs)
+    this.copy(id = newId)
   }
 
   def withoutTabs(tabHashes: Set[String]) = {
-    TabGroup(id, name, tabs.filter(tab => !tabHashes.contains(tab.hash)))
+    this.copy(tabs = tabs.filter(tab => !tabHashes.contains(tab.hash)))
+  }
+
+  def ranked = {
+    this.copy(tabs = tabs.toList.sortBy(_.pageRank).toSet)
   }
 }
 
@@ -31,7 +35,7 @@ object TabGroup {
 
   def apply(tuple: (String, Set[TabMeta])): TabGroup = {
     val groupHash = md5(tuple._2.map(_.hash).toArray.sorted.mkString)
-    TabGroup(groupHash, tuple._1, tuple._2.toSet)
+    TabGroup(groupHash, tuple._1, tuple._2.toSet).ranked
   }
 
   def md5(s: String): String = {

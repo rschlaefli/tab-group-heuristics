@@ -1,0 +1,23 @@
+{
+  "name": "Additional #1",
+  "heuristics": {
+    "algorithm": "simap",
+    "minOverlap": 0.2
+  },
+  "graphGeneration": {
+    "minWeight": 1,
+    "expireAfter": 30,
+    "sameOriginFactor": 0,
+    "urlSimilarityFactor": 0.75
+  },
+  "grouping": {
+    "maxGroups": 10,
+    "minGroupSize": 3,
+    "maxGroupSize": 15,
+    "tau": 0.15,
+    "resStart": 0.0001,
+    "resEnd": 0.05,
+    "resAcc": 0.0001,
+    "largestCC": false
+  }
+}

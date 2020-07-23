@@ -12,9 +12,9 @@ case class CliqueStatistics(
 ) {
 
   def score =
-    0.4 * averageWeight
-  +0.3 * connectedness
-  +0.3 * pageRank
+    0.25 * averageWeight
+  +0.5 * connectedness
+  +0.25 * pageRank
 
   def asSeq = Array(averageWeight, connectedness, pageRank)
 

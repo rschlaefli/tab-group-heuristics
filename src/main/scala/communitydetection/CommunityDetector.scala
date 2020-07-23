@@ -24,7 +24,7 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
       .asScala
       .map(entry => (entry._1, entry._2.toDouble))
       .toMap
-    logger.debug(s"Computed pagerank for vertexes in graph $pageRank")
+    logger.debug(s"Computed pagerank for ${pageRank.size} vertexes in graph ")
 
     val preparedGraph = prepareGraph(graph, pageRank, params)
     logger.debug(s"Prepared graph for further processing")

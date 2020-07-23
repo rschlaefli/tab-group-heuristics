@@ -80,54 +80,45 @@ object SwitchGraphActor extends LazyLogging {
       params: GraphGenerationParams
   ): TabSwitchGraph = {
 
-    val tabGraph =
-      new SimpleWeightedGraph[TabMeta, DefaultWeightedEdge](
-        classOf[DefaultWeightedEdge]
-      )
+    val tabGraph = new SimpleWeightedGraph[TabMeta, DefaultWeightedEdge](
+      classOf[DefaultWeightedEdge]
+    )
 
-    val now = DateTime.now().getMillis()
-    val expirationFrontier = now - (params.expireAfter days).toMillis
+    val now = java.time.Instant.now().getEpochSecond()
 
     tabSwitchMap.values
-      .filter(switchData =>
-        switchData.tab1 != switchData.tab2 && switchData.count >= params.minWeight
+      .filter(switch =>
+        switch.tab1 != switch.tab2 && switch.count >= params.minWeight
       )
-      .map((switchData: TabSwitchMeta) =>
-        // TODO: expiration decay
-        // TODO: discarded weighting optimization
+      .map((switch: TabSwitchMeta) =>
         Try {
-          tabGraph.addVertex(switchData.tab1)
-          tabGraph.addVertex(switchData.tab2)
-          tabGraph.addEdge(switchData.tab1, switchData.tab2)
-
           // compute a decay factor depending on the recency of the switch
-          val switchAge = switchData.lastUsed - expirationFrontier
-          val decayFactor = if (switchAge > 0) 1.0 else 0.0
+          val decayFactor = computeDecayFactor(
+            now,
+            switch.lastUsed,
+            (params.expireAfter days).toMillis
+          )
 
           // compute a weighting factor depending on the similarity of tabs in the switch
-          val weightingFactor =
-            (switchData.sameOrigin, switchData.urlSimilarity) match {
-              // if the urls in the switch are too similar, ignore it completely
-              case (Some(true), Some(urlSimilarity)) if urlSimilarity > 0.9 =>
-                0
-              // if the urls are similar, reduce the weight of the switch
-              case (_, Some(urlSimilarity)) =>
-                1 - params.urlSimilarityFactor * urlSimilarity
-              // a normal switch should be weighted normally
-              case _ =>
-                1
-            }
+          val weightingFactor = computeWeightingFactor(
+            switch.sameOrigin,
+            switch.urlSimilarity,
+            params.urlSimilarityFactor,
+            0.95
+          )
 
-          tabGraph
-            .setEdgeWeight(
-              switchData.tab1,
-              switchData.tab2,
-              // TODO: evaluate setting discarded edges to -1
-              // TODO: that would require filtering these edges before pagerank
-              if (switchData.wasDiscarded.getOrElse(false)) 0
-              else switchData.count * weightingFactor * decayFactor
-            )
+          // TODO: evaluate setting discarded edges to -1
+          // TODO: that would require filtering these edges before pagerank
+          val edgeWeight =
+            if (switch.wasDiscarded.getOrElse(false)) 0
+            else switch.count * weightingFactor * decayFactor
 
+          if (edgeWeight != 0) {
+            tabGraph.addVertex(switch.tab1)
+            tabGraph.addVertex(switch.tab2)
+            tabGraph.addEdge(switch.tab1, switch.tab2)
+            tabGraph.setEdgeWeight(switch.tab1, switch.tab2, edgeWeight)
+          }
         }
       )
       .filter(_.isFailure)
@@ -137,5 +128,38 @@ object SwitchGraphActor extends LazyLogging {
       }
 
     tabGraph
+  }
+
+  def computeDecayFactor(
+      nowTs: Long,
+      itemTs: Long,
+      expiration: Long
+  ): Double = {
+
+    val expirationFrontier = nowTs - expiration
+
+    if (itemTs < expirationFrontier) {
+      0
+    } else {
+      (itemTs - expirationFrontier) / (nowTs - expirationFrontier)
+    }
+
+  }
+
+  def computeWeightingFactor(
+      sameOrigin: Option[Boolean],
+      urlSimilarity: Option[Float],
+      similarityWeight: Double,
+      maxSimilarity: Double
+  ): Double = (sameOrigin, urlSimilarity) match {
+    // if the urls in the switch are too similar, ignore it completely
+    case (Some(true), Some(urlSimilarity)) if urlSimilarity > maxSimilarity =>
+      0
+    // if the urls are similar, reduce the weight of the switch
+    case (_, Some(urlSimilarity)) =>
+      1 - similarityWeight * urlSimilarity
+    // a normal switch should be weighted normally
+    case _ =>
+      1
   }
 }

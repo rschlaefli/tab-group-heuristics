@@ -105,6 +105,8 @@ trait CommunityDetector[S, T <: CommunityDetectorParameters]
       )
       .sortBy(_._2.score)
 
+    logger.debug(filteredGroups.map(_._2).mkString(","))
+
     val topK = filteredGroups.reverse.take(params.maxGroups)
 
     topK
